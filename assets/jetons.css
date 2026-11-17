@@ -1,0 +1,329 @@
+/* ==========================================================================
+   Kanal — design system · JETONS (tokens)                          v1.0.0
+   --------------------------------------------------------------------------
+   Toutes les valeurs du système sont ici, et nulle part ailleurs.
+   composants.css ne contient AUCUNE couleur, taille ou durée en dur : il lit
+   ces variables. Changer une valeur ici la change partout.
+
+   Dans l'app (Nuxt 3 + Tailwind 4) : importer ce fichier tel quel, puis
+   brancher les jetons sur Tailwind — le bloc @theme est donné dans la page
+   « Démarrer » de la documentation.
+
+   Règle de lecture des couleurs :
+     noir  (--k-inverse)  = une ACTION            (bouton principal) · #1f1f1f, le noir de Revolut
+     bleu  (--k-accent)   = un ÉTAT               (actif, coché, focus, lien)
+     teintes sémantiques  = un STATUT             (succès, attention, erreur…)
+   ========================================================================== */
+
+/* ---- Polices -------------------------------------------------------------- */
+@font-face {
+  font-family: "Inter"; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url("fonts/Inter-Variable-latin.woff2") format("woff2");
+  unicode-range: U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter"; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url("fonts/Inter-Variable-latin-ext.woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Geist"; font-style: normal; font-weight: 400 600; font-display: swap;
+  src: url("fonts/Geist-Variable-latin.woff2") format("woff2");
+  unicode-range: U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Geist"; font-style: normal; font-weight: 400 600; font-display: swap;
+  src: url("fonts/Geist-Variable-latin-ext.woff2") format("woff2");
+  unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  /* ======================================================================
+     1. COULEURS
+     ====================================================================== */
+
+  /* NOIR, GRIS ET BLANC : ceux de Revolut, lus sur revolut.com le 16/11/2026 (jetons --rui-color-* du
+     thème clair). black #1f1f1f · white #ffffff · grey-2 #f7f7f7 · grey-5 #f4f5f6 · grey-10 #e2e2e7 ·
+     grey-20 #c9c9cd · grey-50 #717173 · grey-tone-N = noir à 3, 5, 7, 12, 25 et 65 %.
+     Un seul noir pour le texte, le bouton principal et la barre de navigation : #1f1f1f. */
+
+  /* Fond de l'app et barre de navigation : noir. Les îlots sont posés dessus. */
+  --k-shell:           #1f1f1f;  /* le noir de Revolut */
+  --k-rail-ink:        #a3a3a3;  /* icône d'une page · 6,5:1 sur le noir */
+  --k-rail-ink-hover:  #ffffff;                   /* icône survolée */
+  --k-rail-hover:      rgba(255, 255, 255, 0.07); /* case survolée */
+  --k-rail-active:     rgba(255, 255, 255, 0.15); /* case de la page ouverte : un noir plus clair, pas une case blanche */
+  --k-rail-on-active:  #ffffff;                   /* son icône et son libellé : blancs */
+  --k-rail-accent:     #5b8fff;                   /* point de nouveauté : le bleu de marque */
+  --k-rail-line:       rgba(255, 255, 255, 0.16); /* filet entre deux groupes, piste de l'anneau */
+  /* Qualité du numéro WhatsApp, lue sur l'anneau de la barre : des teintes vives, faites pour le fond noir */
+  --k-rail-quality-high:   #3ccf7a;
+  --k-rail-quality-medium: #f5a524;
+  --k-rail-quality-low:    #ff5a52;
+
+  /* Surfaces, du fond vers l'avant. Gris neutres de Revolut. */
+  --k-paper:        #f4f5f6;  /* Revolut grey-5 · canvas d'un builder, zone de travail dans un îlot */
+  --k-panel:        #f7f7f7;  /* Revolut grey-2 · panneau de section, colonne de liste */
+  --k-surface:      #ffffff;  /* Revolut white · îlot de contenu, cartes, menus, modales */
+  --k-fill-subtle:  #f7f7f7;  /* Revolut grey-2 · sous-ligne de réglage, en-tête de tableau, champ en lecture seule */
+  --k-fill:         #eeeeee;  /* Revolut action-background-neutral · bouton secondaire, piste d'un segmenté, badge neutre */
+  --k-fill-hover:   #e2e2e7;  /* Revolut grey-10 · survol d'un élément posé sur --k-fill */
+  --k-fill-press:   #d5d5da;  /* appui (dérivé : entre grey-10 et grey-20) */
+
+  /* Texte */
+  --k-ink:          #1f1f1f;  /* Revolut black · texte principal, 16,5:1 sur blanc */
+  --k-ink-2:        rgba(31, 31, 31, 0.65);  /* Revolut grey-tone-50 · texte secondaire. Noir à 65 % : il fonce avec son fond, donc ≥ 4,5:1 sur toutes les surfaces claires */
+  --k-ink-3:        #717173;  /* Revolut grey-50 · méta, placeholder, heure. Sur blanc (4,9:1) et --k-panel (4,6:1) seulement */
+  --k-ink-disabled: #c9c9cd;  /* Revolut grey-20 · désactivé : seul texte exempté de contraste */
+  --k-on-inverse:   #ffffff;  /* Revolut white · texte sur noir, sur bleu, sur teinte pleine */
+
+  /* Traits */
+  --k-line:         rgba(31, 31, 31, 0.07);  /* Revolut grey-tone-8 · filet par défaut : cartes, séparateurs */
+  --k-line-strong:  rgba(31, 31, 31, 0.12);  /* Revolut grey-tone-10 · contour d'un champ, d'un bouton contour */
+  --k-line-control: rgba(31, 31, 31, 0.5);  /* contour d'une case, piste d'un interrupteur éteint · 3,2:1 (dérivé du noir : grey-20 ne passe pas 3:1) */
+  --k-line-hover:   rgba(31, 31, 31, 0.25);  /* Revolut grey-tone-20 · contour d'un champ survolé */
+  --k-connector:    #c9c9cd;  /* Revolut grey-20 · trait entre deux étapes d'un flow */
+  --k-hover:        rgba(31, 31, 31, 0.05);  /* Revolut grey-tone-5 · survol d'un élément transparent (navigation, ligne) */
+  --k-grid-line:    rgba(31, 31, 31, 0.04);  /* papier quadrillé (canvas, aperçus) */
+
+  /* Action : noir */
+  --k-inverse:        #1f1f1f;  /* Revolut black : le même noir que le texte et la barre de navigation */
+  --k-inverse-hover:  #343434;
+  --k-inverse-press:  #474747;
+
+  /* État : bleu Kanal */
+  --k-accent:        #266df0;  /* coché, actif, focus · blanc dessus : 4,6:1 */
+  --k-accent-hover:  #1f5fd6;
+  --k-accent-text:   #1d55c4;  /* lien, texte bleu · 5,9:1 sur --k-accent-soft */
+  --k-accent-soft:   #eaf1ff;  /* fond d'une ligne sélectionnée, badge info */
+  --k-accent-ring:   rgba(38, 109, 240, 0.24);  /* halo de focus d'un champ */
+  --k-accent-line:   rgba(38, 109, 240, 0.22);  /* contour d'un bandeau d'information */
+  --k-success-line:  rgba(21, 128, 61, 0.22);   /* contour d'un bandeau de succès */
+  --k-danger-line:   rgba(220, 38, 38, 0.22);   /* contour d'un bandeau d'erreur */
+  --k-danger-ring:   rgba(220, 38, 38, 0.20);   /* halo de focus d'un champ en erreur */
+  --k-on-inverse-2:  rgba(255, 255, 255, 0.72); /* texte secondaire sur noir */
+  --k-on-inverse-fill: rgba(255, 255, 255, 0.14); /* bouton posé sur noir (toast, actions groupées) */
+  --k-on-inverse-fill-hover: rgba(255, 255, 255, 0.22);
+  --k-on-inverse-fill-press: rgba(255, 255, 255, 0.28);
+  --k-skeleton-shine: rgba(255, 255, 255, 0.65); /* reflet qui traverse un squelette */
+  --k-toast-success: #4ade80;                   /* coche d'un toast, sur noir */
+  --k-brand:         #5b8fff;  /* bleu de marque, décoratif seulement (jamais de texte dessus) */
+
+  /* Statuts : fond doux / texte / plein (texte blanc sur le plein) */
+  --k-success-soft: #e6f6ec;  --k-success-text: #0b7a3b;  --k-success: #15803d;
+  --k-warning-soft: #fdf3d7;  --k-warning-text: #8a5a00;  --k-warning: #e5a100;  --k-warning-line: #f0d98f;
+  --k-danger-soft:  #fdecec;  --k-danger-text:  #c0271f;  --k-danger:  #dc2626;  --k-danger-hover: #b91c1c;
+  --k-violet-soft:  #f1ecfe;  --k-violet-text:  #5b2fc9;  --k-violet:  #7c3aed;  /* IA, programmé */
+  --k-orange-soft:  #fff0e0;  --k-orange-text:  #b54708;                         /* en cours d'envoi */
+  /* Carte de mise en avant (une nouveauté, une offre) : le seul aplat en dégradé du système. Repris de la carte de
+     Gleap, à la demande d'Erevan : un lilas clair, traversé en diagonale par une bande orange qui finit en pêche,
+     un coin orangé en haut à gauche. Texte BLANC dessus : il ne passe pas 4,5:1 sur le lilas (choix assumé, la
+     phrase entière est dans aria-label). */
+  --k-teaser-corner: #e98d6d;  --k-teaser-lilac: #efc4f2;  --k-teaser-rose: #ecb4d6;
+  --k-teaser-orange: #ef7a3f;  --k-teaser-peach: #ffb37c;
+  --k-teaser-ink: #ffffff;                              /* titre */
+  --k-teaser-ink-soft: rgba(255, 255, 255, 0.86);       /* seconde ligne */
+  --k-teaser-text-shadow: 0 1px 2px rgba(122, 52, 96, 0.28);   /* détache un peu le blanc du lilas */
+  --k-teaser-glass: rgba(255, 255, 255, 0.58);          /* pastille de l'icône et de la flèche */
+  --k-teaser-ring: rgba(255, 255, 255, 0.9);            /* leur filet blanc */
+  --k-teaser-close: #fdeee6;                            /* fond de la croix */
+  --k-shadow-teaser: 0 14px 22px -14px rgba(120, 58, 70, 0.42);   /* ombre douce sous la carte */
+
+  /* Messagerie */
+  --k-bubble-in:    #f4f5f6;  /* Revolut grey-5 · message du client */
+  --k-bubble-out:   #e3edfb;  /* notre réponse */
+  --k-bubble-ai:    #f1ecfe;  /* réponse de l'agent IA */
+  --k-note:         #fff7d6;  /* note interne */
+  --k-note-text:    #7a5200;
+  --k-note-line:    #f3e2a0;
+  --k-note-fill:    rgba(255, 255, 255, 0.6);  /* piste du segmenté dans une zone de réponse en mode note */
+
+  /* Canaux : ces couleurs appartiennent aux canaux, on ne les retouche pas */
+  --k-whatsapp:     #00c940;
+  --k-whatsapp-chat:#efeae2;  /* fond d'un aperçu de conversation WhatsApp */
+  --k-whatsapp-out:  #d9fdd3;  /* bulle d'un message envoyé par le client, dans un aperçu WhatsApp */
+  --k-whatsapp-out: #d9fdd3;
+  --k-whatsapp-ink:  #111b21;  /* le noir de WhatsApp, pas le nôtre */
+  --k-whatsapp-meta: #667781;
+  --k-whatsapp-link: #027eb5;
+  --k-whatsapp-line: #e9edef;
+  --k-imessage:     #1f8aff;
+
+  /* Graphiques : ordre fixe, jamais permuté (validé daltonisme, ≥ 3:1 sur blanc) */
+  --k-chart-1: #266df0;
+  --k-chart-2: #0f9d8a;
+  --k-chart-3: #d97706;
+  --k-chart-4: #7c3aed;
+  --k-chart-5: #d6336c;
+  --k-chart-area: rgba(38, 109, 240, 0.10);
+  --k-chart-fade-top: 0.24;     /* aire sous une courbe : opacité du bleu au ras de la courbe… */
+  --k-chart-fade-bottom: 0.01;  /* …et en bas du graphique, presque transparent */
+  --k-chart-grid: rgba(31, 31, 31, 0.07);
+
+  /* Voile derrière une modale */
+  --k-scrim: rgba(31, 31, 31, 0.45);
+
+  /* ======================================================================
+     2. TYPOGRAPHIE
+     ====================================================================== */
+  --k-font-sans:    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --k-font-display: "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;  /* tous les titres et les grands chiffres */
+  --k-font-mono:    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* taille / interligne. L'interface vit en 14 px. Les tailles ne changent pas avec l'écran. */
+  --k-text-display: 32px;  --k-leading-display: 38px;  /* titre de page */
+  --k-text-title-1: 24px;  --k-leading-title-1: 30px;  /* titre d'une modale large, chiffre moyen */
+  --k-text-title-2: 18px;  --k-leading-title-2: 24px;  /* titre de modale, de panneau */
+  --k-text-heading: 16px;  --k-leading-heading: 22px;  /* titre d'une barre : barre latérale, barre du haut */
+  --k-text-figure:  20px;  --k-leading-figure:  26px;  /* chiffre d'un bandeau de chiffres */
+  --k-text-title-3: 15px;  --k-leading-title-3: 22px;  /* titre de section, de carte */
+  --k-text-body:    14px;  --k-leading-body:    20px;  /* tout le reste */
+  --k-text-small:   13px;  --k-leading-small:   18px;  /* description, méta */
+  --k-text-caption: 12px;  --k-leading-caption: 16px;  /* badge, en-tête de tableau */
+  --k-text-micro:   11px;  --k-leading-micro:   14px;  /* touche clavier, compteur */
+  --k-text-metric:  32px;  --k-leading-metric:  36px;  /* grand chiffre d'une tuile */
+
+  --k-weight-regular: 400;
+  --k-weight-medium:  500;
+  --k-weight-strong:  550;  /* libellés, boutons, éléments de navigation */
+  --k-weight-bold:    600;  /* titres en Inter */
+
+  --k-tracking-display: -0.03em;   /* Geist à partir de 22 px : titre de page, de modale, grand chiffre */
+  --k-tracking-title:   -0.015em;  /* Geist de 15 à 18 px : titre de section, de carte, de barre */
+  --k-tracking-body:    -0.003em;
+
+  /* ======================================================================
+     3. ESPACES · unité 4 px
+     ====================================================================== */
+  --k-space-0-5: 2px;
+  --k-space-1:   4px;
+  --k-space-1-5: 6px;
+  --k-space-2:   8px;
+  --k-space-3:   12px;
+  --k-space-4:   16px;
+  --k-space-5:   20px;
+  --k-space-6:   24px;
+  --k-space-8:   32px;
+  --k-space-10:  40px;
+  --k-space-12:  48px;
+  --k-space-16:  64px;
+
+  /* Hauteurs de contrôle */
+  --k-control-sm: 28px;
+  --k-control-md: 36px;
+  --k-control-lg: 44px;
+
+  /* ======================================================================
+     4. RAYONS
+     ====================================================================== */
+  --k-radius-xs:   6px;    /* touche clavier, badge plein, case à cocher */
+  --k-radius-sm:   8px;    /* ligne de menu, puce d'un segmenté carré */
+  --k-radius-md:   10px;   /* entrée de navigation */
+  --k-radius-lg:   14px;   /* menu, popover, ligne de liste, vignette d'icône */
+  --k-radius-xl:   18px;   /* carte, carte de réglages, bulle de message, zone de texte sur plusieurs lignes */
+  --k-radius-2xl:  22px;   /* îlot, modale */
+  --k-radius-pill: 999px;  /* bouton, champ de saisie, liste déroulante, recherche, badge, segmenté */
+
+  /* ======================================================================
+     5. PROFONDEUR · quatre niveaux, pas un de plus
+     ====================================================================== */
+  --k-shadow-line:   0 0 0 1px var(--k-line);
+  --k-shadow-raised: 0 0 0 1px rgba(31, 31, 31, 0.06), 0 1px 2px rgba(31, 31, 31, 0.08);
+  --k-shadow-pop:    0 0 0 1px rgba(31, 31, 31, 0.07), 0 2px 6px -2px rgba(31, 31, 31, 0.08), 0 12px 32px -6px rgba(31, 31, 31, 0.16);
+  --k-shadow-knob:   0 1px 2px rgba(31, 31, 31, 0.28);
+  --k-shadow-wa:     0 1px 1px rgba(11, 20, 26, 0.13);
+  --k-shadow-modal:  0 0 0 1px rgba(31, 31, 31, 0.06), 0 8px 20px -8px rgba(31, 31, 31, 0.14), 0 32px 80px -16px rgba(31, 31, 31, 0.30);
+
+  /* ======================================================================
+     6. MOUVEMENT
+     ====================================================================== */
+  --k-ease-out:    cubic-bezier(0.23, 1, 0.32, 1);     /* tout ce qui entre */
+  --k-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);    /* ce qui se déplace à l'écran */
+  --k-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);     /* panneau latéral */
+  --k-duration-fast: 120ms;  /* appui, survol */
+  --k-duration-tooltip: 125ms; /* infobulle */
+  --k-duration-base: 180ms;  /* menu, infobulle, pastille d'un segmenté */
+  --k-duration-slow: 260ms;  /* modale, panneau latéral, toast */
+  --k-duration-enter: 360ms; /* un bloc de page qui arrive, une fois, à l'ouverture */
+  --k-duration-page: 480ms;  /* une page qui en pousse une autre (entrer dans un objet, en revenir), une feuille qui monte.
+                                Avec --k-ease-drawer, c'est la courbe et la durée de la pile de navigation d'iOS (Ionic : 500 à 540 ms) */
+  --k-shadow-page: -28px 0 48px -28px rgba(31, 31, 31, 0.28);   /* l'ombre que la page du dessus porte sur celle du dessous */
+  --k-sheet-travel: 56px;    /* d'où monte une modale, et jusqu'où elle redescend en se fermant */
+  --k-duration-chart: 720ms; /* une courbe qui se dessine, des barres qui poussent : la seule durée au-dessus de 300 ms */
+  --k-stagger: 45ms;         /* décalage entre deux blocs qui arrivent l'un après l'autre */
+  --k-press-scale:   0.97;
+
+  /* ======================================================================
+     7. MISE EN PAGE · valeurs par défaut = écran 14 pouces (1512 px)
+     ====================================================================== */
+  --k-shell-gap:      8px;     /* marge entre les îlots, et entre un îlot et le bord de la fenêtre (pas côté barre) */
+  --k-rail-width:     56px;    /* la navigation de l'app, repliée : une colonne d'icônes */
+  --k-rail-width-open: 192px;  /* la même, ouverte au survol ou épinglée : l'icône et son libellé */
+  --k-rail-item:      40px;    /* côté d'une case de la barre */
+  --k-rail-gap:       4px;
+  --k-sidebar-width:  256px;   /* panneau de section (vues de l'inbox, pages de réglages), jamais la navigation principale */
+  --k-list-width:     304px;   /* colonne de liste dans un îlot (conversations) */
+  --k-aside-width:    280px;   /* panneau de détails (fiche contact, propriétés) : étroit, le fil passe d'abord */
+  --k-aside-width-wide: 336px; /* fiche riche (contact, audience) et propriétés d'une étape du builder */
+  --k-page-max:       1040px;  /* largeur de lecture d'une page */
+  --k-page-gutter:    40px;
+  --k-page-top:       48px;
+  --k-section-gap:    40px;
+  --k-topbar-height:  60px;
+  --k-announce-height: 40px; /* bandeau d'annonce, au-dessus de l'app */
+  --k-z-sticky: 10;
+  --k-z-rail: 20;              /* la barre de navigation ouverte passe au-dessus du contenu */
+  --k-z-overlay: 100;
+}
+
+/* 13 pouces et fenêtres étroites : 1280 à 1399 px de large */
+@media (max-width: 1399px) {
+  :root {
+    --k-rail-width-open: 184px;
+    --k-sidebar-width: 232px;
+    --k-list-width:    288px;
+    --k-aside-width:   264px;
+    --k-page-gutter:   28px;
+    --k-page-top:      36px;
+    --k-section-gap:   32px;
+  }
+}
+
+/* 16 pouces et écrans externes : à partir de 1680 px */
+@media (min-width: 1680px) {
+  :root {
+    --k-sidebar-width: 280px;
+    --k-list-width:    320px;
+    --k-aside-width:   300px;
+    --k-page-gutter:   56px;
+    --k-page-top:      56px;
+    --k-page-max:      1120px;
+  }
+}
+
+/* Écran bas (13 pouces avec la barre du navigateur : moins de 760 px de haut) */
+@media (max-height: 760px) {
+  :root {
+    --k-page-top:     28px;
+    --k-section-gap:  28px;
+    --k-topbar-height: 52px;
+    --k-rail-item:    36px;
+    --k-rail-gap:     2px;
+  }
+}
+
+/* Mouvement réduit : on garde les fondus, on retire les déplacements */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --k-duration-fast: 0ms;
+    --k-duration-tooltip: 0ms;
+    --k-duration-base: 0ms;
+    --k-duration-slow: 120ms;
+    --k-duration-enter: 0ms;
+    --k-duration-page: 0ms;
+    --k-sheet-travel: 0px;
+    --k-duration-chart: 0ms;
+    --k-stagger: 0ms;
+    --k-press-scale:   1;
+  }
+}

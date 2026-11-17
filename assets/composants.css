@@ -1,0 +1,1545 @@
+/* ==========================================================================
+   Kanal — design system · COMPOSANTS                               v1.0.0
+   --------------------------------------------------------------------------
+   Lit jetons.css. Aucune couleur ni durée en dur ici, et les tailles de
+   texte viennent des jetons (seule exception : l'aperçu WhatsApp, qui
+   reprend les mesures de WhatsApp).
+
+   Nommage : .k-bloc · .k-bloc__partie · .k-bloc--variante
+   États   : attributs natifs ou ARIA, jamais une classe « is-… »
+             (disabled, aria-selected, aria-current, aria-invalid, open,
+             data-loading). Le style suit l'état réel du composant.
+
+   Mouvement : un déplacement ou une apparition n'anime que transform et
+   opacity. Un changement de teinte au survol dure --k-duration-fast.
+   Ce qui est déclenché au clavier ne s'anime pas ([data-instant]).
+
+   Sommaire
+     01 Base           08 Navigation        15 Modale, panneau
+     02 Icône          09 Coquille, page    16 Toast, bandeau, progression
+     03 Bouton         10 Carte, réglages   17 Messagerie
+     04 Champ          11 Tuile de chiffre  18 Aperçu WhatsApp
+     05 Sélection      12 Liste, tableau    19 Builder
+     06 Badge, avatar  13 Menu, popover     20 Graphique
+     07 Onglets        14 Infobulle
+   ========================================================================== */
+
+/* ---- 01 Base -------------------------------------------------------------
+   À ne pas reprendre si le preflight de Tailwind est déjà chargé.          */
+*, *::before, *::after { box-sizing: border-box; }
+
+.k-app {
+  margin: 0;
+  background: var(--k-shell);
+  color: var(--k-ink);
+  font: var(--k-weight-regular) var(--k-text-body)/var(--k-leading-body) var(--k-font-sans);
+  letter-spacing: var(--k-tracking-body);
+  font-feature-settings: "cv11", "ss03";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.k-app :where(h1, h2, h3, h4, p, ul, ol, dl, dd, figure) { margin: 0; }
+.k-app :where(ul, ol) { padding: 0; list-style: none; }
+.k-app :where(button, input, select, textarea) { font: inherit; letter-spacing: inherit; color: inherit; }
+.k-app :where(a) { color: inherit; }
+.k-app [hidden] { display: none !important; }
+
+/* Focus clavier : le même anneau partout */
+:where(.k-button, .k-link, .k-chip, .k-fab, .k-nav__item, .k-nav__remove, .k-rail__item, .k-tabs__item, .k-segmented__item, .k-menu__item,
+  .k-conv, .k-list__row, .k-tile, .k-switch, .k-checkbox, .k-radio, .k-tag__remove, .k-pagination__page,
+  .k-connector__add, .k-settings__row, .k-choice):focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 2px;
+}
+
+.k-scroll { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--k-line-strong) transparent; }
+.k-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-tabular { font-variant-numeric: tabular-nums; }
+.k-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Papier quadrillé : canvas d'un builder, fond d'un aperçu */
+.k-grid-paper {
+  background-color: var(--k-fill-subtle);
+  background-image: linear-gradient(var(--k-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--k-grid-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ---- 02 Icône ------------------------------------------------------------ */
+/* La même icône, retournée : rétablir à partir d'annuler */
+.k-icon--flip { transform: scaleX(-1); }
+k-icon { --k-icon: 20px; display: inline-flex; flex: none; inline-size: var(--k-icon); block-size: var(--k-icon); vertical-align: middle; }
+k-icon > svg { display: block; inline-size: 100%; block-size: 100%; }
+k-icon[size="12"] { --k-icon: 12px; }
+k-icon[size="14"] { --k-icon: 14px; }
+k-icon[size="16"] { --k-icon: 16px; }
+k-icon[size="18"] { --k-icon: 18px; }
+k-icon[size="24"] { --k-icon: 24px; }
+/* Icônes pleines seulement : plein 20 par défaut, plein 16 avec set="micro". */
+
+/* ---- 03 Bouton ------------------------------------------------------------ */
+.k-button {
+  --_h: var(--k-control-md); --_px: var(--k-space-4);
+  --_bg: var(--k-fill); --_bg-hover: var(--k-fill-hover); --_bg-press: var(--k-fill-press); --_fg: var(--k-ink);
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--k-space-2);
+  height: var(--_h); padding: 0 var(--_px); border: 0; border-radius: var(--k-radius-pill);
+  background: var(--_bg); color: var(--_fg); box-shadow: var(--_ring, none);
+  font: var(--k-weight-strong) var(--k-text-body)/1 var(--k-font-sans); letter-spacing: var(--k-tracking-body);
+  white-space: nowrap; text-decoration: none; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--k-duration-fast) ease, transform var(--k-duration-fast) var(--k-ease-out);
+}
+@media (hover: hover) { .k-button:hover { background: var(--_bg-hover); } }
+.k-button:active { background: var(--_bg-press); transform: scale(var(--k-press-scale)); }
+.k-button[aria-expanded="true"] { background: var(--_bg-hover); }
+
+.k-button--primary   { --_bg: var(--k-inverse); --_bg-hover: var(--k-inverse-hover); --_bg-press: var(--k-inverse-press); --_fg: var(--k-on-inverse); }
+.k-button--secondary { --_bg: var(--k-fill); }
+.k-button--outline   { --_bg: var(--k-surface); --_bg-hover: var(--k-fill-subtle); --_bg-press: var(--k-fill); --_ring: inset 0 0 0 1px var(--k-line-strong); }
+.k-button--ghost     { --_bg: transparent; --_bg-hover: var(--k-hover); --_bg-press: var(--k-line); }
+.k-button--danger    { --_bg: var(--k-danger); --_bg-hover: var(--k-danger-hover); --_bg-press: var(--k-danger-hover); --_fg: var(--k-on-inverse); }
+
+/* Sur un fond noir (bannière d'appel) : le bouton principal s'inverse */
+.k-button--inverse   { --_bg: var(--k-on-inverse); --_bg-hover: var(--k-fill); --_bg-press: var(--k-fill-hover); --_fg: var(--k-inverse); }
+
+.k-button--sm { --_h: var(--k-control-sm); --_px: var(--k-space-3); gap: var(--k-space-1-5); font-size: var(--k-text-small); }
+.k-button--lg { --_h: var(--k-control-lg); --_px: var(--k-space-5); font-size: var(--k-text-title-3); }
+.k-button--block { display: flex; width: 100%; }
+/* Un bouton d'icône est un cercle : il garde sa largeur même quand la ligne manque de place (flex: none). */
+.k-button--icon { flex: none; width: var(--_h); min-width: var(--_h); padding: 0; }
+/* Un logo dans un bouton (« Créer avec Claude ») : à la taille d'une icône */
+.k-button > img { flex: none; width: 18px; height: 18px; margin-inline: -2px; }
+.k-button--icon > img { margin: 0; }
+
+.k-button k-icon { --k-icon: 18px; margin-inline: -2px; }
+.k-button--sm k-icon { --k-icon: 16px; margin-inline: -1px; }
+.k-button--icon k-icon { margin: 0; }
+
+.k-button:disabled, .k-button[aria-disabled="true"] {
+  --_bg: var(--k-fill); --_fg: var(--k-ink-disabled); --_ring: none;
+  background: var(--_bg); cursor: not-allowed; transform: none;
+}
+.k-button--ghost:disabled { --_bg: transparent; }
+
+/* En cours : le libellé garde sa place, le bouton ne change pas de largeur */
+.k-button[data-loading] { color: transparent; pointer-events: none; }
+.k-button[data-loading]::after {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--_fg) 28%, transparent); border-top-color: var(--_fg);
+  animation: k-spin 0.6s linear infinite;
+}
+@keyframes k-spin { to { transform: rotate(360deg); } }
+
+/* Bouton en deux parties : l'action, puis ses variantes */
+.k-split { display: inline-flex; gap: 1px; }
+.k-split > .k-button:first-child { border-start-end-radius: 0; border-end-end-radius: 0; padding-inline-end: var(--k-space-3); }
+.k-split > .k-button:last-child { border-start-start-radius: 0; border-end-start-radius: 0; width: 32px; padding: 0; }
+.k-split > .k-button:active { transform: none; }
+
+/* Point d'état sur le coin d'un bouton icône : la couleur dit l'état, l'infobulle le dit en mots */
+.k-button__dot { position: absolute; top: 1px; right: 1px; width: 10px; height: 10px; border-radius: 50%; background: var(--_dot, var(--k-ink-disabled)); box-shadow: 0 0 0 2px var(--k-halo, var(--k-surface)); }
+.k-button--icon > .k-avatar { --_s: 24px; }
+
+/* Compteur posé sur le coin d'un bouton icône (filtres actifs) */
+.k-button__count { position: absolute; top: -3px; right: -5px; box-shadow: 0 0 0 2px var(--k-halo, var(--k-surface)); }
+.k-main__list, .k-sidebar { --k-halo: var(--k-panel); }
+
+.k-button-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--k-space-2); }
+
+button.k-link { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; }
+.k-link {
+  color: var(--k-accent-text); font-weight: var(--k-weight-medium); text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 3px; border-radius: 4px;
+}
+@media (hover: hover) { .k-link:hover { text-decoration-color: currentColor; } }
+
+.k-kbd {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px;
+  border-radius: var(--k-radius-xs); background: var(--k-fill); color: var(--k-ink-2);
+  font: var(--k-weight-bold) var(--k-text-micro)/1 var(--k-font-sans);
+}
+
+/* ---- 04 Champ -------------------------------------------------------------- */
+.k-field { display: flex; flex-direction: column; gap: var(--k-space-1-5); min-width: 0; }
+/* Un groupe de réglages dans un formulaire : un titre, puis ses choix */
+.k-fieldset { display: flex; flex-direction: column; gap: var(--k-space-3); min-width: 0; margin: 0; padding: 0; border: 0; }
+.k-fieldset__legend { padding: 0; font: var(--k-weight-bold) var(--k-text-title-3)/var(--k-leading-title-3) var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+.k-field__label { font: var(--k-weight-strong) var(--k-text-small)/var(--k-leading-small) var(--k-font-sans); color: var(--k-ink); }
+.k-field__optional { font-weight: var(--k-weight-regular); color: var(--k-ink-3); }
+.k-field__hint { font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+.k-field__error { display: flex; align-items: center; gap: var(--k-space-1-5); font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-danger-text); }
+
+/* Tout champ d'une ligne est entièrement arrondi, comme les boutons. La zone de texte, sur plusieurs lignes,
+   prend le rayon d'une carte : une pilule y couperait le texte dans les coins. */
+.k-input, .k-textarea, .k-select {
+  display: block; width: 100%; height: var(--k-control-md); padding: 0 var(--k-space-4); border: 0; outline: 0;
+  border-radius: var(--k-radius-pill); background-color: var(--k-surface); color: var(--k-ink);
+  box-shadow: inset 0 0 0 1px var(--k-line-strong);
+  font: var(--k-weight-regular) var(--k-text-body)/var(--k-leading-body) var(--k-font-sans);
+  transition: box-shadow var(--k-duration-fast) ease;
+}
+.k-input::placeholder, .k-textarea::placeholder { color: var(--k-ink-3); opacity: 1; }
+@media (hover: hover) { :is(.k-input, .k-textarea, .k-select):hover { box-shadow: inset 0 0 0 1px var(--k-line-hover); } }
+:is(.k-input, .k-textarea, .k-select):focus { box-shadow: inset 0 0 0 1.5px var(--k-accent), 0 0 0 3px var(--k-accent-ring); }
+:is(.k-input, .k-textarea, .k-select)[aria-invalid="true"] { box-shadow: inset 0 0 0 1.5px var(--k-danger); }
+:is(.k-input, .k-textarea, .k-select)[aria-invalid="true"]:focus { box-shadow: inset 0 0 0 1.5px var(--k-danger), 0 0 0 3px var(--k-danger-ring); }
+:is(.k-input, .k-textarea, .k-select):disabled { background-color: var(--k-fill-subtle); color: var(--k-ink-disabled); box-shadow: inset 0 0 0 1px var(--k-line); cursor: not-allowed; }
+:is(.k-input, .k-textarea)[readonly] { background-color: var(--k-fill-subtle); }
+
+.k-textarea { height: auto; min-height: 88px; padding: 10px var(--k-space-4); border-radius: var(--k-radius-xl); resize: vertical; }
+/* La flèche est une image : sa teinte (#717173, celle de --k-ink-3) est écrite dans l'URL. */
+.k-select {
+  appearance: none; padding-inline-end: 40px; cursor: pointer; text-align: start;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23717173'%3E%3Cpath fill-rule='evenodd' d='M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center; background-size: 16px;
+}
+.k-input--sm, .k-select--sm { height: var(--k-control-sm); padding-inline: var(--k-space-3); font-size: var(--k-text-small); }
+.k-input--lg, .k-select--lg { height: var(--k-control-lg); padding-inline: var(--k-space-5); font-size: var(--k-text-title-3); }
+.k-select--sm { padding-inline-end: 32px; background-position: right 10px center; }
+
+/* Champ avec icône à gauche et actions à droite */
+.k-input-group { position: relative; display: flex; align-items: center; min-width: 0; }
+.k-input-group > k-icon { position: absolute; inset-inline-start: 14px; --k-icon: 18px; color: var(--k-ink-3); pointer-events: none; }
+.k-input-group > k-icon ~ .k-input { padding-inline-start: 40px; }
+.k-input-group__end { position: absolute; inset-inline-end: 6px; display: flex; align-items: center; gap: var(--k-space-1); }
+
+/* Champ avec préfixe fixe (https://, €) */
+.k-input-addon { display: flex; min-width: 0; }
+.k-input-addon__text {
+  display: flex; align-items: center; padding: 0 var(--k-space-3) 0 var(--k-space-4); border-radius: var(--k-radius-pill) 0 0 var(--k-radius-pill);
+  background: var(--k-fill-subtle); box-shadow: inset 0 0 0 1px var(--k-line-strong); color: var(--k-ink-2); white-space: nowrap;
+}
+.k-input-addon > .k-input { margin-inline-start: -1px; padding-inline-start: var(--k-space-3); border-start-start-radius: 0; border-end-start-radius: 0; }
+.k-input-addon > .k-input:focus { position: relative; }
+
+/* Valeur à copier (URL, clé d'API) */
+.k-copyfield {
+  display: flex; align-items: center; gap: var(--k-space-2); min-width: 0; height: 40px; padding: 0 var(--k-space-1-5) 0 var(--k-space-4);
+  border-radius: var(--k-radius-pill); background: var(--k-fill-subtle); color: var(--k-ink);
+  font: var(--k-text-small)/1 var(--k-font-mono);
+}
+.k-copyfield__value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Saisie de plusieurs valeurs */
+.k-taginput {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--k-space-1-5); min-height: var(--k-control-md); padding: 5px var(--k-space-2);
+  border-radius: calc(var(--k-control-md) / 2); background: var(--k-surface); box-shadow: inset 0 0 0 1px var(--k-line-strong); cursor: text;
+  transition: box-shadow var(--k-duration-fast) ease;
+}
+.k-taginput:focus-within { box-shadow: inset 0 0 0 1.5px var(--k-accent), 0 0 0 3px var(--k-accent-ring); }
+.k-taginput input { flex: 1; min-width: 120px; height: 26px; padding: 0 var(--k-space-1-5); border: 0; outline: 0; background: none; }
+.k-taginput input::placeholder { color: var(--k-ink-3); opacity: 1; }
+
+/* Variable dans un texte : {{ prénom }} */
+.k-var {
+  display: inline-flex; align-items: center; height: 22px; padding: 0 var(--k-space-1-5); border-radius: var(--k-radius-xs);
+  background: var(--k-accent-soft); color: var(--k-accent-text); font-weight: var(--k-weight-medium); font-size: var(--k-text-small); white-space: nowrap;
+}
+
+/* ---- 05 Sélection ---------------------------------------------------------- */
+.k-switch {
+  appearance: none; position: relative; flex: none; width: 36px; height: 20px; margin: 0; border-radius: var(--k-radius-pill);
+  background: var(--k-line-control); cursor: pointer; transition: background-color var(--k-duration-base) ease;
+}
+.k-switch::before {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--k-surface); box-shadow: var(--k-shadow-knob); transition: transform var(--k-duration-base) var(--k-ease-out);
+}
+.k-switch:checked { background: var(--k-accent); }
+.k-switch:checked::before { transform: translateX(16px); }
+.k-switch:active::before { transform: scale(0.9); }
+.k-switch:checked:active::before { transform: translateX(16px) scale(0.9); }
+.k-switch:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.k-checkbox, .k-radio {
+  appearance: none; position: relative; flex: none; display: inline-grid; place-content: center; width: 18px; height: 18px; margin: 0;
+  background: var(--k-surface); box-shadow: inset 0 0 0 1.5px var(--k-line-control); cursor: pointer;
+  transition: background-color var(--k-duration-fast) ease, box-shadow var(--k-duration-fast) ease;
+}
+.k-checkbox { border-radius: var(--k-radius-xs); }
+.k-radio { border-radius: 50%; }
+.k-checkbox::before {
+  content: ""; width: 12px; height: 12px; background: var(--k-on-inverse); opacity: 0; transform: scale(0.7);
+  clip-path: polygon(14% 52%, 26% 40%, 42% 56%, 74% 22%, 86% 34%, 42% 80%);
+  transition: opacity var(--k-duration-fast) ease, transform var(--k-duration-fast) var(--k-ease-out);
+}
+.k-radio::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--k-on-inverse); opacity: 0; transform: scale(0.6);
+  transition: opacity var(--k-duration-fast) ease, transform var(--k-duration-fast) var(--k-ease-out);
+}
+:is(.k-checkbox, .k-radio):checked, .k-checkbox:indeterminate { background: var(--k-accent); box-shadow: none; }
+:is(.k-checkbox, .k-radio):checked::before, .k-checkbox:indeterminate::before { opacity: 1; transform: none; }
+.k-checkbox:indeterminate::before { clip-path: inset(41% 16% 41% 16% round 2px); }
+:is(.k-checkbox, .k-radio):disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Case, radio ou interrupteur avec son libellé */
+.k-check { display: inline-flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.k-check > :is(.k-checkbox, .k-radio) { margin-top: 1px; }
+.k-check__label { font-weight: var(--k-weight-medium); }
+.k-check__hint { display: block; font-weight: var(--k-weight-regular); font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+
+/* Segmenté : 2 à 5 options courtes, une seule active */
+.k-segmented { position: relative; isolation: isolate; display: inline-flex; padding: 3px; border-radius: var(--k-radius-pill); background: var(--k-fill); }
+.k-segmented__item {
+  position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; gap: var(--k-space-1-5);
+  height: 30px; padding: 0 14px; border: 0; border-radius: var(--k-radius-pill); background: none; color: var(--k-ink-2);
+  font: var(--k-weight-strong) var(--k-text-small)/1 var(--k-font-sans); white-space: nowrap; cursor: pointer;
+  transition: color var(--k-duration-fast) ease;
+}
+@media (hover: hover) { .k-segmented__item:hover { color: var(--k-ink); } }
+.k-segmented__item:is([aria-selected="true"], [aria-checked="true"]) { color: var(--k-ink); }
+.k-segmented__count { font-weight: var(--k-weight-medium); color: var(--k-ink-2); font-variant-numeric: tabular-nums; }
+.k-segmented__thumb {
+  position: absolute; z-index: 0; top: 3px; left: 0; height: 30px; width: var(--_w, 0); border-radius: var(--k-radius-pill);
+  background: var(--k-surface); box-shadow: var(--k-shadow-raised); transform: translateX(var(--_x, 0));
+  transition: transform var(--k-duration-base) var(--k-ease-out), width var(--k-duration-base) var(--k-ease-out);
+}
+.k-segmented[data-instant] .k-segmented__thumb { transition: none; }
+/* Sans script : l'option active porte elle-même la pastille */
+.k-segmented:not([data-ready]) .k-segmented__item:is([aria-selected="true"], [aria-checked="true"]) { background: var(--k-surface); box-shadow: var(--k-shadow-raised); }
+.k-segmented--sm .k-segmented__item, .k-segmented--sm .k-segmented__thumb { height: 24px; }
+.k-segmented--sm .k-segmented__item { padding: 0 10px; font-size: var(--k-text-caption); }
+.k-segmented--block { display: flex; }
+.k-segmented--block .k-segmented__item { flex: 1; }
+
+/* Puce à bascule : un filtre qu'on allume ou qu'on éteint, dans un groupe */
+.k-chips { display: flex; flex-wrap: wrap; gap: var(--k-space-1-5); }
+.k-chip {
+  display: inline-flex; align-items: center; gap: var(--k-space-1); height: var(--k-control-sm); padding: 0 var(--k-space-3); border: 0; border-radius: var(--k-radius-pill);
+  background: var(--k-fill); color: var(--k-ink); font: var(--k-weight-medium) var(--k-text-small)/1 var(--k-font-sans); white-space: nowrap; cursor: pointer;
+  transition: background-color var(--k-duration-fast) ease, color var(--k-duration-fast) ease, box-shadow var(--k-duration-fast) ease, transform var(--k-duration-fast) var(--k-ease-out);
+}
+@media (hover: hover) { .k-chip:hover { background: var(--k-fill-hover); } }
+.k-chip:active { transform: scale(var(--k-press-scale)); }
+.k-chip[aria-pressed="true"] { background: var(--k-accent-soft); color: var(--k-accent-text); box-shadow: inset 0 0 0 1.5px var(--k-accent); }
+
+/* Carte de choix : une option qui mérite une explication */
+.k-choice {
+  display: flex; align-items: flex-start; gap: var(--k-space-3); padding: 14px var(--k-space-4); border-radius: var(--k-radius-lg);
+  background: var(--k-surface); box-shadow: inset 0 0 0 1px var(--k-line-strong); cursor: pointer;
+  transition: background-color var(--k-duration-fast) ease, box-shadow var(--k-duration-fast) ease;
+}
+@media (hover: hover) { .k-choice:hover { box-shadow: inset 0 0 0 1px var(--k-line-hover); } }
+.k-choice:has(input:checked) { background: var(--k-accent-soft); box-shadow: inset 0 0 0 1.5px var(--k-accent); }
+.k-choice > :is(.k-radio, .k-checkbox) { margin-top: 1px; }
+
+/* ---- 06 Badge, étiquette, compteur, avatar --------------------------------- */
+.k-badge {
+  --_bg: var(--k-fill); --_fg: var(--k-ink-2);
+  display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 var(--k-space-2); border-radius: var(--k-radius-pill);
+  background: var(--_bg); color: var(--_fg); font: var(--k-weight-medium) var(--k-text-caption)/1 var(--k-font-sans); white-space: nowrap;
+}
+.k-badge--success { --_bg: var(--k-success-soft); --_fg: var(--k-success-text); }
+.k-badge--warning { --_bg: var(--k-warning-soft); --_fg: var(--k-warning-text); }
+.k-badge--danger  { --_bg: var(--k-danger-soft);  --_fg: var(--k-danger-text); }
+.k-badge--accent  { --_bg: var(--k-accent-soft);  --_fg: var(--k-accent-text); }
+.k-badge--violet  { --_bg: var(--k-violet-soft);  --_fg: var(--k-violet-text); }
+.k-badge--orange  { --_bg: var(--k-orange-soft);  --_fg: var(--k-orange-text); }
+.k-badge--outline { --_bg: var(--k-surface); box-shadow: inset 0 0 0 1px var(--k-line-strong); }
+.k-badge__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.k-badge k-icon { --k-icon: 12px; }
+/* Badge plein : une étiquette de produit (Bêta, Nouveau, Par défaut), pas un statut */
+.k-badge--solid {
+  --_bg: var(--k-accent); --_fg: var(--k-on-inverse);
+  height: 18px; padding: 0 var(--k-space-1-5); border-radius: var(--k-radius-xs); font-weight: var(--k-weight-bold); font-size: var(--k-text-micro);
+}
+.k-badge--solid.k-badge--success { --_bg: var(--k-success); --_fg: var(--k-on-inverse); }
+.k-badge--solid.k-badge--neutral { --_bg: var(--k-inverse); --_fg: var(--k-on-inverse); }
+
+.k-tag {
+  display: inline-flex; align-items: center; gap: var(--k-space-1); height: 26px; padding: 0 var(--k-space-1) 0 10px; border-radius: var(--k-radius-sm);
+  background: var(--k-fill); color: var(--k-ink); font-weight: var(--k-weight-medium); font-size: var(--k-text-small); white-space: nowrap;
+}
+.k-tag:not(:has(.k-tag__remove)) { padding-inline-end: 10px; }
+.k-tag__remove { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--k-ink-2); cursor: pointer; }
+.k-tag__remove k-icon { --k-icon: 12px; }
+@media (hover: hover) { .k-tag__remove:hover { background: var(--k-fill-press); color: var(--k-ink); } }
+
+.k-count {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--k-radius-pill);
+  background: var(--k-fill); color: var(--k-ink-2); font: var(--k-weight-bold) var(--k-text-micro)/1 var(--k-font-sans); font-variant-numeric: tabular-nums;
+}
+.k-count--accent { background: var(--k-accent); color: var(--k-on-inverse); }
+.k-count--danger { background: var(--k-danger); color: var(--k-on-inverse); }
+
+.k-avatar {
+  --_s: 32px; --_bg: var(--k-fill); --_fg: var(--k-ink);
+  position: relative; display: inline-grid; place-items: center; flex: none; width: var(--_s); height: var(--_s); border-radius: 50%;
+  background: var(--_bg); color: var(--_fg); font: var(--k-weight-bold) calc(var(--_s) * 0.38)/1 var(--k-font-sans); text-transform: uppercase; user-select: none;
+}
+.k-avatar > img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.k-avatar--xs { --_s: 20px; }
+.k-avatar--sm { --_s: 24px; }
+.k-avatar--lg { --_s: 40px; }
+.k-avatar--xl { --_s: 56px; }
+.k-avatar--square { border-radius: 28%; }
+.k-avatar--blue   { --_bg: var(--k-accent-soft);  --_fg: var(--k-accent-text); }
+.k-avatar--green  { --_bg: var(--k-success-soft); --_fg: var(--k-success-text); }
+.k-avatar--violet { --_bg: var(--k-violet-soft);  --_fg: var(--k-violet-text); }
+.k-avatar--orange { --_bg: var(--k-orange-soft);  --_fg: var(--k-orange-text); }
+.k-avatar--rose   { --_bg: var(--k-danger-soft);  --_fg: var(--k-danger-text); }
+.k-avatar--ink    { --_bg: var(--k-inverse);      --_fg: var(--k-on-inverse); }
+.k-avatar--whatsapp { --_bg: var(--k-whatsapp);   --_fg: var(--k-on-inverse); }
+.k-avatar--imessage { --_bg: var(--k-imessage);   --_fg: var(--k-on-inverse); }
+.k-avatar > k-icon { --k-icon: calc(var(--_s) * 0.6); }
+.k-avatar__status { position: absolute; right: -1px; bottom: -1px; width: 28%; min-width: 8px; aspect-ratio: 1; border-radius: 50%; background: var(--k-success); box-shadow: 0 0 0 2px var(--k-surface); }
+.k-avatar-stack { display: inline-flex; }
+.k-avatar-stack > .k-avatar { box-shadow: 0 0 0 2px var(--k-surface); }
+.k-avatar-stack > .k-avatar + .k-avatar { margin-inline-start: -8px; }
+
+/* ---- 07 Onglets, fil d'Ariane, étapes, pagination --------------------------- */
+.k-tabs { position: relative; display: flex; gap: var(--k-space-6); box-shadow: inset 0 -1px 0 var(--k-line); overflow-x: auto; scrollbar-width: none; }
+.k-tabs__item {
+  display: inline-flex; align-items: center; gap: var(--k-space-2); height: 40px; padding: 0; border: 0; background: none; color: var(--k-ink-2);
+  font: var(--k-weight-strong) var(--k-text-body)/1 var(--k-font-sans); white-space: nowrap; cursor: pointer; border-radius: 4px;
+  transition: color var(--k-duration-fast) ease;
+}
+@media (hover: hover) { .k-tabs__item:hover { color: var(--k-ink); } }
+.k-tabs__item[aria-selected="true"] { color: var(--k-ink); }
+.k-tabs__bar {
+  position: absolute; left: 0; bottom: 0; height: 2px; width: var(--_w, 0); border-radius: 2px 2px 0 0; background: var(--k-accent);
+  transform: translateX(var(--_x, 0)); transition: transform var(--k-duration-base) var(--k-ease-out), width var(--k-duration-base) var(--k-ease-out);
+}
+.k-tabs[data-instant] .k-tabs__bar { transition: none; }
+.k-tabs:not([data-ready]) .k-tabs__item[aria-selected="true"] { box-shadow: inset 0 -2px 0 var(--k-accent); }
+
+.k-breadcrumb { display: flex; align-items: center; gap: var(--k-space-1-5); font-size: var(--k-text-small); color: var(--k-ink-2); }
+.k-breadcrumb a { text-decoration: none; border-radius: 4px; }
+@media (hover: hover) { .k-breadcrumb a:hover { color: var(--k-ink); } }
+.k-breadcrumb [aria-current="page"] { color: var(--k-ink); font-weight: var(--k-weight-strong); }
+.k-breadcrumb k-icon { --k-icon: 14px; color: var(--k-ink-disabled); }
+
+.k-steps { display: flex; align-items: center; gap: var(--k-space-2); }
+.k-steps__item { display: inline-flex; align-items: center; gap: var(--k-space-2); color: var(--k-ink-2); font-weight: var(--k-weight-strong); font-size: var(--k-text-small); white-space: nowrap; }
+.k-steps__num {
+  display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--k-fill); color: var(--k-ink-2);
+  font: var(--k-weight-bold) var(--k-text-caption)/1 var(--k-font-sans); font-variant-numeric: tabular-nums;
+}
+.k-steps__num k-icon { --k-icon: 12px; }
+.k-steps__item[aria-current="step"] { color: var(--k-ink); }
+.k-steps__item[aria-current="step"] .k-steps__num { background: var(--k-inverse); color: var(--k-on-inverse); }
+.k-steps__item[data-done] .k-steps__num { background: var(--k-success-soft); color: var(--k-success-text); }
+.k-steps__sep { width: 24px; height: 1px; background: var(--k-line-strong); }
+/* Serré : pour une échelle de paliers dans une modale */
+.k-steps--compact { gap: var(--k-space-1-5); flex-wrap: wrap; row-gap: var(--k-space-2); }
+.k-steps--compact .k-steps__item { gap: var(--k-space-1-5); }
+.k-steps--compact .k-steps__sep { width: 12px; }
+/* Étape cliquable : dans un parcours où l'on revient en arrière, l'étape est un bouton.
+   Même dessin que l'étape en lecture ; seuls le curseur, le survol et le focus s'ajoutent. */
+button.k-steps__item { padding: 0; border: 0; border-radius: var(--k-radius-pill); background: none; cursor: pointer; transition: color var(--k-duration-fast) ease; }
+@media (hover: hover) { button.k-steps__item:hover { color: var(--k-ink); } }
+button.k-steps__item:focus-visible { outline: 2px solid var(--k-accent); outline-offset: var(--k-space-1); }
+
+.k-pagination { display: flex; align-items: center; gap: var(--k-space-1); }
+.k-pagination__page {
+  display: grid; place-items: center; min-width: 28px; height: 28px; padding: 0 var(--k-space-1-5); border: 0; border-radius: var(--k-radius-sm); background: none;
+  color: var(--k-ink-2); font: var(--k-weight-medium) var(--k-text-small)/1 var(--k-font-sans); font-variant-numeric: tabular-nums; cursor: pointer;
+}
+@media (hover: hover) { .k-pagination__page:hover { background: var(--k-hover); color: var(--k-ink); } }
+.k-pagination__page[aria-current="page"] { background: var(--k-fill); color: var(--k-ink); font-weight: var(--k-weight-bold); }
+
+/* ---- 08 Navigation ---------------------------------------------------------- */
+.k-nav { display: flex; flex-direction: column; gap: 2px; }
+.k-nav__label { padding: var(--k-space-4) 10px var(--k-space-1-5); font-weight: var(--k-weight-strong); font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-3); }
+.k-nav__label:first-child { padding-top: var(--k-space-1); }
+.k-nav__item {
+  display: flex; align-items: center; gap: 10px; width: 100%; height: var(--k-control-md); padding: 0 10px; border: 0; border-radius: var(--k-radius-md);
+  background: none; color: var(--k-ink); font: var(--k-weight-medium) var(--k-text-body)/1 var(--k-font-sans); letter-spacing: var(--k-tracking-body);
+  text-align: start; text-decoration: none; white-space: nowrap; cursor: pointer; list-style: none;
+  transition: background-color var(--k-duration-fast) ease;
+}
+.k-nav__item::-webkit-details-marker { display: none; }
+.k-nav__item > span:first-of-type { overflow: hidden; text-overflow: ellipsis; }
+.k-nav__item k-icon { color: var(--k-ink-2); }
+@media (hover: hover) { .k-nav__item:hover { background: var(--k-hover); } }
+.k-nav__item[aria-current="page"] { background: var(--k-surface); box-shadow: var(--k-shadow-raised); font-weight: var(--k-weight-strong); }
+.k-nav__item[aria-current="page"] k-icon { color: var(--k-ink); }
+.k-nav__end { display: inline-flex; align-items: center; gap: var(--k-space-1-5); margin-inline-start: auto; color: var(--k-ink-2); }
+.k-nav__end k-icon { --k-icon: 16px; color: var(--k-ink-3); }
+.k-nav__row { position: relative; }
+.k-nav__remove { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--k-radius-sm); background: var(--k-fill-hover); color: var(--k-ink-2); cursor: pointer; opacity: 0; }
+.k-nav__remove k-icon { --k-icon: 12px; }
+.k-nav__row:hover .k-nav__remove, .k-nav__remove:focus-visible { opacity: 1; }
+.k-nav__row:hover .k-nav__end { visibility: hidden; }
+.k-nav__sub { display: flex; flex-direction: column; gap: 2px; padding-inline-start: 30px; padding-block: 2px; }
+.k-nav__group[open] > .k-nav__item .k-nav__chevron { transform: rotate(90deg); }
+.k-nav__chevron { transition: transform var(--k-duration-fast) var(--k-ease-out); }
+
+/* ---- 09 Coquille de l'app et page -------------------------------------------- */
+.k-shell { display: flex; gap: var(--k-shell-gap); height: 100dvh; padding: var(--k-shell-gap); background: var(--k-shell); overflow: hidden; }
+/* Avec la barre de navigation : pas de marge à gauche, l'îlot touche la barre. */
+.k-shell:has(> .k-rail) { padding-inline-start: 0; }
+
+/* Barre de navigation : LA navigation de l'app, noire, à gauche. Trois états :
+   - repliée (56 px) : une colonne de cases carrées, une icône pleine par page ;
+   - ouverte (data-open) : au survol ou au clavier, elle passe par-dessus le contenu et montre les libellés ;
+   - épinglée (data-pinned) : elle reste ouverte et pousse le contenu.
+   La page ouverte est une case d'un noir plus clair, icône et libellé blancs.
+
+   Mouvement. La barre est toujours mise en page ouverte (192 px) ; repliée, elle est seulement découpée à 56 px.
+   S'ouvrir, c'est élargir cette découpe : rien n'est remis en page, donc rien ne saute. Le fond, la case de
+   chaque page, les filets, les libellés et les compteurs suivent la même durée et la même courbe (--_d, --_e) :
+   260 ms à l'ouverture, 180 ms à la fermeture, plus courte. */
+.k-shell:has(> .k-rail[data-pinned]) { --k-rail-width: var(--k-rail-width-open); }
+.k-rail[data-pinned] { --k-rail-width: var(--k-rail-width-open); }
+.k-rail {
+  --_d: var(--k-duration-base); --_e: var(--k-ease-out);                 /* le retour à l'état replié */
+  --_reste: calc(var(--k-rail-width-open) - var(--k-rail-width));        /* ce que la barre ouverte dépasse de sa place */
+  position: relative; z-index: var(--k-z-rail); flex: none; display: flex; flex-direction: column; gap: var(--k-rail-gap); width: var(--k-rail-width); margin-inline-end: calc(-1 * var(--k-shell-gap)); padding-block: var(--k-space-2); color: var(--k-rail-ink);
+  clip-path: inset(calc(-1 * var(--k-shell-gap)) 0 calc(-1 * var(--k-shell-gap)) 0);
+  transition: clip-path var(--_d) var(--_e);
+}
+.k-rail[data-open]:not([data-pinned]) {
+  --_d: var(--k-duration-slow); --_e: var(--k-ease-drawer);
+  clip-path: inset(calc(-1 * var(--k-shell-gap)) calc(-1 * var(--_reste) - 48px) calc(-1 * var(--k-shell-gap)) 0);   /* 48 px de plus pour l'ombre */
+}
+.k-rail > * { width: var(--k-rail-width-open); }
+/* Le fond de la barre ouverte : il recouvre le contenu, d'un bord à l'autre de la fenêtre */
+.k-rail::before { content: ""; position: absolute; z-index: -1; inset-block: calc(-1 * var(--k-shell-gap)); inset-inline-start: 0; width: var(--k-rail-width-open); background: var(--k-shell); box-shadow: var(--k-shadow-modal); }
+
+.k-rail__head { flex: none; display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--k-space-1-5); padding-inline: var(--k-space-2); }
+.k-rail__logo { flex: none; display: grid; place-items: center; width: var(--k-rail-item); height: var(--k-rail-item); padding: 0; border: 0; border-radius: var(--k-radius-md); background: none; cursor: pointer; transition: background-color var(--k-duration-fast) ease; }
+@media (hover: hover) { .k-rail__logo:hover { background: var(--k-rail-hover); } }
+.k-rail__logo img { width: 26px; height: 26px; object-fit: contain; }
+/* L'épingle, en haut à droite de la barre ouverte. Enfoncée (aria-pressed), la barre est épinglée. */
+.k-rail__pin { display: grid; place-items: center; width: var(--k-control-sm); height: var(--k-control-sm); margin-inline-end: var(--k-space-1); padding: 0; border: 0; border-radius: 50%; background: none; color: var(--k-rail-ink); cursor: pointer; -webkit-tap-highlight-color: transparent; opacity: 0; transition: background-color var(--k-duration-fast) ease, color var(--k-duration-fast) ease, opacity var(--_d) ease; }
+.k-rail__pin k-icon { --k-icon: 16px; }
+@media (hover: hover) { .k-rail__pin:hover { background: var(--k-rail-hover); color: var(--k-rail-ink-hover); } }
+.k-rail__pin[aria-pressed="true"] { background: var(--k-rail-hover); color: var(--k-rail-ink-hover); }
+.k-rail__pin:focus-visible { outline: 2px solid var(--k-accent); outline-offset: 2px; }
+
+.k-rail__main { display: flex; flex-direction: column; gap: var(--k-rail-gap); min-height: 0; margin: -3px 0; padding: 3px var(--k-space-2); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+/* Une case : l'icône à gauche, à la même place dans les trois états ; le libellé à sa droite */
+.k-rail__item {
+  position: relative; z-index: 0; flex: none; display: flex; align-items: center; gap: 10px; height: var(--k-rail-item); padding: 0 10px 0 calc((var(--k-rail-item) - 20px) / 2); border: 0; border-radius: 12px;
+  background: none; color: var(--k-rail-ink); text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: color var(--k-duration-fast) ease, transform var(--k-duration-fast) var(--k-ease-out);
+}
+.k-rail__item:has(> .k-avatar) { padding-inline-start: calc((var(--k-rail-item) - 32px) / 2); }
+.k-rail__item:has(> .k-rail__count, > .k-rail__dot) { padding-inline-end: var(--k-space-10); }
+/* Le fond de la case : un carré tant que la barre est repliée, toute la ligne quand elle s'ouvre */
+.k-rail__item::before { content: ""; position: absolute; z-index: -1; inset: 0; background: var(--_case, transparent); clip-path: inset(0 calc(100% - var(--k-rail-item)) 0 0 round 12px); transition: background-color var(--k-duration-fast) ease, clip-path var(--_d) var(--_e); }
+.k-rail__item k-icon { --k-icon: 20px; }
+@media (hover: hover) { .k-rail__item:hover { --_case: var(--k-rail-hover); color: var(--k-rail-ink-hover); } }
+.k-rail__item:active { transform: scale(var(--k-press-scale)); }
+.k-rail__item[aria-expanded="true"] { --_case: var(--k-rail-hover); color: var(--k-rail-ink-hover); }
+.k-rail__item[aria-current="page"] { --_case: var(--k-rail-active); color: var(--k-rail-on-active); }
+/* Filet entre deux groupes : 20 px sous les icônes, toute la largeur quand la barre s'ouvre */
+.k-rail__sep { flex: none; height: 1px; margin: var(--k-space-1) 10px; background: var(--k-rail-line); clip-path: inset(0 calc(100% - 20px) 0 0); transition: clip-path var(--_d) var(--_e); }
+/* Compteur et point : dans le coin de la case, puis en bout de ligne. Ils glissent de l'un à l'autre. */
+.k-rail__count, .k-rail__dot { position: absolute; top: 50%; transition: transform var(--_d) var(--_e), box-shadow var(--_d) ease; }
+.k-rail__count { right: 10px; box-shadow: 0 0 0 2px var(--k-shell); transform: translate(calc(var(--k-rail-item) + 31px - var(--k-rail-width-open)), calc(-1 * var(--k-rail-item) / 2 - 3px)); }
+.k-rail__dot { right: 14px; width: 8px; height: 8px; border-radius: 50%; background: var(--k-rail-accent); box-shadow: 0 0 0 2px var(--k-shell); transform: translate(calc(var(--k-rail-item) + 23px - var(--k-rail-width-open)), calc(7px - var(--k-rail-item) / 2)); }
+.k-rail__end { flex: none; display: flex; flex-direction: column; gap: var(--k-rail-gap); margin-top: auto; padding: var(--k-space-2) var(--k-space-2) 0; }
+.k-rail .k-avatar__status { box-shadow: 0 0 0 2px var(--k-shell); }
+.k-rail .k-ring { --_track: var(--k-rail-line); }
+/* Libellé d'une case, et chiffre en bout de ligne : ils apparaissent en fondu pendant que la barre se déroule */
+.k-rail__label, .k-rail__meta { opacity: 0; transition: opacity var(--_d) ease; }
+.k-rail__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; font: var(--k-weight-strong) var(--k-text-body)/var(--k-leading-body) var(--k-font-sans); letter-spacing: var(--k-tracking-body); }
+.k-rail__meta { flex: none; font: var(--k-weight-regular) var(--k-text-caption)/1 var(--k-font-sans); font-variant-numeric: tabular-nums; }
+
+/* Barre ouverte ou épinglée */
+.k-rail:is([data-open], [data-pinned]) :is(.k-rail__label, .k-rail__meta, .k-rail__pin) { opacity: 1; }
+.k-rail:is([data-open], [data-pinned]) .k-rail__item::before { clip-path: inset(0 0 0 0 round 12px); }
+.k-rail:is([data-open], [data-pinned]) .k-rail__sep { clip-path: inset(0 0 0 0); }
+.k-rail:is([data-open], [data-pinned]) :is(.k-rail__count, .k-rail__dot) { transform: translate(0, -50%); box-shadow: 0 0 0 2px transparent; }
+/* Ouverte au clavier, ou déjà épinglée au chargement : rien ne s'anime */
+.k-rail[data-instant], .k-rail[data-instant] *, .k-rail[data-instant] *::before { transition: none !important; }
+.k-rail__toggle { display: none; }
+/* Bouton qui ouvre le panneau de section en fenêtre étroite */
+.k-nav-toggle { display: none; }
+
+/* Anneau : une jauge qui tient dans une case de la barre (quota de messages) */
+.k-ring { --k-value: 0; --_s: 20px; --_w: 3.5px; display: block; width: var(--_s); height: var(--_s); border-radius: 50%; background: conic-gradient(var(--_c, currentColor) calc(var(--k-value) * 360deg), var(--_track, var(--k-line-strong)) 0); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--_w)), #000 calc(100% - var(--_w) + 0.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - var(--_w)), #000 calc(100% - var(--_w) + 0.5px)); }
+/* Grand anneau : l'état principal d'une modale (la qualité du numéro) */
+.k-ring--lg { --_s: 96px; --_w: 9px; }
+/* Sur fond clair, le grand anneau prend les teintes de statut du système (celles de l'échelle), pas celles de la barre noire */
+.k-ring--lg[data-quality="high"] { --_c: var(--k-success); }
+.k-ring--lg[data-quality="medium"] { --_c: var(--k-warning); }
+.k-ring--lg[data-quality="low"] { --_c: var(--k-danger); }
+/* Jauge : un grand anneau avec, en son centre, une icône */
+.k-gauge { display: grid; place-items: center; }
+.k-gauge > * { grid-area: 1 / 1; }
+.k-gauge > k-icon { --k-icon: 32px; color: var(--k-ink); }
+/* Bloc en retrait : une information secondaire sur un fond gris très clair, dans une modale ou une carte */
+.k-inset { display: flex; flex-direction: column; gap: var(--k-space-2); padding: var(--k-space-4); border-radius: var(--k-radius-lg); background: var(--k-fill-subtle); }
+.k-inset__row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--k-space-3); }
+.k-inset__label { font-weight: var(--k-weight-strong); }
+.k-inset__value { font-variant-numeric: tabular-nums; color: var(--k-ink-2); }
+.k-inset__value b { color: var(--k-ink); font-weight: var(--k-weight-bold); }
+.k-inset__hint { font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+.k-ring--warning { --_c: var(--k-warning); }
+.k-ring--danger { --_c: var(--k-danger); }
+/* Qualité du numéro : l'anneau prend la teinte de la qualité, piste comprise, pour se lire même vide et barre repliée */
+.k-ring[data-quality] { --_track: color-mix(in srgb, var(--_c) 30%, transparent); }
+/* Anneau de qualité (barre de navigation) : la couleur ET le remplissage disent le niveau, jamais la couleur seule.
+   Élevée : anneau plein, vert. Moyenne : deux tiers, orange. Basse : un tiers, rouge. */
+.k-ring[data-quality="high"] { --_c: var(--k-rail-quality-high); --k-value: 1; }
+.k-ring[data-quality="medium"] { --_c: var(--k-rail-quality-medium); --k-value: 0.66; }
+.k-ring[data-quality="low"] { --_c: var(--k-rail-quality-low); --k-value: 0.33; }
+/* Le niveau écrit à côté du libellé, dans sa couleur */
+.k-rail__meta[data-quality] { font-weight: var(--k-weight-strong); font-size: var(--k-text-small); }
+.k-rail__meta[data-quality="high"] { color: var(--k-rail-quality-high); }
+.k-rail__meta[data-quality="medium"] { color: var(--k-rail-quality-medium); }
+.k-rail__meta[data-quality="low"] { color: var(--k-rail-quality-low); }
+
+/* Panneau de section : la sous-navigation d'UNE section qui en a besoin (vues de l'inbox, pages de
+   réglages). Facultatif. Ce n'est jamais la navigation principale : elle est dans le rail. */
+.k-sidebar { flex: none; display: flex; flex-direction: column; width: var(--k-sidebar-width); min-height: 0; border-radius: var(--k-radius-2xl); background: var(--k-panel); }
+.k-sidebar__header { flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-2); height: var(--k-topbar-height); padding: 0 var(--k-space-3) 0 var(--k-space-5); }
+.k-sidebar__title { font: var(--k-weight-bold) var(--k-text-heading)/1 var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+.k-sidebar__body { flex: 1; min-height: 0; padding: var(--k-space-1) 10px var(--k-space-3); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--k-line-strong) transparent; }
+.k-sidebar__footer { flex: none; padding: 10px; }
+
+/* Îlot de contenu */
+.k-main { flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: var(--k-radius-2xl); background: var(--k-surface); overflow: hidden; }
+.k-main--split { flex-direction: row; }
+/* min-height: 0 : dans un îlot en colonne, sans cela la colonne prend la hauteur de son contenu et rien ne défile */
+.k-main__column { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+/* position: relative : la zone qui défile est le repère de ses descendants en position absolue (un .k-sr-only dans
+   un tableau, par exemple). Sans cela ils allongent le document et la coquille entière peut défiler. */
+.k-main__scroll { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--k-line-strong) transparent; }
+.k-main__list { flex: none; display: flex; flex-direction: column; width: var(--k-list-width); min-height: 0; background: var(--k-panel); box-shadow: inset -1px 0 0 var(--k-line); }
+.k-main__list-head { flex: none; display: flex; flex-direction: column; gap: var(--k-space-2); padding: var(--k-space-3) var(--k-space-2) var(--k-space-2); }
+.k-main__list-title { display: flex; align-items: center; gap: var(--k-space-1-5); min-height: var(--k-control-md); padding-inline-start: var(--k-space-3); font: var(--k-weight-bold) var(--k-text-heading)/1 var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+.k-main__list-name { flex: 1; min-width: 0; margin: 0; font: inherit; letter-spacing: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-main__list-meta { display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-2); min-height: var(--k-control-sm); padding-inline-start: var(--k-space-2); font-size: var(--k-text-small); color: var(--k-ink-2); }
+.k-main__list-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px; padding: 0 var(--k-space-2) var(--k-space-3); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--k-line-strong) transparent; }
+.k-main__footer { flex: none; display: flex; flex-direction: column; gap: var(--k-space-2); padding: var(--k-space-2) var(--k-space-4) var(--k-space-4); }
+.k-aside { flex: none; display: flex; flex-direction: column; width: var(--k-aside-width); min-height: 0; box-shadow: inset 1px 0 0 var(--k-line); background: var(--k-surface); }
+.k-aside__body { flex: 1; min-height: 0; padding: 0 var(--k-space-4) var(--k-space-4); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--k-line-strong) transparent; }
+.k-aside__section { padding-block: var(--k-space-3); }
+.k-aside__section + .k-aside__section { box-shadow: inset 0 1px 0 var(--k-line); }
+.k-aside__title { margin-bottom: var(--k-space-1); font: var(--k-weight-bold) var(--k-text-small)/var(--k-leading-small) var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+/* Le panneau de détails se ferme à la demande, à toutes les largeurs : le fil gagne sa place */
+.k-aside[data-collapsible][data-closed] { display: none; }
+/* Écran large : la fiche arrive en fondu, d'un léger glissement depuis la droite */
+@media (min-width: 1400px) {
+  .k-aside[data-collapsible] { transition: opacity var(--k-duration-base) ease, transform var(--k-duration-slow) var(--k-ease-out); }
+  @starting-style { .k-aside[data-collapsible]:not([data-closed]) { opacity: 0; transform: translateX(16px); } }
+}
+/* Fiche riche (contact, audience) : plus large, avec une identité en tête et des actions en pied */
+.k-aside--wide { --k-aside-width: var(--k-aside-width-wide); }
+.k-aside--wide .k-details dt, .k-aside--wide .k-details dd { align-items: flex-start; padding-block: 5px; }
+.k-aside--wide .k-details dd > span { white-space: normal; overflow-wrap: anywhere; }
+.k-aside__identity { display: flex; align-items: center; gap: var(--k-space-3); padding-block: var(--k-space-1) var(--k-space-3); min-width: 0; }
+.k-aside__identity > div { min-width: 0; }
+.k-aside__name { font: var(--k-weight-bold) var(--k-text-heading)/var(--k-leading-heading) var(--k-font-display); letter-spacing: var(--k-tracking-title); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-aside__sub { display: flex; flex-wrap: wrap; align-items: center; gap: var(--k-space-1) var(--k-space-2); font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+.k-aside__actions { display: flex; gap: var(--k-space-2); }
+.k-aside__actions > .k-button--block { flex: 1; width: auto; }
+.k-aside__head { display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-2); min-height: var(--k-control-sm); margin-bottom: var(--k-space-1); }
+.k-aside__head .k-aside__title { margin: 0; }
+/* Pied d'un panneau : des boutons à leur taille, jamais étirés sur toute la largeur. L'action secondaire à gauche, la principale à droite. */
+.k-aside__foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-2); padding: var(--k-space-3) var(--k-space-4); box-shadow: inset 0 1px 0 var(--k-line); }
+.k-aside__foot > .k-button--block { flex: 1; width: auto; }
+.k-aside__form { display: flex; flex-direction: column; gap: var(--k-space-4); padding-top: var(--k-space-4); }
+.k-aside__form .k-wa { width: 100%; }
+.k-aside .k-stat__value { font-size: var(--k-text-title-1); line-height: var(--k-leading-title-1); }
+.k-aside .k-banner { margin-top: var(--k-space-3); }
+/* Fil d'activité : ce qui s'est passé, du plus récent au plus ancien */
+.k-timeline { display: flex; flex-direction: column; margin: var(--k-space-2) 0 0; padding: 0; list-style: none; }
+.k-timeline__item { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: start; column-gap: 10px; padding-bottom: var(--k-space-3); }
+.k-timeline__item:not(:last-child)::before { content: ""; position: absolute; inset: 30px auto 2px 13.5px; width: 1px; background: var(--k-line); }
+.k-timeline__icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--k-fill-subtle); color: var(--k-ink-2); }
+.k-timeline__icon k-icon { --k-icon: 14px; }
+.k-timeline__title { font-weight: var(--k-weight-medium); font-size: var(--k-text-small); line-height: var(--k-leading-small); padding-top: 5px; }
+.k-timeline__meta { font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+.k-timeline__time { padding-top: 6px; font-size: var(--k-text-caption); line-height: var(--k-leading-caption); color: var(--k-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.k-timeline__item > .k-badge { margin-top: 3px; }
+/* Groupe de conditions d'un segment, en édition. Une condition = un mot de liaison, une propriété, un opérateur,
+   une valeur, et de quoi la retirer. */
+.k-rules { display: flex; flex-direction: column; gap: var(--k-space-2); padding: var(--k-space-4); }
+.k-rules__head { display: flex; align-items: center; gap: var(--k-space-2); margin-bottom: var(--k-space-1); }
+.k-rules__head .k-select { width: auto; font-weight: var(--k-weight-strong); }
+.k-rules__count { display: inline-flex; align-items: center; gap: var(--k-space-1-5); margin-inline-start: auto; padding-inline-end: var(--k-space-2); font-size: var(--k-text-small); color: var(--k-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.k-rules__count k-icon { --k-icon: 16px; }
+.k-rules__join { display: flex; padding: var(--k-space-2) var(--k-space-5); }
+.k-rule { display: grid; grid-template-columns: 36px minmax(0, 1.5fr) minmax(0, 1.1fr) minmax(0, 1fr) auto; align-items: center; gap: var(--k-space-2); padding: var(--k-space-2); border-radius: var(--k-radius-xl); background: var(--k-fill-subtle); }
+.k-rule__mot { font-size: var(--k-text-small); color: var(--k-ink-2); text-align: center; }
+.k-rule__unit { display: flex; align-items: center; gap: var(--k-space-2); min-width: 0; font-size: var(--k-text-small); color: var(--k-ink-2); }
+/* Le nom d'un objet, modifiable dans la barre de son éditeur */
+.k-topbar__name { width: clamp(180px, 24vw, 320px); font: var(--k-weight-bold) var(--k-text-heading)/1 var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+.k-topbar__name:not(:focus):not(:hover) { box-shadow: none; }
+@media (min-width: 1400px) { .k-topbar .k-nav-toggle[data-k-aside-toggle] { display: none; } }
+@media (max-width: 1399px) { .k-topbar .k-nav-toggle[data-k-aside-toggle] { display: inline-flex; } }
+
+/* Conditions d'un segment, en lecture : « Où [propriété] opérateur [valeur] », une par ligne */
+.k-conditions { display: flex; flex-direction: column; gap: var(--k-space-1-5); }
+.k-conditions__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--k-space-1-5); }
+.k-conditions__mot { font-size: var(--k-text-small); color: var(--k-ink-2); }
+
+.k-topbar { flex: none; display: flex; align-items: center; gap: var(--k-space-3); height: var(--k-topbar-height); padding: 0 var(--k-space-4) 0 var(--k-space-5); box-shadow: inset 0 -1px 0 var(--k-line); }
+.k-topbar__title { font: var(--k-weight-bold) var(--k-text-heading)/1 var(--k-font-display); letter-spacing: var(--k-tracking-title); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-topbar { container-type: inline-size; }
+/* Dans une barre du haut de moins de 560 px, un libellé facultatif s'efface : il reste l'icône et l'infobulle */
+@container (max-width: 560px) { .k-topbar__optional { display: none; } }
+.k-topbar__text { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.k-topbar__meta { font-size: var(--k-text-small); line-height: 1; color: var(--k-ink-2); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-topbar__end { flex: none; display: flex; align-items: center; gap: var(--k-space-2); margin-inline-start: auto; }
+/* Barre d'un éditeur : le retour et le nom à gauche, les onglets au centre exact, les actions à droite */
+.k-topbar--editor { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); padding-inline-start: var(--k-space-3); }
+.k-topbar__start { display: flex; align-items: center; gap: var(--k-space-2); min-width: 0; }
+.k-topbar--editor .k-topbar__end { justify-self: end; }
+.k-topbar__sep { width: 1px; height: 20px; margin-inline: var(--k-space-1); background: var(--k-line-strong); }
+
+.k-page { width: 100%; max-width: calc(var(--k-page-max) + 2 * var(--k-page-gutter)); margin: 0 auto; padding: var(--k-page-top) var(--k-page-gutter) var(--k-space-16); }
+.k-page--wide { max-width: none; }
+/* Les blocs d'une page arrivent l'un après l'autre, une fois : un fondu et 8 px de montée. Pareil quand un onglet
+   remplace le contenu. Rien d'autre ne bouge à l'ouverture d'une page. */
+@keyframes k-enter { from { opacity: var(--_enter-opacity, 0); transform: translateY(var(--_enter-shift, 8px)); } }
+/* Arrivée par une transition de page : le fondu est déjà fait par la transition. Les blocs ne repartent pas de
+   l'invisible (l'îlot ne se vide jamais) : ils montent seulement de 8 px, tous ensemble. */
+:root[data-k-arrivee] .k-page > * { --_enter-opacity: 1; animation-delay: 0s; }
+/* Arrivée par un glissement de page (data-k-calme) : la page entière bouge déjà. Elle arrive COMPLÈTE et immobile :
+   ses blocs ne montent pas, ses courbes ne se tracent pas, ses barres ne poussent pas. Deux mouvements à la fois
+   feraient saccader le glissement. */
+:root[data-k-calme] .k-page > * { --_enter-opacity: 1; --_enter-shift: 0px; animation-delay: 0s; }
+:root[data-k-calme] .k-chart svg[data-draw] :is(.k-chart__line, .k-chart__area), :root[data-k-calme] .k-bars__bar > span { animation-duration: 1ms; animation-delay: 0s; }
+.k-page > * { animation: k-enter var(--k-duration-enter) var(--k-ease-out) backwards; }
+.k-page > :nth-child(2) { animation-delay: calc(var(--k-stagger) * 1); }
+.k-page > :nth-child(3) { animation-delay: calc(var(--k-stagger) * 2); }
+.k-page > :nth-child(4) { animation-delay: calc(var(--k-stagger) * 3); }
+.k-page > :nth-child(5) { animation-delay: calc(var(--k-stagger) * 4); }
+.k-page > :nth-child(n + 6) { animation-delay: calc(var(--k-stagger) * 5); }
+@media (prefers-reduced-motion: reduce) { .k-page > * { animation: none; } }
+.k-page__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--k-space-6); margin-bottom: var(--k-section-gap); }
+.k-page__title { font: var(--k-weight-bold) var(--k-text-display)/var(--k-leading-display) var(--k-font-display); letter-spacing: var(--k-tracking-display); text-wrap: balance; }
+.k-page__subtitle { margin-top: var(--k-space-2); max-width: 64ch; font-size: var(--k-text-title-3); line-height: var(--k-leading-title-3); color: var(--k-ink-2); }
+.k-page__actions { flex: none; display: flex; align-items: center; gap: var(--k-space-2); padding-top: 1px; }
+
+.k-section { display: flex; flex-direction: column; gap: var(--k-space-3); }
+.k-section + .k-section { margin-top: var(--k-section-gap); }
+.k-section__header { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--k-space-4); }
+.k-section__title { font: var(--k-weight-bold) var(--k-text-title-3)/var(--k-leading-title-3) var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+.k-section__desc { margin-top: 2px; color: var(--k-ink-2); }
+
+.k-grid { display: grid; gap: var(--k-space-4); grid-template-columns: repeat(var(--_cols, 3), minmax(0, 1fr)); }
+.k-grid--2 { --_cols: 2; }
+.k-grid--4 { --_cols: 4; }
+/* Une colonne principale et une colonne d'appoint (aperçu, détails), côte à côte */
+.k-duo { display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: start; gap: var(--k-space-4); }
+@media (max-width: 1399px) { .k-duo { grid-template-columns: minmax(0, 1fr) 288px; } }
+/* Des blocs empilés, au même écart que dans une grille */
+.k-stack { display: flex; flex-direction: column; gap: var(--k-space-4); min-width: 0; }
+@media (max-width: 1399px) { .k-grid--4 { --_cols: 2; } }
+
+/* Fenêtre étroite : le panneau de section passe par-dessus le contenu */
+@media (max-width: 1179px) {
+  .k-rail__toggle { display: grid; }
+  .k-nav-toggle { display: inline-flex; }
+  .k-sidebar {
+    position: fixed; z-index: var(--k-z-overlay); inset-block: var(--k-shell-gap); inset-inline-start: var(--k-rail-width);
+    box-shadow: var(--k-shadow-modal); opacity: 0; visibility: hidden; transform: translateX(-12px);
+    transition: transform var(--k-duration-slow) var(--k-ease-drawer), opacity var(--k-duration-base) ease, visibility 0s linear var(--k-duration-slow);
+  }
+  .k-shell[data-nav-open] .k-sidebar { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+}
+/* 13 pouces : le panneau de détails se replie, on l'ouvre à la demande */
+@media (max-width: 1399px) {
+  .k-aside[data-collapsible][data-closed] { display: flex; }
+  .k-main--split { position: relative; }
+  .k-aside[data-collapsible] {
+    position: absolute; z-index: var(--k-z-sticky); inset-block: 0; inset-inline-end: 0; box-shadow: var(--k-shadow-modal);
+    transform: translateX(105%); visibility: hidden;
+    transition: transform var(--k-duration-slow) var(--k-ease-drawer), visibility 0s linear var(--k-duration-slow);
+  }
+  .k-aside[data-collapsible][data-open] { transform: none; visibility: visible; transition-delay: 0s; }
+  /* Builder : le panneau passe par-dessus le canvas. On lui laisse sa place, pour que le flow reste entier à côté. */
+  .k-main__column:has(+ .k-aside--wide:not(.k-aside--float)[data-open]) > .k-canvas { padding-inline-end: var(--k-aside-width-wide); }
+}
+/* Panneau d'appoint d'un éditeur à étapes (aperçu, résumé). Sous 1400 px, le panneau repliable passe par-dessus le
+   contenu sur toute la hauteur : il couvrirait la fin de la barre d'éditeur, où est le bouton principal. Celui-ci
+   commence sous la barre, et le contenu lui laisse sa place tant qu'il est ouvert. */
+@media (max-width: 1399px) {
+  .k-aside--companion[data-collapsible] { inset-block-start: var(--k-topbar-height); box-shadow: inset 1px 0 0 var(--k-line); }
+  .k-main__column:has(+ .k-aside--companion[data-open]) > .k-main__scroll { padding-inline-end: var(--k-aside-width-wide); }
+}
+/* Panneau flottant (fiche d'un contact, propriétés d'un nœud) : il passe PAR-DESSUS le contenu, à toutes les largeurs,
+   sans le déplacer ni le réduire. Détaché du bord de l'îlot, arrondi, avec une ombre. Ouvert : data-open.
+   Sous une barre d'éditeur, il commence sous la barre : le bouton principal reste visible. */
+.k-main:has(> .k-aside--float) { position: relative; }
+.k-aside.k-aside--float[data-collapsible] {
+  position: absolute; z-index: var(--k-z-sticky); inset-block: var(--k-space-2); inset-inline-end: var(--k-space-2);
+  display: flex; border-radius: var(--k-radius-xl); box-shadow: var(--k-shadow-modal); overflow: hidden;
+  opacity: 0; transform: translateX(calc(100% + var(--k-space-4))); visibility: hidden;
+  transition: transform var(--k-duration-base) var(--k-ease-out), opacity var(--k-duration-fast) ease, visibility 0s linear var(--k-duration-base);
+}
+.k-aside.k-aside--float[data-collapsible][data-open] {
+  opacity: 1; transform: none; visibility: visible;
+  transition: transform var(--k-duration-slow) var(--k-ease-drawer), opacity var(--k-duration-base) ease, visibility 0s;
+}
+.k-main__column:has(> .k-topbar) + .k-aside--float[data-collapsible] { inset-block-start: calc(var(--k-topbar-height) + var(--k-space-2)); }
+.k-aside--float > .k-topbar { box-shadow: inset 0 -1px 0 var(--k-line); }
+
+/* Bandeau d'annonce : une nouveauté ou une offre, dans le noir de la coquille, au-dessus du CONTENU. Il n'existe à
+   l'écran que si la racine porte data-k-announce : le logo de la barre le montre et le cache, et le choix est gardé.
+   La barre de navigation ne bouge pas : le bandeau commence à sa droite, et seuls les îlots de contenu descendent.
+   Le logo et les entrées de la barre restent à leur place, en haut à gauche. */
+.k-announce { display: none; }
+.k-app { --_announce-start: var(--k-rail-width); }
+.k-app:has(> .k-shell > .k-rail[data-pinned]) { --_announce-start: var(--k-rail-width-open); }
+:root[data-k-announce] .k-announce {
+  position: fixed; inset-block-start: 0; inset-inline: var(--_announce-start) 0; display: flex; align-items: center; justify-content: center; gap: var(--k-space-3);
+  height: var(--k-announce-height); padding: var(--k-space-2) var(--k-space-12) 0; color: var(--k-rail-on-active);
+  font-size: var(--k-text-small); line-height: var(--k-leading-small);
+}
+:root[data-k-announce] .k-announce ~ .k-shell > :not(.k-rail) { margin-block-start: var(--k-announce-height); }
+.k-announce__tag { flex: none; padding: 2px var(--k-space-2); border-radius: var(--k-radius-pill); background: var(--k-rail-active); font-weight: var(--k-weight-strong); font-size: var(--k-text-caption); }
+.k-announce__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--k-rail-ink); }
+.k-announce__text b { color: var(--k-rail-on-active); font-weight: var(--k-weight-strong); }
+.k-announce__link { flex: none; display: inline-flex; align-items: center; gap: var(--k-space-1); color: var(--k-rail-on-active); font-weight: var(--k-weight-strong); text-decoration: underline; text-decoration-color: var(--k-rail-ink); text-underline-offset: 3px; }
+.k-announce__link k-icon { --k-icon: 14px; }
+@media (hover: hover) { .k-announce__link:hover { text-decoration-color: currentColor; } }
+.k-announce__close { position: absolute; inset-block-start: calc(var(--k-space-2) + (var(--k-announce-height) - var(--k-space-2) - var(--k-control-sm)) / 2); inset-inline-end: var(--k-space-3); display: grid; place-items: center; width: var(--k-control-sm); height: var(--k-control-sm); padding: 0; border: 0; border-radius: var(--k-radius-pill); background: none; color: var(--k-rail-ink); cursor: pointer; transition: background-color var(--k-duration-fast) ease, color var(--k-duration-fast) ease; }
+.k-announce__close k-icon { --k-icon: 16px; }
+@media (hover: hover) { .k-announce__close:hover { background: var(--k-rail-hover); color: var(--k-rail-ink-hover); } }
+.k-announce :is(a, button):focus-visible { outline: 2px solid var(--k-rail-on-active); outline-offset: 2px; }
+
+/* Passer d'une page à l'autre : la barre de navigation ne bouge pas (elle porte son propre nom de transition, et
+   garde son état : ouverte au survol, elle reste ouverte sur la page suivante). Tout le reste, l'îlot de contenu
+   compris, passe de l'ancienne page à la nouvelle par un simple fondu croisé de 180 ms, à sa place : rien ne
+   glisse, rien ne s'étire, même entre deux pages qui n'ont pas la même forme (inbox, réglages). Les blocs de la
+   nouvelle page montent de 8 px pendant le fondu.
+   L'îlot ne reçoit un nom que le temps où le bandeau d'annonce apparaît ou disparaît (data-k-vt="annonce") : il
+   descend alors d'un seul mouvement. */
+@view-transition { navigation: auto; }
+.k-app > .k-shell > .k-rail { view-transition-name: k-rail; }
+.k-app > .k-announce { view-transition-name: k-announce; }
+:root[data-k-vt] .k-app > .k-shell > .k-main { view-transition-name: k-main; }
+::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation-duration: var(--k-duration-slow); animation-timing-function: var(--k-ease-out); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--k-duration-base); animation-timing-function: ease; }
+
+/* Entrer dans un objet, en revenir : la logique d'une pile de navigation mobile.
+   - AVANT (data-k-sens="avant") : on ouvre un objet depuis sa liste (une automatisation, une campagne, un lien, une
+     liste, un segment). Sa page arrive par la DROITE et passe PAR-DESSUS la liste. La liste, elle, NE BOUGE PAS :
+     ni recul, ni estompage. Elle est simplement recouverte.
+   - ARRIÈRE (data-k-sens="arriere") : la flèche de retour, qui pointe à gauche, ou le retour du navigateur. La page
+     repart vers la DROITE, par où elle était venue, et découvre la liste, restée à sa place, immobile.
+   Une seule chose bouge donc : la page de l'objet. Tout se passe DANS l'îlot : son cadre arrondi ne bouge pas, la
+   barre de navigation non plus. Entre deux pages de même niveau (d'une section à l'autre par la barre), rien ne
+   glisse : le fondu ci-dessus.
+   Le sens est posé par composants.js sur la racine (data-k-vt="page", data-k-sens) le temps de la transition. */
+:root[data-k-sens]::view-transition-group(k-main) { overflow: clip; border-radius: var(--k-radius-2xl); background: var(--k-surface); }
+:root[data-k-sens]::view-transition-old(k-main), :root[data-k-sens]::view-transition-new(k-main) {
+  mix-blend-mode: normal; animation-duration: var(--k-duration-page); animation-timing-function: var(--k-ease-drawer); animation-fill-mode: both;
+}
+/* la page du dessous : immobile et pleinement visible pendant toute la transition */
+:root[data-k-sens="avant"]::view-transition-old(k-main), :root[data-k-sens="arriere"]::view-transition-new(k-main) { animation: none; opacity: 1; transform: none; }
+/* la page de l'objet : elle seule glisse, au-dessus, avec son ombre portée */
+:root[data-k-sens="avant"]::view-transition-new(k-main) { z-index: 1; animation-name: k-page-arrive; box-shadow: var(--k-shadow-page); }
+:root[data-k-sens="arriere"]::view-transition-old(k-main) { z-index: 1; animation-name: k-page-repart; box-shadow: var(--k-shadow-page); }
+@keyframes k-page-arrive { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes k-page-repart { from { transform: none; } to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
+
+/* ---- 10 Carte, réglages, promotion, tuile de modèle --------------------------- */
+.k-card { padding: var(--k-space-5); border-radius: var(--k-radius-xl); background: var(--k-surface); box-shadow: var(--k-shadow-line); }
+.k-card--flush { padding: 0; overflow: hidden; }
+.k-card--muted { background: var(--k-fill-subtle); box-shadow: none; }
+.k-card__title { font: var(--k-weight-bold) var(--k-text-title-3)/var(--k-leading-title-3) var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+.k-card__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--k-space-3); margin-bottom: var(--k-space-4); }
+.k-card .k-wa { width: 100%; }
+/* QR code d'un lien : sur blanc, avec sa marge, prêt à être scanné */
+.k-qr { display: grid; place-items: center; padding: var(--k-space-3); border-radius: var(--k-radius-lg); background: var(--k-surface); box-shadow: var(--k-shadow-line); }
+.k-qr img { display: block; width: 148px; height: 148px; image-rendering: pixelated; }
+.k-card__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-3); margin-top: var(--k-space-4); }
+.k-card__figure { font: var(--k-weight-bold) var(--k-text-figure)/var(--k-leading-figure) var(--k-font-display); letter-spacing: var(--k-tracking-title); font-variant-numeric: tabular-nums; }
+.k-card__figure small { margin-inline-start: var(--k-space-1); font: var(--k-weight-regular) var(--k-text-small)/1 var(--k-font-sans); letter-spacing: 0; color: var(--k-ink-2); }
+.k-card__desc { margin-top: 2px; font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+
+/* Carte de réglages : une ligne = un réglage, libellé à gauche, contrôle à droite */
+.k-settings { border-radius: var(--k-radius-xl); background: var(--k-surface); box-shadow: var(--k-shadow-line); overflow: hidden; }
+.k-settings__row { display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-6); min-height: 68px; padding: 14px var(--k-space-5); color: inherit; text-decoration: none; }
+.k-settings__row + .k-settings__row { box-shadow: inset 0 1px 0 var(--k-line); }
+.k-settings__row--sub { background: var(--k-fill-subtle); }
+.k-settings__row--stack { flex-direction: column; align-items: stretch; justify-content: center; gap: 10px; }
+a.k-settings__row { cursor: pointer; transition: background-color var(--k-duration-fast) ease; }
+@media (hover: hover) { a.k-settings__row:hover { background: var(--k-fill-subtle); } }
+.k-settings__text { min-width: 0; }
+.k-settings__label, .k-settings__desc, .k-list__title, .k-list__meta, .k-check__label { display: block; }
+.k-settings__label { font-weight: var(--k-weight-strong); }
+.k-settings__desc { margin-top: 2px; max-width: 72ch; font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+.k-settings__control { flex: none; display: flex; align-items: center; gap: var(--k-space-2); }
+.k-settings__control > :is(.k-input, .k-select, .k-input-group) { width: clamp(200px, 22vw, 320px); }
+
+/* Carte de mise en route : ce qu'une fonction apporte, avant qu'elle soit branchée */
+.k-promo { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: var(--k-space-8); padding: var(--k-space-4); border-radius: var(--k-radius-xl); box-shadow: var(--k-shadow-line); }
+.k-promo__media { display: grid; place-items: center; min-height: 220px; padding: var(--k-space-5); border-radius: var(--k-radius-lg); background: var(--k-surface); box-shadow: var(--k-shadow-line); }
+.k-promo__body { display: flex; flex-direction: column; align-items: flex-start; gap: var(--k-space-2); padding-inline-end: var(--k-space-8); }
+.k-promo__title { font: var(--k-weight-bold) var(--k-text-title-2)/var(--k-leading-title-2) var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+.k-promo__desc { color: var(--k-ink-2); }
+.k-promo__close { position: absolute; top: var(--k-space-2); right: var(--k-space-2); }
+/* Carte de mise en avant : petite, pour pousser UNE nouveauté ou UNE offre au pied d'un panneau (les avis à laisser,
+   au pied des vues de l'inbox). Une icône, deux lignes, une flèche ; toute la surface est le lien. Une seule par
+   écran. Aucun effet au survol de la carte : seule la croix apparaît, dans le coin, pour la masquer. */
+.k-teaser { position: relative; display: block; }
+.k-teaser__link {
+  display: flex; align-items: center; gap: var(--k-space-2); padding: var(--k-space-3); border-radius: var(--k-radius-2xl);
+  background: linear-gradient(118deg, var(--k-teaser-corner) 0%, var(--k-teaser-lilac) 14%, var(--k-teaser-lilac) 46%, var(--k-teaser-rose) 58%, var(--k-teaser-orange) 78%, var(--k-teaser-peach) 93%);
+  box-shadow: var(--k-shadow-teaser); color: var(--k-teaser-ink); text-decoration: none; text-shadow: var(--k-teaser-text-shadow);
+  transition: transform var(--k-duration-fast) var(--k-ease-out);
+}
+.k-teaser__link:active { transform: scale(0.98); }
+.k-teaser__link:focus-visible { outline: 2px solid var(--k-accent); outline-offset: 2px; }
+.k-teaser__icon, .k-teaser__go { flex: none; display: grid; place-items: center; border-radius: var(--k-radius-pill); background: var(--k-teaser-glass); box-shadow: inset 0 0 0 2px var(--k-teaser-ring); color: var(--k-ink); }
+.k-teaser__icon { width: var(--k-control-md); height: var(--k-control-md); }
+.k-teaser__icon k-icon { --k-icon: 18px; }
+.k-teaser__go { width: var(--k-control-sm); height: var(--k-control-sm); }
+.k-teaser__go k-icon { --k-icon: 16px; }
+.k-teaser__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.k-teaser__title { font: var(--k-weight-bold) var(--k-text-body)/var(--k-leading-body) var(--k-font-display); letter-spacing: var(--k-tracking-title); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-teaser__desc { font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-teaser-ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* La croix : un petit cercle clair à filet blanc, à cheval sur le coin haut droit. Elle n'apparaît qu'au survol de la
+   carte ou au focus clavier ; sur un écran tactile, elle est toujours là. */
+.k-teaser__close {
+  position: absolute; inset-block-start: calc(-1 * var(--k-space-2)); inset-inline-end: calc(-1 * var(--k-space-1-5));
+  display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--k-radius-pill);
+  background: var(--k-teaser-close); box-shadow: 0 0 0 2px var(--k-teaser-ring), var(--k-shadow-teaser); color: var(--k-ink); cursor: pointer;
+  opacity: 0; transition: opacity var(--k-duration-fast) ease;
+}
+.k-teaser__close k-icon { --k-icon: 14px; }
+.k-teaser:hover .k-teaser__close, .k-teaser:focus-within .k-teaser__close { opacity: 1; }
+@media (hover: none) { .k-teaser__close { opacity: 1; } }
+.k-teaser__close:focus-visible { outline: 2px solid var(--k-accent); outline-offset: 2px; }
+
+/* Bannière d'appel : LA chose à faire sur cette page, quand il y en a une. Noire, une par écran au plus. */
+.k-hero { display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-8); padding: var(--k-space-6) var(--k-space-8); border: 0; border-radius: var(--k-radius-xl); background: var(--k-inverse); color: var(--k-on-inverse); text-align: start; }
+.k-hero__title { font: var(--k-weight-bold) var(--k-text-title-1)/var(--k-leading-title-1) var(--k-font-display); letter-spacing: var(--k-tracking-display); text-wrap: balance; }
+.k-hero__desc { margin-top: var(--k-space-1-5); max-width: 60ch; color: var(--k-on-inverse-2); }
+.k-hero__actions { flex: none; display: flex; align-items: center; gap: var(--k-space-2); }
+
+/* Marche à suivre : des étapes numérotées */
+.k-olist { counter-reset: k-etape; display: flex; flex-direction: column; gap: var(--k-space-3); margin: 0; padding: 0; list-style: none; }
+.k-olist > li { counter-increment: k-etape; display: flex; align-items: flex-start; gap: var(--k-space-3); overflow-wrap: anywhere; }
+.k-olist > li::before { content: counter(k-etape); flex: none; display: grid; place-items: center; width: 22px; height: 22px; margin-top: -1px; border-radius: 50%; background: var(--k-fill); color: var(--k-ink); font: var(--k-weight-bold) var(--k-text-caption)/1 var(--k-font-sans); font-variant-numeric: tabular-nums; }
+
+/* Logo d'un service tiers, dans une vignette */
+.k-logo { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--k-surface); box-shadow: var(--k-shadow-line); }
+.k-logo img { display: block; width: 22px; height: 22px; object-fit: contain; }
+
+/* Carte de connexion : un service, une phrase, un bouton */
+.k-connect { display: flex; flex-direction: column; gap: var(--k-space-3); padding: var(--k-space-5); border-radius: var(--k-radius-xl); background: var(--k-surface); box-shadow: var(--k-shadow-line); }
+.k-connect__head { display: flex; align-items: center; gap: var(--k-space-3); }
+.k-connect__name { font: var(--k-weight-bold) var(--k-text-title-3)/var(--k-leading-title-3) var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+.k-connect__by { font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+.k-connect__desc { flex: 1; font-size: var(--k-text-small); line-height: 19px; color: var(--k-ink-2); }
+
+/* Texte long à copier : prompt, commande, extrait de configuration */
+.k-code { margin: 0; max-height: 320px; padding: var(--k-space-4); border-radius: var(--k-radius-lg); background: var(--k-fill-subtle); box-shadow: inset 0 0 0 1px var(--k-line); color: var(--k-ink); font: var(--k-text-caption)/1.6 var(--k-font-mono); white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; scrollbar-width: thin; }
+
+/* Bouton flottant : l'aide, en bas à droite de l'îlot */
+.k-fab { position: absolute; z-index: var(--k-z-sticky); right: var(--k-space-5); bottom: var(--k-space-5); display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; background: var(--k-inverse); color: var(--k-on-inverse); box-shadow: var(--k-shadow-pop); cursor: pointer; transition: background-color var(--k-duration-fast) ease, transform var(--k-duration-fast) var(--k-ease-out); }
+.k-fab k-icon { --k-icon: 22px; }
+@media (hover: hover) { .k-fab:hover { background: var(--k-inverse-hover); transform: scale(1.05); } }
+.k-fab:active { transform: scale(var(--k-press-scale)); }
+.k-main:has(> .k-fab) { position: relative; }
+
+/* AIDE DE MAQUETTE, à ne pas porter dans l'app : un segmenté d'icônes dans le coin de l'îlot, presque
+   invisible au repos, pour changer l'état montré par une maquette. */
+.k-demo-switch { position: absolute; z-index: var(--k-z-sticky); top: var(--k-space-1); right: var(--k-space-2); transform: scale(0.8); transform-origin: top right; opacity: 0.28; transition: opacity var(--k-duration-fast) ease; }
+.k-demo-switch:hover, .k-demo-switch:focus-within { opacity: 1; }
+.k-demo-switch .k-segmented__item { padding: 0 var(--k-space-2); }
+.k-main:has(> .k-demo-switch) { position: relative; }
+
+/* Secousse : « ce n'est pas encore possible, regardez ici ». Une fois, sur l'élément qui explique pourquoi. */
+.k-shake { animation: k-shake 360ms var(--k-ease-out); }
+@keyframes k-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+@media (prefers-reduced-motion: reduce) { .k-shake { animation: none; outline: 2px solid var(--k-warning); outline-offset: 2px; } }
+
+/* Tuile de modèle : un aperçu, un titre, une ligne */
+.k-tile {
+  display: flex; flex-direction: column; padding: 0; border: 0; border-radius: var(--k-radius-xl); background: var(--k-surface); box-shadow: var(--k-shadow-line);
+  color: inherit; font: inherit; text-align: start; text-decoration: none; overflow: hidden; cursor: pointer;
+  transition: transform var(--k-duration-base) var(--k-ease-out), box-shadow var(--k-duration-base) ease;
+}
+@media (hover: hover) { .k-tile:hover { transform: translateY(-2px); box-shadow: var(--k-shadow-pop); } }
+.k-tile:active { transform: scale(0.99); }
+.k-tile__preview { display: grid; place-items: center; aspect-ratio: 16 / 9; padding: var(--k-space-4); box-shadow: inset 0 -1px 0 var(--k-line); }
+.k-tile__body { display: flex; flex-direction: column; gap: var(--k-space-1); padding: var(--k-space-4) var(--k-space-5) var(--k-space-5); }
+.k-tile__title { display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-2); font: var(--k-weight-bold) var(--k-text-title-3)/var(--k-leading-title-3) var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+.k-tile__desc { font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+.k-tile__meta { margin-top: var(--k-space-2); font-size: var(--k-text-small); color: var(--k-ink-3); }
+
+/* Forfaits : la carte d'un forfait, sa liste de fonctions, la pile de logos (page forfaits.html) */
+/* ---- Carte de forfait -------------------------------------------------------
+   Un nom, une phrase, un prix, ce qui est compris, puis l'action en pied. Posées dans une .k-grid, les cartes
+   ont la même hauteur : la liste prend la place qui reste, le pied est toujours en bas.
+   Le forfait mis en avant (.k-plan--featured) prend le dessin d'un choix coché (.k-choice) : fond bleu très
+   clair et filet bleu. Pas de dégradé. Un seul par rangée. */
+.k-plan { display: flex; flex-direction: column; gap: var(--k-space-5); min-width: 0; padding: var(--k-space-6); border-radius: var(--k-radius-xl); background: var(--k-surface); box-shadow: var(--k-shadow-line); }
+.k-plan--featured { background: var(--k-accent-soft); box-shadow: inset 0 0 0 1.5px var(--k-accent); }
+/* La carte reçoit le focus quand son bouton vient de se désactiver (forfait devenu le forfait actuel) */
+.k-plan:focus-visible { outline: 2px solid var(--k-accent); outline-offset: 2px; }
+.k-plan__head { display: flex; flex-direction: column; gap: var(--k-space-1-5); }
+/* Le nom à gauche, les étiquettes à droite (« Le plus choisi », « Forfait actuel ») */
+.k-plan__top { display: flex; align-items: center; flex-wrap: wrap; gap: var(--k-space-1-5); min-height: var(--k-leading-title-2); }
+.k-plan__name { margin-inline-end: auto; font: var(--k-weight-bold) var(--k-text-title-2)/var(--k-leading-title-2) var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+/* Deux lignes réservées : les prix restent alignés d'une carte à l'autre */
+.k-plan__desc { min-height: calc(2 * var(--k-leading-body)); color: var(--k-ink-2); }
+.k-plan__price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 var(--k-space-2); }
+.k-plan__amount { font: var(--k-weight-bold) var(--k-text-metric)/var(--k-leading-metric) var(--k-font-display); letter-spacing: var(--k-tracking-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.k-plan__period { font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+/* Ce qui est compris : prend la hauteur qui reste */
+.k-plan__body { flex: 1; display: flex; flex-direction: column; gap: var(--k-space-3); padding-top: var(--k-space-5); box-shadow: inset 0 1px 0 var(--k-line); }
+.k-plan__label { font-weight: var(--k-weight-strong); font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+/* Le bouton pleine largeur (.k-button--lg.k-button--block), puis la mention de paiement */
+.k-plan__foot { display: flex; flex-direction: column; gap: var(--k-space-3); }
+.k-plan__secure { display: flex; align-items: center; justify-content: center; gap: var(--k-space-1-5); font-size: var(--k-text-caption); line-height: var(--k-leading-caption); color: var(--k-ink-2); }
+
+/* ---- Liste de fonctions ------------------------------------------------------
+   Une ligne = une fonction, précédée d'une coche (plein 16). Bleue : c'est un état, « compris ».
+   .k-features__item--lost : ce qu'on perd en changeant de forfait, précédé d'une croix. */
+.k-features { display: flex; flex-direction: column; gap: var(--k-space-2); }
+.k-features__item { display: flex; align-items: flex-start; gap: var(--k-space-2); min-width: 0; }
+.k-features__item > k-icon { --k-icon: 16px; margin-top: var(--k-space-0-5); color: var(--k-accent); }
+.k-features__item--lost > k-icon { color: var(--k-danger); }
+.k-features__text { flex: 1; min-width: 0; }
+/* Une pile de logos en bout de ligne ne grandit pas la ligne */
+.k-features__item > .k-logo-stack { margin-block: calc(-1 * var(--k-space-0-5)); }
+
+/* ---- Pile de logos -------------------------------------------------------------
+   Les services tiers d'une ligne, en petit, qui se chevauchent : le pendant de .k-avatar-stack pour des logos.
+   Quatre au plus. Chaque logo est posé sur une pastille blanche, pour rester lisible sur un fond teinté. */
+.k-logo-stack { flex: none; display: inline-flex; align-items: center; }
+.k-logo-stack > img { display: block; width: 24px; height: 24px; padding: 5px; border-radius: 50%; background: var(--k-surface); box-shadow: 0 0 0 1px var(--k-line-strong); object-fit: contain; }
+.k-logo-stack > img + img { margin-inline-start: calc(-1 * var(--k-space-1-5)); }
+
+/* Échelle à trois niveaux (qualité d'un numéro : basse, moyenne, élevée). Trois traits ; celui du niveau actuel
+   prend sa couleur, son libellé passe en gras. Le niveau est aussi écrit en toutes lettres à côté. */
+.k-scale { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--k-space-1-5); margin: 0; padding: 0; list-style: none; }
+.k-scale__step { display: flex; flex-direction: column; gap: var(--k-space-1-5); font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-3); }
+.k-scale__step::before { content: ""; height: 6px; border-radius: var(--k-radius-pill); background: var(--k-fill-hover); }
+.k-scale__step[aria-current="true"] { color: var(--k-ink); font-weight: var(--k-weight-strong); }
+.k-scale__step[aria-current="true"][data-tone="success"]::before { background: var(--k-success); }
+.k-scale__step[aria-current="true"][data-tone="warning"]::before { background: var(--k-warning); }
+.k-scale__step[aria-current="true"][data-tone="danger"]::before { background: var(--k-danger); }
+
+/* ---- 11 Tuile de chiffre -------------------------------------------------------- */
+.k-stat { position: relative; display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: var(--k-space-5); border-radius: var(--k-radius-xl); background: var(--k-surface); box-shadow: var(--k-shadow-line); overflow: hidden; }
+.k-stat__label { display: flex; align-items: center; gap: var(--k-space-1-5); font-weight: var(--k-weight-bold); }
+.k-stat__label k-icon { --k-icon: 16px; color: var(--k-ink-3); }
+.k-stat__value { font: var(--k-weight-bold) var(--k-text-metric)/var(--k-leading-metric) var(--k-font-display); letter-spacing: var(--k-tracking-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.k-stat__unit { margin-inline-start: 3px; font: var(--k-weight-medium) var(--k-text-title-3)/1 var(--k-font-sans); color: var(--k-ink-2); }
+.k-stat__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--k-space-2); font-size: var(--k-text-small); color: var(--k-ink-2); }
+.k-stat__chart { height: 56px; margin: var(--k-space-1) calc(-1 * var(--k-space-5)) calc(-1 * var(--k-space-5)); }
+.k-stat__chart svg { display: block; width: 100%; height: 100%; }
+
+/* Bandeau de chiffres : les quatre à six chiffres d'une page, sur une ligne, dans une seule carte */
+.k-kpis { display: grid; grid-template-columns: repeat(var(--_cols, 6), minmax(0, 1fr)); border-radius: var(--k-radius-xl); background: var(--k-surface); box-shadow: var(--k-shadow-line); }
+.k-kpis__item { display: flex; flex-direction: column; gap: var(--k-space-1-5); min-width: 0; padding: var(--k-space-4) var(--k-space-5); }
+.k-kpis__item + .k-kpis__item { box-shadow: inset 1px 0 0 var(--k-line); }
+.k-kpis { position: relative; overflow: hidden; }
+/* Sélecteur de période : le bouton qui ouvre le menu, puis les dates de la période en clair */
+.k-period { display: flex; align-items: center; gap: var(--k-space-3); min-width: 0; }
+.k-period__dates { font-size: var(--k-text-small); color: var(--k-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Une case cliquable choisit le chiffre que montre le graphique ; la case choisie porte une barre bleue */
+button.k-kpis__item { position: relative; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-align: start; cursor: pointer; transition: background-color var(--k-duration-fast) ease; }
+@media (hover: hover) { button.k-kpis__item:hover { background: var(--k-fill-subtle); } }
+button.k-kpis__item:focus-visible { outline: 2px solid var(--k-accent); outline-offset: -2px; }
+button.k-kpis__item[aria-pressed="true"]::after { content: ""; position: absolute; inset: auto var(--k-space-5) 0; height: 2px; border-radius: 2px 2px 0 0; background: var(--k-accent); }
+button.k-kpis__item[aria-pressed="true"] .k-kpis__label { color: var(--k-ink); font-weight: var(--k-weight-strong); }
+/* Le bouton qui ouvre le graphique, dans le coin de la carte */
+.k-kpis__toggle { position: absolute; top: var(--k-space-2); right: var(--k-space-2); }
+/* Le bouton mord sur le coin de la case en haut à droite (la 6e, ou la 3e sur deux rangées) : son libellé s'arrête avant lui */
+.k-kpis:has(> .k-kpis__toggle) > .k-kpis__item:nth-child(6) .k-kpis__label { max-width: calc(100% - var(--k-space-5)); }
+/* Le graphique du chiffre choisi, sous la rangée, dans la même carte */
+.k-kpis__panel { grid-column: 1 / -1; padding: var(--k-space-4) var(--k-space-5) var(--k-space-5); box-shadow: inset 0 1px 0 var(--k-line); transition: opacity var(--k-duration-base) ease; }
+@starting-style { .k-kpis__panel { opacity: 0; } }
+.k-kpis__panel[data-instant] { transition: none; }
+.k-kpis__panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--k-space-3); margin-bottom: var(--k-space-3); }
+.k-kpis__panel-title { font: var(--k-weight-bold) var(--k-text-body)/var(--k-leading-body) var(--k-font-display); letter-spacing: var(--k-tracking-title); }
+.k-kpis__panel-meta { font-size: var(--k-text-small); color: var(--k-ink-2); }
+.k-kpis__panel .k-empty { padding-block: var(--k-space-8); }
+.k-kpis__label { font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* le chiffre, puis sa variation dessous : à six par ligne, il n'y a pas la place côte à côte */
+.k-kpis__value { display: flex; flex-direction: column; align-items: flex-start; gap: var(--k-space-1-5); font: var(--k-weight-bold) var(--k-text-figure)/var(--k-leading-figure) var(--k-font-display); letter-spacing: var(--k-tracking-title); font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 1399px) { .k-kpis { --_cols: 3; } .k-kpis:has(> .k-kpis__toggle) > .k-kpis__item:nth-child(6) .k-kpis__label { max-width: none; } .k-kpis:has(> .k-kpis__toggle) > .k-kpis__item:nth-child(3) .k-kpis__label { max-width: calc(100% - var(--k-space-5)); } .k-kpis__item:nth-child(3n + 1) { box-shadow: none; } .k-kpis__item:nth-child(n + 4) { box-shadow: inset 1px 0 0 var(--k-line), inset 0 1px 0 var(--k-line); } .k-kpis__item:nth-child(4) { box-shadow: inset 0 1px 0 var(--k-line); } }
+.k-kpis--4, .k-kpis.k-kpis--4 { --_cols: 4; }
+@media (max-width: 1399px) { .k-kpis.k-kpis--4 { --_cols: 4; } .k-kpis--4 .k-kpis__item:nth-child(n) { box-shadow: inset 1px 0 0 var(--k-line); } .k-kpis--4 .k-kpis__item:first-child { box-shadow: none; } }
+
+.k-delta {
+  display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 7px; border-radius: 7px; background: var(--k-fill); color: var(--k-ink-2);
+  font: var(--k-weight-strong) var(--k-text-caption)/1 var(--k-font-sans); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.k-delta k-icon { --k-icon: 12px; }
+.k-delta--up { background: var(--k-success-soft); color: var(--k-success-text); }
+.k-delta--down { background: var(--k-danger-soft); color: var(--k-danger-text); }
+
+/* ---- 12 Liste, tableau, détails, état vide ---------------------------------------- */
+.k-list { display: flex; flex-direction: column; }
+.k-list__row { display: flex; align-items: center; gap: 14px; margin-inline: calc(-1 * var(--k-space-3)); padding: var(--k-space-3); border-radius: var(--k-radius-lg); color: inherit; text-decoration: none; transition: background-color var(--k-duration-fast) ease; }
+@media (hover: hover) { .k-list__row:hover { background: var(--k-fill-subtle); } }
+.k-list__icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--k-surface); box-shadow: var(--k-shadow-line); color: var(--k-ink-2); }
+.k-list__main { flex: 1; min-width: 0; }
+.k-list__title { font-weight: var(--k-weight-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-list__meta { font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-list__end { flex: none; display: flex; align-items: center; gap: var(--k-space-2); }
+.k-list__footer { margin-top: var(--k-space-2); padding-top: var(--k-space-3); box-shadow: inset 0 1px 0 var(--k-line); font-size: var(--k-text-small); color: var(--k-ink-2); }
+
+.k-table-wrap { border-radius: var(--k-radius-xl); background: var(--k-surface); box-shadow: var(--k-shadow-line); overflow: hidden; }
+.k-table-wrap__scroll { overflow-x: auto; }
+.k-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.k-table th {
+  height: 40px; padding: 0 var(--k-space-4); background: var(--k-fill-subtle); box-shadow: inset 0 -1px 0 var(--k-line); color: var(--k-ink-2);
+  font: var(--k-weight-medium) var(--k-text-caption)/1 var(--k-font-sans); text-align: start; white-space: nowrap;
+}
+.k-table td.k-table__empty { height: auto; padding-block: var(--k-space-8); text-align: center; color: var(--k-ink-2); }
+.k-table td { height: 56px; padding: var(--k-space-2) var(--k-space-4); box-shadow: inset 0 -1px 0 var(--k-line); vertical-align: middle; transition: background-color var(--k-duration-fast) ease; }
+.k-table tbody tr:last-child td { box-shadow: none; }
+@media (hover: hover) { .k-table tbody tr:hover td { background: var(--k-fill-subtle); } }
+.k-table tbody tr[aria-selected="true"] td { background: var(--k-accent-soft); }
+.k-table--compact td { height: 44px; }
+.k-table__num { text-align: end !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.k-table__check { width: 44px; padding-inline-end: 0 !important; }
+.k-table__actions { width: 1%; white-space: nowrap; text-align: end; }
+.k-table__primary { font-weight: var(--k-weight-strong); }
+/* Une cellule qui aligne un avatar ou une vignette et son texte */
+.k-table__who { display: flex; align-items: center; gap: var(--k-space-3); min-width: 0; }
+.k-table__who > div { min-width: 0; }
+.k-table__who k-icon { --k-icon: 16px; flex: none; }
+.k-table__who--end { justify-content: flex-end; }
+/* Un texte long dans une cellule : une ligne, coupée */
+.k-table__clip { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+a.k-table__primary { color: inherit; text-decoration: none; }
+@media (hover: hover) { a.k-table__primary:hover { text-decoration: underline; text-underline-offset: 3px; } }
+.k-table .k-logo { width: 36px; height: 36px; border-radius: 10px; }
+.k-table .k-logo img { width: 18px; height: 18px; }
+.k-table .k-logo k-icon { --k-icon: 18px; color: var(--k-ink-2); }
+/* Une ligne qui ouvre un détail : cliquable en entier ; la ligne ouverte reste grisée */
+.k-table tbody tr[data-k-row] { cursor: pointer; }
+.k-table tbody tr[data-k-row]:focus-visible { outline: 2px solid var(--k-accent); outline-offset: -2px; }
+.k-table tbody tr[aria-current="true"] td { background: var(--k-fill-subtle); }
+.k-table__secondary { font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+.k-table__sort { display: inline-flex; align-items: center; gap: var(--k-space-1); padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.k-table__sort k-icon { --k-icon: 12px; }
+.k-table__sort[aria-sort] { color: var(--k-ink); }
+.k-table-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-4); min-height: 48px; padding: var(--k-space-2) var(--k-space-4); box-shadow: inset 0 1px 0 var(--k-line); font-size: var(--k-text-small); color: var(--k-ink-2); }
+
+/* Barre d'actions groupées : remplace la ligne de filtres dès qu'une ligne est cochée */
+.k-bulk { display: flex; align-items: center; gap: var(--k-space-2); min-height: 44px; padding: var(--k-space-1) var(--k-space-1-5) var(--k-space-1) var(--k-space-4); border-radius: var(--k-radius-pill); background: var(--k-inverse); color: var(--k-on-inverse); font-weight: var(--k-weight-medium); }
+.k-bulk__count { margin-inline-end: auto; font-variant-numeric: tabular-nums; }
+.k-bulk .k-button { --_bg: var(--k-on-inverse-fill); --_bg-hover: var(--k-on-inverse-fill-hover); --_bg-press: var(--k-on-inverse-fill-press); --_fg: var(--k-on-inverse); }
+
+.k-details { display: grid; grid-template-columns: minmax(88px, 36%) minmax(0, 1fr); column-gap: var(--k-space-3); row-gap: 2px; }
+.k-details dt { display: flex; align-items: center; min-height: var(--k-control-md); color: var(--k-ink-2); }
+.k-details dd { display: flex; align-items: center; gap: var(--k-space-2); min-width: 0; min-height: var(--k-control-md); font-weight: var(--k-weight-medium); }
+.k-details dd > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-details dd k-icon { --k-icon: 16px; color: var(--k-ink-2); }
+/* Version dense, pour un panneau de détails étroit : 28 px par ligne, texte de 13 px */
+.k-details--compact { grid-template-columns: minmax(84px, 44%) minmax(0, 1fr); column-gap: var(--k-space-2); row-gap: 0; font-size: var(--k-text-small); line-height: var(--k-leading-small); }
+.k-details--compact dt, .k-details--compact dd { min-height: var(--k-control-sm); }
+/* Des valeurs longues : elles passent à la ligne au lieu d'être coupées */
+.k-details--wrap dt, .k-details--wrap dd { align-items: flex-start; padding-block: 5px; }
+.k-details--wrap dd > span { white-space: normal; overflow-wrap: anywhere; }
+
+.k-empty { display: flex; flex-direction: column; align-items: center; gap: var(--k-space-1-5); padding: var(--k-space-12) var(--k-space-6); text-align: center; }
+.k-empty__icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 10px; border-radius: var(--k-radius-lg); background: var(--k-surface); box-shadow: var(--k-shadow-line); color: var(--k-ink-2); }
+.k-empty__title { font: var(--k-weight-bold) var(--k-text-title-3)/var(--k-leading-title-3) var(--k-font-display); }
+.k-empty__desc { max-width: 44ch; color: var(--k-ink-2); text-wrap: balance; }
+.k-empty__actions { display: flex; gap: var(--k-space-2); margin-top: 14px; }
+
+/* ---- 13 Menu, popover ---------------------------------------------------------------- */
+.k-menu, .k-popover {
+  position: fixed; inset: auto; margin: 0; border: 0; border-radius: var(--k-radius-lg); background: var(--k-surface); color: var(--k-ink);
+  box-shadow: var(--k-shadow-pop); font: var(--k-weight-regular) var(--k-text-body)/var(--k-leading-body) var(--k-font-sans); letter-spacing: var(--k-tracking-body);
+  transform-origin: var(--_origin, top left); overscroll-behavior: contain;
+}
+.k-menu { min-width: 220px; max-width: 320px; max-height: min(420px, calc(100dvh - 24px)); padding: var(--k-space-1-5); overflow-y: auto; scrollbar-width: thin; }
+.k-popover { width: 320px; max-width: calc(100vw - 24px); padding: var(--k-space-4); }
+/* Pied d'un popover : l'action qui annule à gauche, celle qui valide à droite. Jamais plus de deux boutons sur
+   cette ligne : à 320 px de large, un troisième déborde. Une action de plus prend sa propre ligne, en pleine largeur. */
+.k-popover__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-2); }
+:is(.k-menu, .k-popover)[popover] {
+  opacity: 0; transform: scale(0.98);
+  transition: opacity var(--k-duration-fast) ease, transform var(--k-duration-fast) ease, overlay var(--k-duration-fast) allow-discrete, display var(--k-duration-fast) allow-discrete;
+}
+:is(.k-menu, .k-popover)[popover]:popover-open { opacity: 1; transform: none; transition-duration: var(--k-duration-base); transition-timing-function: var(--k-ease-out); }
+@starting-style { :is(.k-menu, .k-popover)[popover]:popover-open { opacity: 0; transform: scale(0.96) translateY(-4px); } }
+:is(.k-menu, .k-popover)[data-instant] { transition: none !important; }
+:is(.k-menu, .k-popover):not([popover]) { position: relative; }
+
+.k-menu__item {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 34px; padding: var(--k-space-1-5) 10px; border: 0; border-radius: var(--k-radius-sm);
+  background: none; color: var(--k-ink); font: var(--k-weight-medium) var(--k-text-body)/var(--k-leading-body) var(--k-font-sans); letter-spacing: var(--k-tracking-body);
+  text-align: start; text-decoration: none; cursor: pointer; outline-offset: -2px;
+}
+.k-menu__item k-icon { --k-icon: 18px; color: var(--k-ink-2); }
+@media (hover: hover) { .k-menu__item:hover { background: var(--k-fill); } }
+.k-menu__item:focus-visible { background: var(--k-fill); outline: 0; }
+.k-menu__item[aria-disabled="true"] { color: var(--k-ink-disabled); pointer-events: none; }
+.k-menu__item[aria-disabled="true"] k-icon { color: inherit; }
+.k-menu__item--danger, .k-menu__item--danger k-icon { color: var(--k-danger-text); }
+@media (hover: hover) { .k-menu__item--danger:hover { background: var(--k-danger-soft); } }
+.k-menu__item--danger:focus-visible { background: var(--k-danger-soft); }
+.k-menu__text { flex: 1; min-width: 0; }
+.k-menu__desc { display: block; font-weight: var(--k-weight-regular); font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+.k-menu__end { display: inline-flex; align-items: center; gap: 3px; margin-inline-start: auto; padding-inline-start: var(--k-space-3); color: var(--k-ink-2); }
+.k-menu__end k-icon { --k-icon: 16px; color: var(--k-accent); }
+.k-menu__item:not([aria-checked="true"]) .k-menu__check { visibility: hidden; }
+.k-menu__sep { height: 1px; margin: var(--k-space-1-5) calc(-1 * var(--k-space-1-5)); background: var(--k-line); }
+.k-menu__label { padding: var(--k-space-2) 10px var(--k-space-1); font-weight: var(--k-weight-strong); font-size: var(--k-text-caption); color: var(--k-ink-3); }
+.k-menu__search { margin: 0 0 var(--k-space-1-5); }
+/* Un menu plus large, quand il porte un petit formulaire sous sa liste (période : deux dates et un bouton) */
+.k-menu--wide { width: 296px; }
+/* Palette : un menu à deux colonnes, pour un choix long rangé par familles (les actions du builder) */
+.k-menu--palette { width: 560px; max-width: calc(100vw - 24px); max-height: min(560px, calc(100dvh - 24px)); }
+.k-menu--palette:popover-open { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--k-space-1); align-content: start; }
+.k-menu--palette > .k-menu__label, .k-menu--palette > .k-menu__sep { grid-column: 1 / -1; }
+.k-menu__form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--k-space-2); padding: var(--k-space-1) 10px var(--k-space-2); }
+.k-menu__form > .k-button { grid-column: 1 / -1; }
+
+/* ---- 14 Infobulle ------------------------------------------------------------------------ */
+.k-tooltip {
+  position: fixed; inset: auto; margin: 0; display: flex; align-items: center; gap: var(--k-space-1-5); max-width: 260px; padding: var(--k-space-1-5) var(--k-space-2);
+  border: 0; border-radius: var(--k-radius-sm); background: var(--k-inverse); color: var(--k-on-inverse); box-shadow: var(--k-shadow-pop); pointer-events: none;
+  font: var(--k-weight-medium) var(--k-text-caption)/var(--k-leading-caption) var(--k-font-sans);
+  transition: opacity var(--k-duration-tooltip) ease-out, transform var(--k-duration-tooltip) var(--k-ease-out);
+}
+@starting-style { .k-tooltip:popover-open { opacity: 0; transform: translateY(2px) scale(0.97); } }
+.k-tooltip[data-instant] { transition: none; }
+.k-tooltip .k-kbd { background: var(--k-on-inverse-fill); color: var(--k-on-inverse); }
+
+/* ---- 15 Modale, panneau latéral ------------------------------------------------------------ */
+.k-modal {
+  --_w: 560px;
+  width: min(var(--_w), calc(100vw - 32px)); max-height: min(760px, calc(100dvh - 48px)); padding: 0; border: 0; border-radius: var(--k-radius-2xl);
+  background: var(--k-surface); color: var(--k-ink); box-shadow: var(--k-shadow-modal); overflow: hidden;
+  font: var(--k-weight-regular) var(--k-text-body)/var(--k-leading-body) var(--k-font-sans); letter-spacing: var(--k-tracking-body);
+  /* Une modale se comporte comme une feuille mobile : elle MONTE du bas en s'ouvrant, et REDESCEND par où elle est
+     venue en se fermant (sortie plus courte que l'entrée). Le voile suit en fondu. */
+  opacity: 0; transform: translateY(var(--k-sheet-travel));
+  transition: opacity var(--k-duration-base) ease, transform var(--k-duration-base) var(--k-ease-in-out), overlay var(--k-duration-base) allow-discrete, display var(--k-duration-base) allow-discrete;
+}
+.k-modal[open] { display: flex; flex-direction: column; opacity: 1; transform: none; transition-duration: var(--k-duration-base), var(--k-duration-page), var(--k-duration-page), var(--k-duration-page); transition-timing-function: ease, var(--k-ease-drawer), ease, ease; }
+@starting-style { .k-modal[open] { opacity: 0; transform: translateY(var(--k-sheet-travel)); } }
+.k-modal::backdrop { background: var(--k-scrim); opacity: 0; transition: opacity var(--k-duration-base) ease, overlay var(--k-duration-base) allow-discrete, display var(--k-duration-base) allow-discrete; }
+.k-modal[open]::backdrop { opacity: 1; transition-duration: var(--k-duration-slow); }
+@starting-style { .k-modal[open]::backdrop { opacity: 0; } }
+.k-modal[data-instant], .k-modal[data-instant]::backdrop { transition: none; }
+.k-modal--sm { --_w: 440px; }
+.k-modal--lg { --_w: 880px; }
+.k-modal--xl { --_w: 1160px; max-height: calc(100dvh - 48px); }
+
+/* Un formulaire qui enveloppe l'en-tête, le corps et le pied garde la colonne : sans cela, un contenu plus haut que
+   la modale pousse le pied hors du cadre au lieu de faire défiler le corps. */
+.k-modal > form { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.k-modal__header { flex: none; display: flex; align-items: flex-start; justify-content: space-between; gap: var(--k-space-4); padding: var(--k-space-6) var(--k-space-6) 0; }
+.k-modal__title { font: var(--k-weight-bold) var(--k-text-title-1)/var(--k-leading-title-1) var(--k-font-display); letter-spacing: var(--k-tracking-display); }
+.k-modal__desc { margin-top: var(--k-space-1); color: var(--k-ink-2); }
+.k-modal__close { margin: -6px -8px 0 0; }
+.k-modal__body { flex: 1; min-height: 0; padding: var(--k-space-5) var(--k-space-6) var(--k-space-6); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.k-modal__footer { flex: none; display: flex; align-items: center; justify-content: flex-end; gap: var(--k-space-2); padding: var(--k-space-4) var(--k-space-6); box-shadow: inset 0 1px 0 var(--k-line); }
+.k-modal__note { margin-inline-end: auto; font-size: var(--k-text-small); color: var(--k-ink-2); }
+
+/* Panneau latéral : même structure qu'une modale, il entre par la droite */
+.k-modal--drawer {
+  --_w: 440px; inset: var(--k-shell-gap) var(--k-shell-gap) var(--k-shell-gap) auto; margin: 0; height: calc(100dvh - 2 * var(--k-shell-gap)); max-height: none;
+  opacity: 1; transform: translateX(calc(100% + 16px));
+  transition: transform var(--k-duration-base) ease, overlay var(--k-duration-base) allow-discrete, display var(--k-duration-base) allow-discrete;
+}
+.k-modal--drawer[open] { transform: none; transition-duration: var(--k-duration-slow); transition-timing-function: var(--k-ease-drawer); }
+@starting-style { .k-modal--drawer[open] { opacity: 1; transform: translateX(calc(100% + 16px)); } }
+
+/* ---- 16 Toast, bandeau, progression, squelette ----------------------------------------------- */
+.k-toasts { position: fixed; inset: auto 0 var(--k-space-6) 0; width: fit-content; max-width: calc(100vw - 32px); margin: 0 auto; padding: 0; border: 0; background: none; overflow: visible; display: flex; flex-direction: column; align-items: center; gap: var(--k-space-2); pointer-events: none; }
+.k-toast {
+  display: flex; align-items: center; gap: var(--k-space-3); min-height: 44px; padding: var(--k-space-2) var(--k-space-2) var(--k-space-2) var(--k-space-4);
+  border-radius: var(--k-radius-pill); background: var(--k-inverse); color: var(--k-on-inverse); box-shadow: var(--k-shadow-pop); pointer-events: auto;
+  font: var(--k-weight-medium) var(--k-text-body)/var(--k-leading-body) var(--k-font-sans);
+  transition: opacity var(--k-duration-slow) ease, transform var(--k-duration-slow) var(--k-ease-out);
+}
+@starting-style { .k-toast { opacity: 0; transform: translateY(16px) scale(0.97); } }
+.k-toast[data-leaving] { opacity: 0; transform: translateY(8px) scale(0.98); transition-duration: var(--k-duration-fast); }
+.k-toast:not(:has(.k-toast__action)) { padding-inline-end: var(--k-space-4); }
+.k-toast > k-icon { --k-icon: 18px; margin-inline-start: -4px; }
+.k-toast--success > k-icon { color: var(--k-toast-success); }
+.k-toast__action { height: 28px; padding: 0 var(--k-space-3); border: 0; border-radius: var(--k-radius-pill); background: var(--k-on-inverse-fill); color: var(--k-on-inverse); font: var(--k-weight-strong) var(--k-text-small)/1 var(--k-font-sans); cursor: pointer; }
+@media (hover: hover) { .k-toast__action:hover { background: var(--k-on-inverse-fill-hover); } }
+
+.k-banner {
+  --_bg: var(--k-fill-subtle); --_line: var(--k-line); --_icon: var(--k-ink-2);
+  display: flex; align-items: flex-start; gap: var(--k-space-3); padding: var(--k-space-3) var(--k-space-4); border-radius: var(--k-radius-lg);
+  background: var(--_bg); box-shadow: inset 0 0 0 1px var(--_line); color: var(--k-ink);
+}
+.k-banner > k-icon { margin-top: 0; color: var(--_icon); }
+.k-banner__text { flex: 1; min-width: 0; }
+.k-banner__title { font-weight: var(--k-weight-strong); }
+.k-banner > .k-avatar { margin-block: -2px; }
+.k-banner__actions { flex: none; display: flex; align-items: center; gap: var(--k-space-2); margin-block: -4px; }
+.k-banner--info    { --_bg: var(--k-accent-soft);  --_line: var(--k-accent-line);  --_icon: var(--k-accent); }
+/* Les quatre tons ont le même dessin : un fond clair et un filet de la même teinte, un peu plus soutenu */
+.k-banner--success { --_bg: var(--k-success-soft); --_line: var(--k-success-line); --_icon: var(--k-success); }
+.k-banner--warning { --_bg: var(--k-warning-soft); --_line: var(--k-warning-line); --_icon: var(--k-warning-text); }
+.k-banner--danger  { --_bg: var(--k-danger-soft);  --_line: var(--k-danger-line);  --_icon: var(--k-danger); }
+
+.k-progress { --k-value: 0; height: 6px; border-radius: var(--k-radius-pill); background: var(--k-fill); overflow: hidden; }
+.k-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--_c, var(--k-accent)); transform: translateX(calc((var(--k-value) - 1) * 100%)); transition: transform var(--k-duration-slow) var(--k-ease-out); }
+.k-progress--success { --_c: var(--k-success); }
+.k-progress--warning { --_c: var(--k-warning); }
+.k-progress--danger  { --_c: var(--k-danger); }
+.k-progress--ink     { --_c: var(--k-inverse); }
+/* Dans une cellule de tableau, à côté d'un chiffre : la part du total */
+.k-progress--inline { flex: none; width: 64px; height: 4px; }
+
+.k-skeleton { position: relative; display: block; border-radius: var(--k-radius-sm); background: var(--k-fill); overflow: hidden; }
+.k-skeleton::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--k-skeleton-shine), transparent); transform: translateX(-100%); animation: k-shimmer 1.4s linear infinite; }
+@keyframes k-shimmer { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .k-skeleton::after { animation: none; } }
+
+/* ---- 17 Messagerie ------------------------------------------------------------------------------ */
+/* Ligne de conversation : DEUX lignes. En haut le nom, les marques d'état et la personne assignée ;
+   en bas l'aperçu et l'heure. Une marque est une icône de 14 px avec son infobulle, pas un badge. */
+.k-conv { position: relative; display: flex; align-items: center; gap: 10px; padding: 10px var(--k-space-3); border-radius: var(--k-radius-lg); color: inherit; text-decoration: none; cursor: pointer; transition: background-color var(--k-duration-fast) ease; }
+@media (hover: hover) { .k-conv:hover { background: var(--k-hover); } }
+.k-conv[aria-current="true"] { background: var(--k-surface); box-shadow: var(--k-shadow-raised); }
+.k-conv__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.k-conv__top, .k-conv__line { display: flex; align-items: center; gap: var(--k-space-2); min-width: 0; }
+.k-conv__name { min-width: 0; font-weight: var(--k-weight-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-conv__marks { flex: none; display: inline-flex; align-items: center; gap: var(--k-space-1-5); margin-inline-start: auto; color: var(--k-ink-2); }
+.k-conv__marks k-icon { --k-icon: 14px; }
+.k-conv__marks [data-tone="danger"]  { color: var(--k-danger); }
+.k-conv__marks [data-tone="warning"] { color: var(--k-warning-text); }
+.k-conv__marks [data-tone="violet"]  { color: var(--k-violet); }
+.k-conv__marks [data-tone="accent"]  { color: var(--k-accent); }
+.k-conv__marks .k-avatar { --_s: 18px; }
+.k-conv__preview { flex: 1; min-width: 0; font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-conv__time { flex: none; margin-inline-start: auto; font-size: var(--k-text-caption); color: var(--k-ink-2); font-variant-numeric: tabular-nums; }
+.k-conv__time[data-late] { color: var(--k-orange-text); font-weight: var(--k-weight-strong); }
+.k-conv__avatar { position: relative; flex: none; }
+.k-conv__preview k-icon { --k-icon: 12px; margin-inline-end: 3px; color: var(--k-violet-text); vertical-align: -1px; }
+.k-conv[data-unread] .k-conv__name { font-weight: 650; }
+.k-conv[data-unread] .k-conv__preview { color: var(--k-ink); font-weight: var(--k-weight-medium); }
+.k-conv[data-unread] .k-conv__time::after { content: ""; display: inline-block; width: 8px; height: 8px; margin-inline-start: var(--k-space-1-5); border-radius: 50%; background: var(--k-accent); }
+
+.k-thread { display: flex; flex-direction: column; justify-content: flex-end; gap: var(--k-space-1-5); min-height: 100%; padding: var(--k-space-4) var(--k-space-5); }
+.k-thread__day { align-self: center; margin-block: var(--k-space-2); }
+.k-thread__event { align-self: center; display: inline-flex; align-items: center; gap: var(--k-space-1-5); margin-block: var(--k-space-1); font-size: var(--k-text-caption); color: var(--k-ink-2); }
+.k-thread__event k-icon { --k-icon: 14px; }
+.k-thread > .k-summary { margin-bottom: var(--k-space-2); }
+.k-bubble { max-width: min(560px, 76%); padding: 10px 14px; border-radius: var(--k-radius-xl); overflow-wrap: anywhere; }
+.k-bubble--in   { align-self: flex-start; border-end-start-radius: var(--k-radius-xs); background: var(--k-bubble-in); }
+.k-bubble--out  { align-self: flex-end;   border-end-end-radius: var(--k-radius-xs);   background: var(--k-bubble-out); }
+.k-bubble--ai   { align-self: flex-end;   border-end-end-radius: var(--k-radius-xs);   background: var(--k-bubble-ai); }
+.k-bubble--note { align-self: flex-end;   border-end-end-radius: var(--k-radius-xs);   background: var(--k-note); box-shadow: inset 0 0 0 1px var(--k-note-line); }
+.k-bubble__author { display: flex; align-items: center; gap: var(--k-space-1); margin-bottom: 2px; font-weight: var(--k-weight-strong); font-size: var(--k-text-caption); color: var(--k-ink-2); }
+.k-bubble--ai .k-bubble__author { color: var(--k-violet-text); }
+.k-bubble--note .k-bubble__author { color: var(--k-note-text); }
+.k-bubble__author k-icon { --k-icon: 12px; }
+.k-bubble__meta { display: flex; justify-content: flex-end; align-items: center; gap: var(--k-space-1); margin-top: var(--k-space-1); font-size: var(--k-text-micro); color: var(--k-ink-2); font-variant-numeric: tabular-nums; }
+.k-bubble__meta k-icon { --k-icon: 12px; }
+.k-mention { font-weight: var(--k-weight-strong); color: var(--k-accent-text); }
+/* Modèle WhatsApp envoyé : un titre, le texte, un pied, ses boutons */
+.k-bubble--template { width: min(320px, 76%); }
+.k-bubble__title { margin-bottom: var(--k-space-1); font-weight: var(--k-weight-strong); }
+.k-bubble__footer { margin-top: var(--k-space-1-5); font-size: var(--k-text-caption); color: var(--k-ink-2); }
+.k-bubble__buttons { display: flex; flex-direction: column; gap: var(--k-space-1); margin-top: var(--k-space-2); }
+.k-bubble__button { display: flex; align-items: center; justify-content: center; min-height: 30px; padding: 0 var(--k-space-3); border-radius: var(--k-radius-md); background: var(--k-surface); color: var(--k-accent-text); font-weight: var(--k-weight-strong); font-size: var(--k-text-small); }
+/* « Est en train d'écrire » : trois points, dans un bandeau ou un badge */
+.k-typing { display: inline-flex; align-items: center; gap: 3px; }
+.k-typing i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0.35; animation: k-typing 1.2s ease-in-out infinite; }
+.k-typing i:nth-child(2) { animation-delay: 0.15s; }
+.k-typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes k-typing { 0%, 60%, 100% { opacity: 0.35; } 30% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .k-typing i { animation: none; opacity: 0.6; } }
+
+.k-composer { display: flex; flex-direction: column; gap: var(--k-space-2); padding: 10px; border-radius: var(--k-radius-xl); background: var(--k-surface); box-shadow: inset 0 0 0 1px var(--k-line-strong); transition: box-shadow var(--k-duration-fast) ease; }
+.k-composer:focus-within { box-shadow: inset 0 0 0 1.5px var(--k-accent), 0 0 0 3px var(--k-accent-ring); }
+.k-composer--note { background: var(--k-note); box-shadow: inset 0 0 0 1px var(--k-note-line); }
+.k-composer--note:focus-within { box-shadow: inset 0 0 0 1.5px var(--k-warning); }
+.k-composer--note .k-segmented { background: var(--k-note-fill); }
+.k-composer__top { display: flex; align-items: center; gap: var(--k-space-2); }
+.k-composer__input { display: block; width: 100%; min-height: 56px; padding: var(--k-space-1) var(--k-space-1-5); border: 0; outline: 0; background: none; resize: none; }
+.k-composer__input::placeholder { color: var(--k-ink-3); opacity: 1; }
+.k-composer__bar { display: flex; align-items: center; gap: 2px; }
+.k-composer__bar > .k-split, .k-composer__bar > .k-button--primary { margin-inline-start: auto; }
+/* Suggestions (« / » réponses enregistrées, « @ » mentions) : une liste posée au-dessus de la zone de réponse */
+.k-composer-zone { position: relative; }
+.k-menu.k-composer__suggest { position: absolute; z-index: var(--k-z-sticky); inset: auto 0 calc(100% + var(--k-space-1-5)) 0; max-width: none; max-height: 280px; }
+.k-composer__suggest .k-menu__item[aria-selected="true"] { background: var(--k-fill); }
+
+/* Résumé de passation : ce que l'agent IA a compris avant de passer la main */
+.k-summary { padding: 14px var(--k-space-4); border-radius: var(--k-radius-lg); background: var(--k-violet-soft); }
+.k-summary__title { display: flex; align-items: center; gap: var(--k-space-1-5); margin-bottom: var(--k-space-2); font-weight: var(--k-weight-strong); font-size: var(--k-text-small); color: var(--k-violet-text); }
+.k-summary__title k-icon { --k-icon: 16px; }
+.k-summary dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--k-space-1) var(--k-space-3); font-size: var(--k-text-small); line-height: var(--k-leading-small); }
+.k-summary dt { color: var(--k-ink-2); }
+
+/* ---- 18 Aperçu WhatsApp ---------------------------------------------------------------------------- */
+/* Les tailles de texte de l'aperçu sont celles de WhatsApp, pas les nôtres : elles restent en dur. */
+.k-wa { width: 300px; max-width: 100%; padding: var(--k-space-4) 14px; border-radius: var(--k-radius-xl); background: var(--k-whatsapp-chat); font: 14px/19px var(--k-font-sans); color: var(--k-whatsapp-ink); text-align: start; }
+.k-wa, .k-wa__bubble, .k-wa__body, .k-wa__footer, .k-wa__time { display: block; }
+.k-wa__bubble { max-width: 252px; padding: var(--k-space-1-5); border-radius: 2px 10px 10px 10px; background: var(--k-surface); box-shadow: var(--k-shadow-wa); }
+.k-wa__media { display: grid; place-items: center; aspect-ratio: 1.91; margin-bottom: var(--k-space-1-5); border-radius: var(--k-radius-xs); background: var(--k-fill); color: var(--k-ink-3); }
+.k-wa__body { padding: 2px var(--k-space-1); }
+.k-wa__footer { padding: var(--k-space-1) var(--k-space-1) 0; font-size: var(--k-text-caption); color: var(--k-whatsapp-meta); }
+.k-wa__time { padding: 0 var(--k-space-1); font-size: var(--k-text-micro); text-align: end; color: var(--k-whatsapp-meta); }
+/* Le message que le client envoie (lien magique) : à droite, sur le vert clair de WhatsApp */
+.k-wa__bubble--out { margin-inline-start: auto; border-radius: 10px 2px 10px 10px; background: var(--k-whatsapp-out); }
+.k-wa__button { display: flex; align-items: center; justify-content: center; gap: var(--k-space-1-5); height: 36px; margin: var(--k-space-1-5) calc(-1 * var(--k-space-1-5)) 0; box-shadow: inset 0 1px 0 var(--k-whatsapp-line); color: var(--k-whatsapp-link); font-weight: var(--k-weight-medium); }
+.k-wa__button + .k-wa__button { margin-top: 0; }
+.k-wa__button:last-child { margin-bottom: calc(-1 * var(--k-space-1-5)); }
+.k-wa__button k-icon { --k-icon: 16px; }
+.k-wa--sm { width: 220px; padding: var(--k-space-3) 10px; font-size: 12px; line-height: 16px; }
+.k-wa--sm .k-wa, .k-wa__bubble, .k-wa__body, .k-wa__footer, .k-wa__time { display: block; }
+.k-wa__bubble { max-width: 190px; }
+.k-wa--sm .k-wa__button { height: 30px; }
+
+/* ---- 19 Builder ------------------------------------------------------------------------------------------ */
+.k-canvas { position: relative; overflow: auto; background-color: var(--k-paper); background-image: linear-gradient(var(--k-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--k-grid-line) 1px, transparent 1px); background-size: 24px 24px; }
+.k-flow { display: flex; flex-direction: column; align-items: center; padding: var(--k-space-8); }
+.k-flow--row { flex-direction: row; align-items: flex-start; }
+/* Suite d'étapes d'une automatisation : une colonne centrée de cartes larges, de haut en bas */
+.k-flow--sequence { width: 100%; max-width: 640px; margin-inline: auto; padding: var(--k-space-6) var(--k-space-6) var(--k-space-16); }
+.k-flow--sequence .k-node { width: 100%; }
+.k-flow__head { display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-3); width: 100%; max-width: 640px; margin-inline: auto; padding: var(--k-space-6) var(--k-space-6) 0; font-size: var(--k-text-small); color: var(--k-ink-2); }
+.k-flow__head + .k-flow--sequence { padding-top: var(--k-space-3); }
+.k-flow__end { display: inline-flex; align-items: center; gap: var(--k-space-1-5); height: var(--k-control-sm); padding: 0 var(--k-space-3) 0 10px; border-radius: var(--k-radius-pill); background: var(--k-fill); font-size: var(--k-text-small); color: var(--k-ink-2); }
+.k-flow__end k-icon { --k-icon: 14px; }
+/* Tableau blanc : le plan se déplace et se met à l'échelle, les nœuds y sont posés en x et y, les flèches dessous.
+   La position et le zoom viennent de trois variables posées par le script (--k-board-x, -y, -z). */
+.k-board { overflow: hidden; cursor: grab; touch-action: none; user-select: none; background-position: var(--k-board-x, 0px) var(--k-board-y, 0px); background-size: calc(24px * var(--k-board-z, 1)) calc(24px * var(--k-board-z, 1)); }
+.k-board[data-panning] { cursor: grabbing; }
+.k-board__plan { position: absolute; inset: 0 auto auto 0; transform-origin: 0 0; transform: translate(var(--k-board-x, 0px), var(--k-board-y, 0px)) scale(var(--k-board-z, 1)); }
+.k-board__edges { position: absolute; inset: 0 auto auto 0; width: 1px; height: 1px; overflow: visible; }
+.k-board .k-node { position: absolute; cursor: grab; }
+.k-board .k-node[data-dragging] { cursor: grabbing; box-shadow: var(--k-shadow-modal); transition: none; }
+.k-board .k-node[data-target] { box-shadow: 0 0 0 2px var(--k-brand), var(--k-shadow-pop); }
+.k-board .k-node__header:last-child, .k-board .k-node__header:has(+ .k-handle) { padding-bottom: 14px; }
+/* Dans un tableau, l'entrée d'un nœud est en haut et ses sorties en bas */
+.k-board .k-handle { z-index: 1; left: 50%; right: auto; margin: 0 0 0 -6px; transition: transform var(--k-duration-fast) var(--k-ease-out); }
+.k-board .k-handle--in { top: -6px; }
+.k-board .k-handle--out { top: auto; bottom: -6px; cursor: crosshair; }
+.k-board .k-handle--out::before { content: ""; position: absolute; inset: -8px; }   /* une cible plus grande que le point */
+@media (hover: hover) { .k-board .k-handle--out:hover { transform: scale(1.35); } }
+.k-board .k-handle--out[data-bd-sortie="oui"] { left: 28%; }
+.k-board .k-handle--out[data-bd-sortie="non"] { left: 72%; }
+/* Les deux sorties d'une condition, chacune au-dessus de sa poignée */
+.k-node__exits { display: grid; grid-template-columns: 56% 44%; padding: 0 0 var(--k-space-3); font-weight: var(--k-weight-strong); font-size: var(--k-text-small); text-align: center; }
+.k-node__exits small { margin-inline-start: var(--k-space-1-5); font-weight: var(--k-weight-regular); font-size: var(--k-text-caption); color: var(--k-ink-2); }
+/* Flèche entre deux nœuds */
+.k-edge { fill: none; stroke: var(--k-connector); stroke-width: 2; stroke-linecap: round; pointer-events: none; }
+.k-edge[data-selected="true"], .k-edge--draft { stroke: var(--k-accent); }
+.k-edge--draft { stroke-dasharray: 5 5; }
+.k-edge__hit { fill: none; stroke: transparent; stroke-width: 16; cursor: pointer; pointer-events: stroke; }
+.k-edge__head path { fill: var(--k-connector); }
+.k-edge__head[data-selected="true"] path { fill: var(--k-accent); }
+.k-edge__tools { position: absolute; display: flex; gap: var(--k-space-1); transform: translate(-12px, -12px); }
+.k-edge__add { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: var(--k-surface); box-shadow: var(--k-shadow-raised); color: var(--k-ink-2); cursor: pointer; transition: background-color var(--k-duration-fast) ease, color var(--k-duration-fast) ease, transform var(--k-duration-fast) var(--k-ease-out); }
+.k-edge__add k-icon { --k-icon: 12px; }
+@media (hover: hover) { .k-edge__add:hover { background: var(--k-inverse); color: var(--k-on-inverse); transform: scale(1.12); } }
+.k-edge__add:active { transform: scale(0.94); }
+.k-edge__add:focus-visible { outline: 2px solid var(--k-accent); outline-offset: 2px; }
+/* Barre flottante au bas d'un tableau : les actions à ajouter au centre, la vue à gauche */
+.k-dock { position: absolute; z-index: var(--k-z-sticky); inset: auto auto var(--k-space-4) 50%; transform: translateX(-50%); display: flex; align-items: center; gap: var(--k-space-1); padding: var(--k-space-1-5); border-radius: var(--k-radius-pill); background: var(--k-surface); box-shadow: var(--k-shadow-pop); cursor: default; }
+.k-dock--start { inset-inline-start: var(--k-space-4); transform: none; }
+.k-dock__sep { width: 1px; height: 20px; margin-inline: var(--k-space-1); background: var(--k-line-strong); }
+.k-dock__value { min-width: 48px; text-align: center; font-weight: var(--k-weight-strong); font-size: var(--k-text-small); font-variant-numeric: tabular-nums; }
+/* Dans une colonne de page, le canvas prend toute la hauteur restante */
+.k-main__column > .k-canvas { flex: 1; min-height: 0; }
+
+.k-node { position: relative; width: 283px; border-radius: var(--k-radius-xl); background: var(--k-surface); box-shadow: var(--k-shadow-raised); cursor: pointer; transition: box-shadow var(--k-duration-fast) ease; }
+@media (hover: hover) { .k-node:hover { box-shadow: var(--k-shadow-pop); } }
+.k-node[aria-selected="true"] { box-shadow: 0 0 0 2px var(--k-accent), var(--k-shadow-pop); }
+.k-node__header { display: flex; align-items: center; gap: 10px; padding: 14px var(--k-space-4) var(--k-space-3); }
+.k-node__icon { --_c: var(--k-inverse); --_i: var(--k-on-inverse); flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--k-radius-md); background: var(--_c); color: var(--_i); }
+.k-node__icon k-icon { --k-icon: 18px; }
+.k-node__icon img { width: 18px; height: 18px; }
+/* Les cartes d'un carrousel, en vignettes */
+.k-node__cards { display: flex; gap: var(--k-space-1-5); margin-top: var(--k-space-2); }
+.k-node__cards > span { flex: 1; max-width: 44px; aspect-ratio: 4 / 5; border-radius: var(--k-radius-sm); background: var(--k-fill); box-shadow: var(--k-shadow-line); }
+.k-node--whatsapp  .k-node__icon { --_c: var(--k-whatsapp); }
+.k-node--imessage  .k-node__icon { --_c: var(--k-imessage); }
+.k-node--wait      .k-node__icon { --_c: var(--k-warning-soft); --_i: var(--k-warning-text); }
+.k-node--condition .k-node__icon { --_c: var(--k-accent-soft);  --_i: var(--k-accent-text); }
+.k-node--ai        .k-node__icon { --_c: var(--k-violet);       --_i: var(--k-on-inverse); }
+.k-node:focus-visible, .k-wait:focus-visible { outline: 2px solid var(--k-accent); outline-offset: 2px; }
+.k-node__end { margin-inline-start: auto; display: flex; align-items: center; gap: var(--k-space-2); }
+.k-node__body > p { margin: 0 0 var(--k-space-2); color: var(--k-ink); }
+.k-node__body .k-tag k-icon { --k-icon: 14px; color: var(--k-ink-2); }
+/* Ce qui se passe à la sortie d'une condition, ou ce que fait l'agent : une ligne par issue */
+.k-node__paths { display: flex; flex-direction: column; gap: var(--k-space-1-5); margin: 0; padding: 0; list-style: none; }
+.k-node__paths li { display: flex; align-items: baseline; gap: var(--k-space-2); }
+.k-node__paths li::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--k-ink-disabled); transform: translateY(-1px); }
+.k-node__paths b { flex: none; min-width: 28px; color: var(--k-ink); font-weight: var(--k-weight-strong); }
+.k-node__kicker { font-size: var(--k-text-caption); line-height: var(--k-leading-caption); color: var(--k-ink-2); }
+.k-node__title { font-weight: var(--k-weight-strong); }
+.k-node__body { padding: 0 var(--k-space-4) var(--k-space-4); font-size: var(--k-text-small); line-height: var(--k-leading-small); color: var(--k-ink-2); }
+.k-node__body > .k-wa { margin-top: var(--k-space-1); }
+.k-node__footer { display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-2); padding: 10px var(--k-space-4); box-shadow: inset 0 1px 0 var(--k-line); font-size: var(--k-text-caption); color: var(--k-ink-2); font-variant-numeric: tabular-nums; }
+.k-handle { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--k-surface); box-shadow: 0 0 0 2px var(--k-brand); }
+.k-handle--out { right: -6px; top: 50%; margin-top: -6px; }
+.k-handle--in  { left: -6px;  top: 50%; margin-top: -6px; }
+
+.k-connector { position: relative; flex: none; width: 2px; height: 36px; background: var(--k-connector); }
+.k-flow--row > .k-connector { width: 50px; height: 2px; align-self: center; }
+.k-connector__add {
+  position: absolute; inset: 0; margin: auto; left: -11px; top: 0; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%;
+  background: var(--k-surface); box-shadow: var(--k-shadow-raised); color: var(--k-ink-2); cursor: pointer;
+  transition: background-color var(--k-duration-fast) ease, color var(--k-duration-fast) ease, transform var(--k-duration-fast) var(--k-ease-out);
+}
+.k-connector__add k-icon { --k-icon: 12px; }
+@media (hover: hover) { .k-connector__add:hover { background: var(--k-inverse); color: var(--k-on-inverse); transform: scale(1.12); } }
+.k-connector__add:active { transform: scale(0.94); }
+
+.k-wait { display: inline-flex; align-items: center; gap: var(--k-space-2); height: var(--k-control-md); padding: 0 14px 0 10px; border-radius: var(--k-radius-pill); background: var(--k-surface); box-shadow: var(--k-shadow-raised); font-weight: var(--k-weight-strong); font-size: var(--k-text-small); white-space: nowrap; }
+.k-wait k-icon { --k-icon: 18px; color: var(--k-warning-text); }
+/* Une attente qu'on peut choisir pour la régler : même anneau qu'un nœud */
+button.k-wait { border: 0; color: var(--k-ink); font-family: inherit; cursor: pointer; transition: box-shadow var(--k-duration-fast) ease; }
+@media (hover: hover) { button.k-wait:hover { box-shadow: var(--k-shadow-pop); } }
+.k-wait[aria-selected="true"] { box-shadow: 0 0 0 2px var(--k-accent), var(--k-shadow-pop); }
+
+/* Barres horizontales : un entonnoir (chaque étape par rapport à la première) ou une répartition */
+.k-bars { display: flex; flex-direction: column; gap: var(--k-space-2); margin: 0; padding: 0; list-style: none; }
+.k-bars__row { display: grid; grid-template-columns: var(--_label, 96px) minmax(0, 1fr) var(--_value, 64px) var(--_rate, 148px); align-items: center; column-gap: var(--k-space-3); }
+.k-bars__label { font-weight: var(--k-weight-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-bars__bar { height: 24px; border-radius: var(--k-radius-sm); background: var(--k-fill-subtle); overflow: hidden; }
+.k-bars__bar > span { display: block; width: max(4px, calc(var(--k-value, 0) * 100%)); height: 100%; border-radius: inherit; background: var(--k-chart-1); }
+/* Les barres poussent depuis la gauche, l'une après l'autre. Pas dans un aperçu qui se recalcule à chaque frappe (data-live). */
+@keyframes k-grow { from { transform: scaleX(0); } }
+.k-bars__bar > span { transform-origin: left center; animation: k-grow var(--k-duration-chart) var(--k-ease-out) backwards; }
+.k-bars__row:nth-child(2) .k-bars__bar > span { animation-delay: calc(var(--k-stagger) * 1); }
+.k-bars__row:nth-child(3) .k-bars__bar > span { animation-delay: calc(var(--k-stagger) * 2); }
+.k-bars__row:nth-child(4) .k-bars__bar > span { animation-delay: calc(var(--k-stagger) * 3); }
+.k-bars__row:nth-child(n + 5) .k-bars__bar > span { animation-delay: calc(var(--k-stagger) * 4); }
+.k-bars[data-live] .k-bars__bar > span { animation: none; }
+@media (prefers-reduced-motion: reduce) { .k-bars__bar > span { animation: none; } }
+.k-bars__value { text-align: end; font-weight: var(--k-weight-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.k-bars__rate { font-size: var(--k-text-small); color: var(--k-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Dans une carte étroite : le libellé et ses chiffres sur une ligne, la barre dessous sur toute la largeur */
+.k-bars--compact { gap: var(--k-space-3); }
+.k-bars--compact .k-bars__row { grid-template-columns: minmax(0, 1fr) auto var(--_rate, 40px); grid-template-areas: "libelle valeur taux" "barre barre barre"; row-gap: var(--k-space-1-5); }
+.k-bars--compact .k-bars__label { grid-area: libelle; }
+.k-bars--compact .k-bars__value { grid-area: valeur; }
+.k-bars--compact .k-bars__rate { grid-area: taux; text-align: end; }
+.k-bars--compact .k-bars__bar { grid-area: barre; height: 6px; border-radius: var(--k-radius-pill); }
+
+/* ---- 20 Graphique -------------------------------------------------------------------------------------------- */
+.k-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--k-space-1) var(--k-space-4); font-size: var(--k-text-small); color: var(--k-ink-2); }
+.k-legend__key { display: inline-flex; align-items: center; gap: var(--k-space-1-5); }
+.k-legend__swatch { width: 8px; height: 8px; border-radius: 2px; background: var(--_c, var(--k-chart-1)); }
+.k-chart { position: relative; }
+.k-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.k-chart:focus-visible { outline: 2px solid var(--k-accent); outline-offset: 4px; border-radius: var(--k-radius-sm); }
+.k-chart text { font: var(--k-text-caption) var(--k-font-sans); fill: var(--k-ink-2); font-variant-numeric: tabular-nums; }
+.k-chart__grid { stroke: var(--k-chart-grid); stroke-width: 1; }
+.k-chart__line { fill: none; stroke: var(--k-chart-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.k-chart__area { fill: var(--k-chart-area); }
+/* L'aire sous une courbe est un dégradé : le bleu au ras de la courbe, presque rien en bas du graphique.
+   Le tracé pose un <linearGradient> avec ces deux arrêts et le donne en remplissage à l'aire. */
+.k-chart__fade-top { stop-color: var(--k-chart-1); stop-opacity: var(--k-chart-fade-top); }
+.k-chart__fade-bottom { stop-color: var(--k-chart-1); stop-opacity: var(--k-chart-fade-bottom); }
+/* Une courbe qui vient d'être tracée (data-draw) se dessine de gauche à droite, puis son aire monte en fondu.
+   Un simple redimensionnement la retrace sans animation. */
+@keyframes k-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes k-fade { from { opacity: 0; } }
+.k-chart svg[data-draw] .k-chart__line { stroke-dasharray: 1; animation: k-draw var(--k-duration-chart) var(--k-ease-out) backwards; }
+.k-chart svg[data-draw] .k-chart__area { animation: k-fade var(--k-duration-chart) ease backwards; }
+@media (prefers-reduced-motion: reduce) { .k-chart svg[data-draw] :is(.k-chart__line, .k-chart__area) { animation: none; } }
+.k-chart__cursor { stroke: var(--k-line-hover); stroke-width: 1; }
+.k-chart__point { fill: var(--k-surface); stroke: var(--k-chart-1); stroke-width: 2; }
+.k-chart__bar { transition: opacity var(--k-duration-fast) ease; }
+.k-chart[data-hover] .k-chart__bar:not([data-on]) { opacity: 0.45; }
+.k-chart__tip { position: absolute; z-index: 2; min-width: 140px; padding: var(--k-space-2) 10px; border-radius: var(--k-radius-md); background: var(--k-surface); box-shadow: var(--k-shadow-pop); font-size: var(--k-text-caption); line-height: var(--k-leading-caption); white-space: nowrap; pointer-events: none; transform: translate(-50%, calc(-100% - 8px)); }
+.k-chart__tip[hidden] { display: none; }
+.k-chart__tip-title { margin-bottom: var(--k-space-1); font-weight: var(--k-weight-strong); }
+.k-chart__tip-row { display: flex; align-items: center; justify-content: space-between; gap: var(--k-space-4); color: var(--k-ink-2); }
+.k-chart__tip-row b { color: var(--k-ink); font-weight: var(--k-weight-strong); font-variant-numeric: tabular-nums; }
