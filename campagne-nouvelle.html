@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La maquette est publiée pour Kite (GitHub Pages) : elle ne doit pas être référencée -->
+<meta name="robots" content="noindex, nofollow">
+<title>Créer une campagne · Campagnes · Kanal</title>
+<!--
+  NOTES D'INTÉGRATION — Créer une campagne, dans le design system Kanal
+
+  Assemblée avec les composants du système. Script : assets/campagne-nouvelle.js. Deux pièces ont été ajoutées au système
+  pour lui (voir [P2] et [P8]) : elles sont dans composants.css, comme tout le reste.
+  On y arrive depuis la page Campagnes (« Créer une campagne », ou un brouillon de la liste). L'écran refait
+  kanal/campaign-builder.html : ce n'est plus un canvas de flow, c'est un parcours en quatre étapes, parce qu'une
+  campagne envoie UN modèle à UNE audience, une fois. L'exemple montré est « Coffrets de Noël », au moment où
+  Camille la prépare : elle est en brouillon, et finit programmée pour le 1er décembre 2026 à 9:00, comme dans la
+  liste des campagnes (exemple.html).
+
+  [P1] Coquille : .k-main.k-main--split > .k-main__column (barre d'éditeur, puis la page qui défile) + .k-aside
+       (aperçu et résumé). Une seule étape est visible à la fois : les quatre sont dans la page, [data-cn-etape],
+       les autres portent hidden.
+  [P2] Barre d'éditeur (.k-topbar.k-topbar--editor) : à gauche le retour aux campagnes, le nom interne (il suit le
+       champ de l'étape Envoi) et le statut ; au centre exact, les quatre étapes (.k-steps) ; à droite, le bouton
+       qui montre ou cache l'aperçu, puis LE bouton principal. Il dit « Continuer » sur les trois premières étapes,
+       puis « Programmer » ou « Envoyer » sur la dernière, selon le choix de l'étape Envoi.
+       PIÈCE AJOUTÉE : une étape cliquable, button.k-steps__item (le système n'avait que l'étape en lecture).
+       « Modifier avec Claude » : un bouton rond à fond gris, le logo de Claude seul, avant le bouton de l'aperçu.
+       Son nom est dans l'infobulle. Il ouvre Claude dans un nouvel onglet (https://claude.ai/new), où le connecteur
+       Kanal (MCP) prépare la campagne en une phrase. Dans l'app : ouvrir Claude avec la campagne en contexte.
+  [P3] Passer d'une étape à l'autre : « Continuer », ou un clic sur une étape de la barre. On ne dépasse pas une
+       étape incomplète : le parcours s'y arrête, montre l'erreur sous le champ et y pose le curseur. Une étape
+       terminée porte une coche (data-done) ; l'étape ouverte porte aria-current="step".
+       Aide de maquette : campagne-nouvelle.html#message, #envoi ou #recapitulatif ouvre la page sur cette étape.
+  [P4] Étape 1, Audience : un tableau à choix unique (un bouton radio par ligne, la ligne entière se clique, la
+       ligne choisie porte aria-selected). Une campagne vise UNE liste ou UN segment. Deux colonnes de chiffres :
+       la taille de l'audience, et ceux qui recevront le message, c'est-à-dire ses contacts abonnés à WhatsApp.
+       Le pied du tableau redit le calcul pour l'audience choisie. Familles, recherche, noms et tailles des
+       audiences : ceux de la page Listes et segments (listes.html).
+  [P5] Étape 2, Message : le modèle (cartes de choix .k-choice, seulement les modèles marketing validés par Meta),
+       puis ses variables. Le prénom se remplit pour chaque contact, avec un texte de repli ; les autres valeurs
+       sont les mêmes pour tout le monde et sont obligatoires. Ce que le modèle fixe (bouton, pied) est rappelé
+       dessous, en lecture.
+  [P6] Étape 3, Envoi : maintenant ou programmé (deux champs natifs, date et heure, lus dans le fuseau de la
+       boutique), heures calmes, nom interne. Heures calmes : de 21 h à 9 h. Quand elles sont respectées, un envoi
+       prévu dans cette plage part à 9 h, et tout l'écran affiche l'heure réelle de départ.
+  [P7] Étape 4, Récapitulatif : quatre cartes (audience, message, envoi, coût estimé), chacune avec « Modifier »
+       qui ramène à son étape. Après la confirmation, un bandeau dit l'état de la campagne.
+  [P8] Panneau de droite (.k-aside.k-aside--wide) : l'aperçu WhatsApp (.k-wa) avec les valeurs d'un contact
+       témoin, puis le résumé : destinataires, audience, envoi, coût estimé. Tout se met à jour à chaque choix.
+       En pied, « Envoyer un test ».
+       PIÈCE AJOUTÉE : .k-aside--companion. Sous 1400 px, le panneau repliable du système passe par-dessus le
+       contenu et couvre la fin de la barre d'éditeur ; ici le bouton principal y est. Cette variante le fait
+       commencer sous la barre et laisse sa place au contenu. Il est ouvert au chargement (data-open), le bouton
+       de la barre et sa croix le ferment (data-k-aside-toggle, déjà dans composants.js).
+  [P9] Confirmation (dialog.k-modal) : elle rappelle le nom, le moment et le nombre de contacts, que le bouton
+       de validation répète. Programmée : statut « Programmée », annulable (toast, ou bandeau du récapitulatif) ;
+       le bouton principal laisse la place à « Voir les campagnes ». Si l'on défait ensuite un réglage (date
+       passée, variable vidée, « Maintenant »), elle redevient un brouillon.
+       Envoyée : statut « En cours », les étapes ne se modifient plus (inert).
+  [P10] « Envoyer un test » : le message part sur le numéro choisi, avec les valeurs du contact témoin.
+  [P11] Limite de Meta : Kanal ne plafonne pas les messages. Si la campagne dépasse la limite d'envoi de Meta sur
+       24 heures (100 000 contacts ici, voir la modale de qualité du numéro), un bandeau le dit aux étapes Envoi
+       et Récapitulatif : le surplus part le lendemain.
+
+  HYPOTHÈSES DE MAQUETTE, À CONFIRMER
+  - Coût : 0,28 € par message, déduit de la campagne « Black Friday, accès anticipé » (3 762 € pour 13 428
+    messages délivrés, campagne.html). Dans l'app, le coût vient de l'estimation de l'API.
+  - Abonnés par audience : seuls 12 480 contacts et 11 640 abonnés sont repris des autres pages (contacts.html) ;
+    les sept autres nombres d'abonnés sont inventés.
+  - « Aujourd'hui » est figé au lundi 16 novembre 2026 à 10:42 et le fuseau à l'heure de Paris : la page ne lit
+    pas l'horloge.
+  - Une campagne programmée reste modifiable jusqu'à l'envoi ; un segment ou une audience synchronisée se
+    recalcule au moment de l'envoi ; le dépassement du forfait prévient sans bloquer.
+
+  À brancher côté app : audiences et nombre de contacts joignables, modèles validés et leurs variables,
+  estimation du coût, enregistrement du brouillon à chaque changement, envoi du test, programmation et envoi,
+  page de création d'un modèle (« Créer un modèle » n'ouvre qu'un toast). Données fictives : Maison Lumen.
+-->
+<link rel="icon" href="assets/img/logo-kanal-min-black.svg">
+<!-- La première image attend la fin du document (#k-fin) : la page arrive complète, y compris dans une transition -->
+<link rel="expect" href="#k-fin" blocking="render">
+<link rel="stylesheet" href="assets/jetons.css?v=20261117-19">
+<link rel="stylesheet" href="assets/composants.css?v=20261117-19">
+<script src="assets/composants.js?v=20261117-19"></script>
+</head>
+<body class="k-app">
+<script src="assets/icones.js?v=20261117-19"></script>
+
+<!-- Bandeau d'annonce : le logo de la barre le montre et le cache (data-k-announce-toggle) -->
+<div class="k-announce" role="region" aria-label="Nouveauté">
+  <span class="k-announce__tag">Nouveau</span>
+  <span class="k-announce__text"><b>Kanal se pilote depuis Claude.</b> Créez vos campagnes et vos automatisations en une phrase : inclus dans Scale et Business.</span>
+  <a class="k-announce__link" href="forfaits.html">Voir les forfaits<k-icon name="arrow-right" set="micro"></k-icon></a>
+  <button type="button" class="k-announce__close" aria-label="Masquer l'annonce" data-k-announce-toggle><k-icon name="x-mark" set="micro"></k-icon></button>
+</div>
+<div class="k-shell">
+  <nav class="k-rail" aria-label="Navigation">
+    <div class="k-rail__head">
+      <button type="button" class="k-rail__logo" aria-label="Kanal : montrer ou masquer l'annonce" data-k-announce-toggle><img src="assets/img/logo-kanal-min-white.svg" alt=""></button>
+      <button type="button" class="k-rail__pin" aria-pressed="false" aria-label="Épingler la navigation" data-k-rail-pin data-k-tooltip="Épingler la navigation" data-k-tooltip-side="bottom"><k-icon name="pin"></k-icon></button>
+    </div>
+    <div class="k-rail__main">
+      <a class="k-rail__item" href="accueil.html" aria-label="Home"><k-icon name="home"></k-icon><span class="k-rail__label">Home</span></a>
+      <a class="k-rail__item" href="inbox.html" aria-label="Inbox, 3 conversations à traiter"><k-icon name="inbox"></k-icon><span class="k-rail__label">Inbox</span><span class="k-count k-count--danger k-rail__count">3</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="automatisations.html" aria-label="Automations"><k-icon name="bolt"></k-icon><span class="k-rail__label">Automations</span></a>
+      <a class="k-rail__item" href="exemple.html" aria-current="page" aria-label="Campaigns"><k-icon name="megaphone"></k-icon><span class="k-rail__label">Campaigns</span></a>
+      <a class="k-rail__item" href="agent.html" aria-label="AI Agent"><k-icon name="sparkles"></k-icon><span class="k-rail__label">AI Agent</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="contacts.html" aria-label="Contacts"><k-icon name="users"></k-icon><span class="k-rail__label">Contacts</span></a>
+      <a class="k-rail__item" href="listes.html" aria-label="Lists &amp; segments"><k-icon name="queue-list"></k-icon><span class="k-rail__label">Lists &amp; segments</span></a>
+      <a class="k-rail__item" href="liens.html" aria-label="Magic links"><k-icon name="link"></k-icon><span class="k-rail__label">Magic links</span></a>
+    </div>
+    <div class="k-rail__end">
+      <button type="button" class="k-rail__item" aria-label="Qualité du numéro : élevée. 4 812 messages sur 100 000 en 24 h" aria-haspopup="dialog" data-k-open="mod-qualite"><span class="k-ring" data-quality="high"></span><span class="k-rail__label">Quality</span><span class="k-rail__meta" data-quality="high" data-rail-qualite>High</span></button>
+      <a class="k-rail__item" href="reglages.html" aria-label="Settings"><k-icon name="cog-6-tooth"></k-icon><span class="k-rail__label">Settings</span></a>
+      <a class="k-rail__item" href="avis.html" aria-label="Claim my 20 €"><k-icon name="gift"></k-icon><span class="k-rail__label">Claim my 20 €</span></a>
+      <button type="button" class="k-rail__item" aria-label="Menu du compte : Camille Roux, Maison Lumen" aria-haspopup="menu" data-k-menu="menu-compte" data-k-placement="right-end"><span class="k-avatar k-avatar--blue">CR<span class="k-avatar__status"></span></span><span class="k-rail__label">Camille Roux</span></button>
+    </div>
+  </nav>
+
+  <!-- [P1] -->
+  <main class="k-main k-main--split">
+    <div class="k-main__column">
+      <!-- [P2] Barre d'éditeur -->
+      <div class="k-topbar k-topbar--editor">
+        <div class="k-topbar__start">
+          <a class="k-button k-button--secondary k-button--icon" href="exemple.html" aria-label="Retour aux campagnes" data-k-tooltip="Retour aux campagnes" data-k-tooltip-side="bottom"><k-icon name="chevron-left"></k-icon></a>
+          <span class="k-topbar__title" data-cn-titre>Coffrets de Noël</span>
+          <span class="k-badge" data-cn-statut>Brouillon</span>
+        </div>
+        <!-- [P3] Les étapes : cliquables -->
+        <ol class="k-steps" aria-label="Étapes de la campagne" data-cn-etapes>
+          <li><button type="button" class="k-steps__item" aria-current="step" data-cn-aller="0"><span class="k-steps__num">1</span>Audience</button></li>
+          <li class="k-steps__sep" aria-hidden="true"></li>
+          <li><button type="button" class="k-steps__item" data-cn-aller="1"><span class="k-steps__num">2</span>Message</button></li>
+          <li class="k-steps__sep" aria-hidden="true"></li>
+          <li><button type="button" class="k-steps__item" data-cn-aller="2"><span class="k-steps__num">3</span>Envoi</button></li>
+          <li class="k-steps__sep" aria-hidden="true"></li>
+          <li><button type="button" class="k-steps__item" data-cn-aller="3"><span class="k-steps__num">4</span>Récapitulatif</button></li>
+        </ol>
+        <div class="k-topbar__end">
+          <!-- [P2] Modifier avec Claude : pousse à passer par le connecteur Kanal (MCP) -->
+          <a class="k-button k-button--secondary k-button--icon" href="https://claude.ai/new" target="_blank" rel="noopener" aria-label="Modifier avec Claude" data-k-tooltip="Modifier avec Claude" data-k-tooltip-side="bottom"><img src="assets/img/claude.svg" alt=""></a>
+          <button type="button" class="k-button k-button--secondary k-button--icon" aria-label="Montrer ou cacher l'aperçu" data-k-aside-toggle="cn-apercu" data-k-tooltip="Aperçu et résumé" data-k-tooltip-side="bottom"><k-icon name="device-phone-mobile"></k-icon></button>
+          <a class="k-button k-button--primary" href="exemple.html" data-cn-fini hidden>Voir les campagnes</a>
+          <button type="button" class="k-button k-button--primary" data-cn-suivant>Continuer</button>
+        </div>
+      </div>
+
+      <div class="k-main__scroll" data-cn-defile>
+        <div class="k-page">
+
+          <!-- [P4] Étape 1 : Audience -->
+          <div data-cn-etape="0">
+            <header class="k-page__header">
+              <div>
+                <h1 class="k-page__title">Audience</h1>
+                <p class="k-page__subtitle">Choisissez la liste ou le segment qui recevra cette campagne.</p>
+              </div>
+            </header>
+            <section class="k-section" aria-label="Choix de l'audience">
+              <div class="k-banner k-banner--info"><k-icon name="information-circle"></k-icon><div class="k-banner__text">Seuls les contacts <b>abonnés à vos messages WhatsApp</b> reçoivent un message marketing. La colonne « Recevront le message » ne compte qu'eux : elle est plus petite que l'audience.</div></div>
+              <div class="k-section__header">
+                <div class="k-segmented" role="tablist" aria-label="Famille d'audience" data-cn-familles>
+                  <span class="k-segmented__thumb"></span>
+                  <button type="button" class="k-segmented__item" role="tab" aria-selected="true" data-famille="toutes">Toutes <span class="k-segmented__count">8</span></button>
+                  <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-famille="listes">Listes <span class="k-segmented__count">3</span></button>
+                  <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-famille="segments">Segments <span class="k-segmented__count">3</span></button>
+                  <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-famille="synchro">Synchronisées <span class="k-segmented__count">2</span></button>
+                </div>
+                <div class="k-input-group" style="width:240px"><k-icon name="magnifying-glass"></k-icon><input class="k-input" type="search" id="cn-recherche" placeholder="Chercher une audience" aria-label="Chercher une audience" data-cn-recherche autocomplete="off"></div>
+              </div>
+              <div class="k-table-wrap">
+                <div class="k-table-wrap__scroll">
+                  <table class="k-table">
+                    <thead><tr><th class="k-table__check"><span class="k-sr-only">Choisir</span></th><th>Audience</th><th>Type</th><th class="k-table__num">Contacts</th><th class="k-table__num">Recevront le message</th></tr></thead>
+                    <tbody data-cn-audiences></tbody>
+                  </table>
+                </div>
+                <div class="k-table-footer"><span data-cn-audience-pied></span><a class="k-link" href="listes.html">Gérer les audiences</a></div>
+              </div>
+            </section>
+          </div>
+
+          <!-- [P5] Étape 2 : Message -->
+          <div data-cn-etape="1" hidden>
+            <header class="k-page__header">
+              <div>
+                <h1 class="k-page__title">Message</h1>
+                <p class="k-page__subtitle">Choisissez un modèle, puis réglez ses variables. L'aperçu se met à jour à chaque changement.</p>
+              </div>
+            </header>
+            <section class="k-section" aria-label="Modèle">
+              <div class="k-section__header">
+                <div><h2 class="k-section__title">Modèle</h2><p class="k-section__desc">Vos modèles marketing validés par Meta. Un modèle en attente ou refusé n'apparaît pas ici.</p></div>
+                <button type="button" class="k-button k-button--secondary k-button--sm" data-k-toast="La création d'un modèle n'est pas encore dans cette maquette"><k-icon name="plus"></k-icon>Créer un modèle</button>
+              </div>
+              <div class="k-grid k-grid--2" role="radiogroup" aria-label="Modèle WhatsApp" data-cn-modeles></div>
+            </section>
+            <section class="k-section" aria-label="Variables">
+              <div><h2 class="k-section__title">Variables</h2><p class="k-section__desc">Le prénom se remplit pour chaque contact. Les autres valeurs sont les mêmes pour tout le monde.</p></div>
+              <div class="k-card">
+                <form class="k-grid k-grid--2" data-cn-variables onsubmit="return false"></form>
+                <dl class="k-details k-details--compact k-details--wrap" style="margin-top:var(--k-space-4)" data-cn-fixe></dl>
+              </div>
+            </section>
+          </div>
+
+          <!-- [P6] Étape 3 : Envoi -->
+          <div data-cn-etape="2" hidden>
+            <header class="k-page__header">
+              <div>
+                <h1 class="k-page__title">Envoi</h1>
+                <p class="k-page__subtitle">Choisissez le moment de l'envoi, puis donnez un nom à la campagne.</p>
+              </div>
+            </header>
+            <section class="k-section" aria-label="Moment de l'envoi">
+              <div><h2 class="k-section__title">Quand envoyer</h2></div>
+              <div class="k-grid k-grid--2" role="radiogroup" aria-label="Moment de l'envoi" data-cn-quand>
+                <label class="k-choice"><input class="k-radio" type="radio" name="cn-quand" value="maintenant"><span><span class="k-check__label">Maintenant</span><span class="k-check__hint">La campagne part dès que vous confirmez.</span></span></label>
+                <label class="k-choice"><input class="k-radio" type="radio" name="cn-quand" value="programme" checked><span><span class="k-check__label">Programmer</span><span class="k-check__hint">Elle part au jour et à l'heure que vous choisissez.</span></span></label>
+              </div>
+              <div class="k-card" data-cn-programme>
+                <div class="k-grid k-grid--2">
+                  <div class="k-field"><label class="k-field__label" for="cn-date">Date</label><input class="k-input" type="date" id="cn-date" value="2026-12-01" min="2026-11-16" aria-describedby="cn-date-err" data-cn-date></div>
+                  <div class="k-field"><label class="k-field__label" for="cn-heure">Heure</label><input class="k-input" type="time" id="cn-heure" value="09:00" aria-describedby="cn-date-err" data-cn-heure><span class="k-field__hint">Heure de Paris, le fuseau de votre boutique.</span></div>
+                </div>
+                <p class="k-card__desc" style="margin-top:var(--k-space-3)" data-cn-date-lue></p>
+                <span class="k-field__error" style="margin-top:var(--k-space-3)" id="cn-date-err" data-cn-date-erreur hidden></span>
+              </div>
+              <!-- [P11] -->
+              <div data-cn-forfait hidden></div>
+            </section>
+            <section class="k-section" aria-label="Heures calmes">
+              <div><h2 class="k-section__title">Heures calmes</h2><p class="k-section__desc">Elles valent pour toute la boutique et se règlent dans <a class="k-link" href="reglages.html#heures-calmes">les réglages</a>.</p></div>
+              <div class="k-settings">
+                <label class="k-settings__row" for="cn-calmes"><span class="k-settings__text"><span class="k-settings__label">Respecter les heures calmes</span><span class="k-settings__desc">Aucun message entre 21 h et 9 h, heure du contact. Un message prévu dans cette plage part à 9 h.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="cn-calmes" checked data-cn-calmes></span></label>
+              </div>
+              <div data-cn-calmes-info hidden></div>
+            </section>
+            <section class="k-section" aria-label="Nom de la campagne">
+              <div><h2 class="k-section__title">Nom de la campagne</h2></div>
+              <div class="k-grid k-grid--2">
+                <div class="k-field">
+                  <label class="k-field__label" for="cn-nom">Nom interne</label>
+                  <input class="k-input" type="text" id="cn-nom" value="Coffrets de Noël" maxlength="60" autocomplete="off" aria-describedby="cn-nom-err" data-cn-nom>
+                  <span class="k-field__hint">Vos clients ne le voient pas. Il sert à retrouver la campagne dans la liste.</span>
+                  <span class="k-field__error" id="cn-nom-err" hidden><k-icon name="exclamation-triangle" set="micro" size="14"></k-icon>Donnez un nom à la campagne.</span>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- [P7] Étape 4 : Récapitulatif -->
+          <div data-cn-etape="3" hidden>
+            <header class="k-page__header">
+              <div>
+                <h1 class="k-page__title">Récapitulatif</h1>
+                <p class="k-page__subtitle">Relisez avant de valider. Rien ne part tant que vous n'avez pas confirmé.</p>
+              </div>
+            </header>
+            <section class="k-section" aria-label="Récapitulatif de la campagne">
+              <!-- [P9] L'état de la campagne, après la confirmation -->
+              <div data-cn-bilan hidden></div>
+              <!-- [P11] -->
+              <div data-cn-forfait hidden></div>
+              <div class="k-grid k-grid--2">
+                <div class="k-card">
+                  <div class="k-card__head"><h2 class="k-card__title">Audience</h2><button type="button" class="k-button k-button--ghost k-button--sm" data-cn-aller="0" data-cn-modifier>Modifier</button></div>
+                  <dl class="k-details k-details--compact k-details--wrap" data-cn-recap="audience"></dl>
+                </div>
+                <div class="k-card">
+                  <div class="k-card__head"><h2 class="k-card__title">Message</h2><button type="button" class="k-button k-button--ghost k-button--sm" data-cn-aller="1" data-cn-modifier>Modifier</button></div>
+                  <dl class="k-details k-details--compact k-details--wrap" data-cn-recap="message"></dl>
+                </div>
+                <div class="k-card">
+                  <div class="k-card__head"><h2 class="k-card__title">Envoi</h2><button type="button" class="k-button k-button--ghost k-button--sm" data-cn-aller="2" data-cn-modifier>Modifier</button></div>
+                  <dl class="k-details k-details--compact k-details--wrap" data-cn-recap="envoi"></dl>
+                </div>
+                <div class="k-card">
+                  <div class="k-card__head"><div><h2 class="k-card__title">Coût estimé</h2><p class="k-card__desc">Meta facture chaque message délivré. Un numéro injoignable ne coûte rien.</p></div></div>
+                  <dl class="k-details k-details--compact k-details--wrap" data-cn-recap="cout"></dl>
+                </div>
+              </div>
+            </section>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- [P8] Aperçu et résumé -->
+    <aside class="k-aside k-aside--wide k-aside--companion" id="cn-apercu" data-collapsible data-open aria-label="Aperçu et résumé">
+      <div class="k-topbar">
+        <span class="k-topbar__title">Aperçu</span>
+        <div class="k-topbar__end">
+          <button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Fermer l'aperçu" data-k-aside-toggle="cn-apercu" data-k-tooltip="Fermer" data-k-tooltip-side="bottom"><k-icon name="x-mark" set="micro"></k-icon></button>
+        </div>
+      </div>
+      <div class="k-aside__body">
+        <section class="k-aside__section" aria-label="Aperçu du message">
+          <div class="k-aside__head"><h3 class="k-aside__title" data-cn-a-modele></h3><span class="k-badge">Marketing</span></div>
+          <div data-cn-apercu></div>
+          <p class="k-aside__sub" style="margin-top:var(--k-space-2)">Avec les valeurs de Léa Martin, l'une de vos contacts.</p>
+        </section>
+        <section class="k-aside__section" aria-label="Résumé">
+          <h3 class="k-aside__title">Résumé</h3>
+          <div class="k-stat__value" data-cn-r="destinataires"></div>
+          <div class="k-aside__sub" data-cn-r="detail"></div>
+          <dl class="k-details k-details--compact" style="margin-top:var(--k-space-2)">
+            <dt>Audience</dt><dd><span data-cn-r="audience"></span></dd>
+            <dt>Envoi</dt><dd><span class="k-tabular" data-cn-r="envoi"></span></dd>
+            <dt>Coût estimé</dt><dd><span class="k-tabular" data-cn-r="cout"></span></dd>
+          </dl>
+        </section>
+      </div>
+      <!-- [P10] -->
+      <div class="k-aside__foot">
+        <button type="button" class="k-button k-button--secondary k-button--sm" data-k-open="cn-tester"><k-icon name="paper-airplane"></k-icon>Envoyer un test</button>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<!-- [P9] Confirmation : le titre, la phrase, les détails et le bouton sont écrits par le script -->
+<dialog class="k-modal k-modal--sm" id="cn-confirmer" aria-labelledby="cn-confirmer-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="cn-confirmer-t" data-cn-c="titre">Programmer cette campagne ?</h2><p class="k-modal__desc" data-cn-c="phrase"></p></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body"><dl class="k-details k-details--compact k-details--wrap" data-cn-c="details"></dl></div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--ghost" data-k-close>Annuler</button><button type="button" class="k-button k-button--primary" data-cn-confirmer>Programmer</button></footer>
+</dialog>
+
+<!-- [P10] Envoyer un test -->
+<dialog class="k-modal k-modal--sm" id="cn-tester" aria-labelledby="cn-tester-t">
+  <form data-cn-test>
+    <header class="k-modal__header">
+      <div><h2 class="k-modal__title" id="cn-tester-t">Envoyer un test</h2><p class="k-modal__desc">Vous recevez le message tel que Léa Martin le verrait, tout de suite.</p></div>
+      <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+    </header>
+    <div class="k-modal__body"><div class="k-field"><label class="k-field__label" for="cn-test-num">Envoyer à</label><select class="k-select" id="cn-test-num"><option>Camille Roux · +33 6 00 00 00 20</option><option>Théo Garnier · +33 6 00 00 00 21</option></select><span class="k-field__hint">Un test ne compte ni dans les résultats ni dans les destinataires.</span></div></div>
+    <footer class="k-modal__footer"><button type="button" class="k-button k-button--ghost" data-k-close>Annuler</button><button type="submit" class="k-button k-button--primary"><k-icon name="paper-airplane"></k-icon>Envoyer le test</button></footer>
+  </form>
+</dialog>
+
+<!-- Modale et menu de la barre de navigation : les mêmes sur toutes les pages -->
+<!-- Qualité du numéro et limite d'envoi de Meta : la même modale sur toutes les pages. Elle s'ouvre depuis « Quality », dans la barre -->
+<dialog class="k-modal k-modal--sm" id="mod-qualite" aria-labelledby="mod-qualite-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="mod-qualite-t">Qualité du numéro</h2></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+    <!-- Le niveau, en grand : un anneau, un mot, une phrase -->
+    <div class="k-stack" style="align-items:center;gap:var(--k-space-3);text-align:center">
+      <span class="k-gauge" aria-hidden="true"><span class="k-ring k-ring--lg" data-quality="high"></span><k-icon name="check"></k-icon></span>
+      <div><div class="k-modal__title" data-q-niveau>Élevée</div><p style="margin-top:var(--k-space-1);color:var(--k-ink-2)" data-q-texte>Vos clients lisent vos messages et les signalent peu. Continuez ainsi.</p></div>
+    </div>
+    <ol class="k-scale" aria-label="Les trois niveaux de qualité"><li class="k-scale__step" data-tone="danger">Basse</li><li class="k-scale__step" data-tone="warning" style="text-align:center">Moyenne</li><li class="k-scale__step" data-tone="success" aria-current="true" style="text-align:end">Élevée</li></ol>
+    <!-- Les envois du jour : une ligne, une jauge, une phrase -->
+    <div class="k-inset">
+      <div class="k-inset__row"><span class="k-inset__label">Envois sur 24 h</span><span class="k-inset__value"><b data-q-envoyes>4 812</b> sur <span data-q-limite>100 000</span></span></div>
+      <div class="k-progress k-progress--ink" role="progressbar" aria-label="Part de la limite d'envoi utilisée sur 24 heures" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="--k-value:0.05" data-q-jauge><span></span></div>
+      <p class="k-inset__hint" data-q-suite>Cette limite augmente toute seule à mesure que vous envoyez.</p>
+    </div>
+  </div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--primary" data-k-close>Compris</button></footer>
+</dialog>
+<div class="k-menu" id="menu-compte" popover role="menu">
+  <div class="k-menu__label">Maison Lumen · Scale plan</div>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#general"><k-icon name="user"></k-icon><span class="k-menu__text">Mon profil</span></a>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#facturation"><k-icon name="credit-card"></k-icon><span class="k-menu__text">Facturation</span></a>
+  <a class="k-menu__item" role="menuitem" href="forfaits.html"><k-icon name="star"></k-icon><span class="k-menu__text">Changer de forfait</span></a>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Passer à Kanal iMessage</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="arrow-left"></k-icon><span class="k-menu__text">Se déconnecter</span></button>
+</div>
+<script src="assets/campagne-nouvelle.js?v=20261117-19"></script>
+<div id="k-fin" hidden></div>
+</body>
+</html>

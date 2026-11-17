@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La maquette est publiée pour Kite (GitHub Pages) : elle ne doit pas être référencée -->
+<meta name="robots" content="noindex, nofollow">
+<title>Éditeur de segment · Kanal</title>
+<!--
+  NOTES D'INTÉGRATION — Éditeur de segment, dans le design system Kanal
+
+  Assemblé avec les seuls composants du système. Script : assets/segment.js.
+  Source des contenus : la maquette pen.dev d'Erevan (pen-dev/screens/07-segment-editor.png), en français.
+  On y arrive depuis Listes et segments : « Modifier » dans le détail d'un segment, ou « Créer une audience »
+  puis « Un segment » (segment.html?nouveau ouvre un segment vide, à nommer).
+
+  [S1] Coquille : .k-main.k-main--split > .k-main__column (barre, page) + .k-aside.k-aside--wide (aperçu, toujours
+       ouvert au-delà de 1400 px ; en dessous, il s'ouvre par le bouton « Aperçu » de la barre).
+  [S2] Barre : retour aux listes, nom du segment (champ), pastille « Modifié » ; à droite « Annuler » et
+       « Enregistrer », éteint tant que rien n'a changé ou que le segment n'a pas de nom.
+  [S3] En tête de page : « Inclure les contacts qui correspondent à » tous les groupes ou au moins un groupe
+       (segmenté), le bouton « Décrire à Lumi » [S7], puis une phrase qui résume le segment en clair.
+  [S4] Groupe de conditions (.k-card.k-rules) : son numéro, sa famille (propriétés du contact, appartenance à
+       une liste, engagement), le nombre de contacts qui y correspondent à lui seul, dupliquer, supprimer.
+       Chaque condition (.k-rule) : « Où » ou « ou », une propriété, un opérateur, une valeur, retirer.
+       Changer de propriété remet l'opérateur et la valeur par défaut de cette propriété.
+  [S5] Dans un groupe, les conditions se relient par « ou ». Entre deux groupes, une pastille dit ET ou OU,
+       selon le choix de [S3]. Un segment garde au moins un groupe, et un groupe au moins une condition.
+  [S6] Aperçu en direct (à droite) : le nombre de membres et leur part, comment chaque groupe réduit
+       l'audience (.k-bars), des exemples de membres, et en pied : exporter, envoyer une campagne.
+       Il se recalcule à chaque changement, sans bouton.
+  [S7] « Décrire à Lumi » : on écrit ce qu'on cherche en une phrase, l'agent IA propose les groupes. Sa
+       proposition remplace les groupes en place, et reste à vérifier avant d'enregistrer.
+  [S8] Toujours exclus : les désabonnés (verrouillé, on ne peut pas leur écrire) et, au choix, les contacts
+       à qui on a écrit dans les dernières 24 heures.
+  [S9] Les nombres de la maquette sont des estimations faites par segment.js. Dans l'app : l'API compte à
+       chaque changement (avec un délai de frappe), et renvoie le décompte par groupe.
+-->
+<link rel="icon" href="assets/img/logo-kanal-min-black.svg">
+<!-- La première image attend la fin du document (#k-fin) : la page arrive complète, y compris dans une transition -->
+<link rel="expect" href="#k-fin" blocking="render">
+<link rel="stylesheet" href="assets/jetons.css?v=20261117-19">
+<link rel="stylesheet" href="assets/composants.css?v=20261117-19">
+<script src="assets/composants.js?v=20261117-19"></script>
+</head>
+<body class="k-app">
+<script src="assets/icones.js?v=20261117-19"></script>
+
+<!-- Bandeau d'annonce : le logo de la barre le montre et le cache (data-k-announce-toggle) -->
+<div class="k-announce" role="region" aria-label="Nouveauté">
+  <span class="k-announce__tag">Nouveau</span>
+  <span class="k-announce__text"><b>Kanal se pilote depuis Claude.</b> Créez vos campagnes et vos automatisations en une phrase : inclus dans Scale et Business.</span>
+  <a class="k-announce__link" href="forfaits.html">Voir les forfaits<k-icon name="arrow-right" set="micro"></k-icon></a>
+  <button type="button" class="k-announce__close" aria-label="Masquer l'annonce" data-k-announce-toggle><k-icon name="x-mark" set="micro"></k-icon></button>
+</div>
+<div class="k-shell">
+  <nav class="k-rail" aria-label="Navigation">
+    <div class="k-rail__head">
+      <button type="button" class="k-rail__logo" aria-label="Kanal : montrer ou masquer l'annonce" data-k-announce-toggle><img src="assets/img/logo-kanal-min-white.svg" alt=""></button>
+      <button type="button" class="k-rail__pin" aria-pressed="false" aria-label="Épingler la navigation" data-k-rail-pin data-k-tooltip="Épingler la navigation" data-k-tooltip-side="bottom"><k-icon name="pin"></k-icon></button>
+    </div>
+    <div class="k-rail__main">
+      <a class="k-rail__item" href="accueil.html" aria-label="Home"><k-icon name="home"></k-icon><span class="k-rail__label">Home</span></a>
+      <a class="k-rail__item" href="inbox.html" aria-label="Inbox, 3 conversations à traiter"><k-icon name="inbox"></k-icon><span class="k-rail__label">Inbox</span><span class="k-count k-count--danger k-rail__count">3</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="automatisations.html" aria-label="Automations"><k-icon name="bolt"></k-icon><span class="k-rail__label">Automations</span></a>
+      <a class="k-rail__item" href="exemple.html" aria-label="Campaigns"><k-icon name="megaphone"></k-icon><span class="k-rail__label">Campaigns</span></a>
+      <a class="k-rail__item" href="agent.html" aria-label="AI Agent"><k-icon name="sparkles"></k-icon><span class="k-rail__label">AI Agent</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="contacts.html" aria-label="Contacts"><k-icon name="users"></k-icon><span class="k-rail__label">Contacts</span></a>
+      <a class="k-rail__item" href="listes.html" aria-current="page" aria-label="Lists &amp; segments"><k-icon name="queue-list"></k-icon><span class="k-rail__label">Lists &amp; segments</span></a>
+      <a class="k-rail__item" href="liens.html" aria-label="Magic links"><k-icon name="link"></k-icon><span class="k-rail__label">Magic links</span></a>
+    </div>
+    <div class="k-rail__end">
+      <button type="button" class="k-rail__item" aria-label="Qualité du numéro : élevée. 4 812 messages sur 100 000 en 24 h" aria-haspopup="dialog" data-k-open="mod-qualite"><span class="k-ring" data-quality="high"></span><span class="k-rail__label">Quality</span><span class="k-rail__meta" data-quality="high" data-rail-qualite>High</span></button>
+      <a class="k-rail__item" href="reglages.html" aria-label="Settings"><k-icon name="cog-6-tooth"></k-icon><span class="k-rail__label">Settings</span></a>
+      <a class="k-rail__item" href="avis.html" aria-label="Claim my 20 €"><k-icon name="gift"></k-icon><span class="k-rail__label">Claim my 20 €</span></a>
+      <button type="button" class="k-rail__item" aria-label="Menu du compte : Camille Roux, Maison Lumen" aria-haspopup="menu" data-k-menu="menu-compte" data-k-placement="right-end"><span class="k-avatar k-avatar--blue">CR<span class="k-avatar__status"></span></span><span class="k-rail__label">Camille Roux</span></button>
+    </div>
+  </nav>
+
+  <!-- [S1] -->
+  <main class="k-main k-main--split">
+    <div class="k-main__column">
+      <!-- [S2] -->
+      <div class="k-topbar">
+        <a class="k-button k-button--secondary k-button--icon" href="listes.html" aria-label="Retour aux listes et segments" data-k-tooltip="Retour" data-k-tooltip-side="bottom"><k-icon name="chevron-left"></k-icon></a>
+        <input class="k-input k-topbar__name" type="text" placeholder="Nom du segment" aria-label="Nom du segment" autocomplete="off" data-sg-nom>
+        <span class="k-badge k-badge--accent">Segment dynamique</span>
+        <span class="k-badge k-badge--warning" data-sg-modifie hidden>Modifié</span>
+        <div class="k-topbar__end">
+          <button type="button" class="k-button k-button--secondary k-nav-toggle" data-k-aside-toggle="sg-apercu">Aperçu</button>
+          <a class="k-button k-button--ghost" href="listes.html">Annuler</a>
+          <button type="button" class="k-button k-button--primary" data-sg-enregistrer disabled>Enregistré</button>
+        </div>
+      </div>
+
+      <div class="k-main__scroll">
+        <div class="k-page">
+          <!-- [S3] -->
+          <section class="k-section">
+            <div class="k-section__header">
+              <div class="k-period">
+                <span class="k-section__title">Inclure les contacts qui correspondent à</span>
+                <div class="k-segmented k-segmented--sm" role="tablist" aria-label="Lien entre les groupes" data-sg-mode>
+                  <span class="k-segmented__thumb"></span>
+                  <button type="button" class="k-segmented__item" role="tab" aria-selected="true" data-mode="tous">tous les groupes</button>
+                  <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-mode="un">au moins un groupe</button>
+                </div>
+              </div>
+              <button type="button" class="k-button k-button--outline k-button--sm" aria-haspopup="dialog" data-k-menu="sg-lumi" data-k-placement="bottom-end"><k-icon name="sparkles"></k-icon>Décrire à Lumi</button>
+            </div>
+            <div class="k-banner"><k-icon name="queue-list"></k-icon><div class="k-banner__text" data-sg-resume></div></div>
+          </section>
+
+          <!-- [S4] [S5] -->
+          <section class="k-section" aria-label="Groupes de conditions">
+            <div class="k-stack" style="gap:0" data-sg-groupes></div>
+            <div><button type="button" class="k-button k-button--outline" data-sg-ajouter><k-icon name="plus"></k-icon>Ajouter un groupe de conditions</button></div>
+          </section>
+
+          <!-- [S8] -->
+          <section class="k-section">
+            <div><h2 class="k-section__title">Toujours exclus</h2><p class="k-section__desc">Ces contacts ne font jamais partie d'un segment, quelles que soient ses conditions.</p></div>
+            <div class="k-settings">
+              <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Les désabonnés</span><span class="k-settings__desc">48 contacts. Vous ne pouvez plus leur écrire : ils sont toujours exclus.</span></span><span class="k-settings__control"><k-icon name="lock-closed" set="micro"></k-icon><input class="k-switch" type="checkbox" role="switch" checked disabled aria-label="Exclure les désabonnés"></span></div>
+              <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Ceux à qui vous avez écrit dans les 24 heures</span><span class="k-settings__desc">38 contacts aujourd'hui. Pour ne pas écrire deux fois de suite à la même personne.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" aria-label="Exclure les contacts écrits dans les 24 heures" data-sg-24h></span></div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- [S6] Aperçu en direct -->
+    <aside class="k-aside k-aside--wide" id="sg-apercu" data-collapsible aria-label="Aperçu du segment">
+      <div class="k-topbar">
+        <span class="k-topbar__title">Aperçu</span>
+        <div class="k-topbar__end"><span class="k-badge k-badge--success"><span class="k-badge__dot"></span>En direct</span></div>
+      </div>
+      <div class="k-aside__body">
+        <section class="k-aside__section" aria-label="Membres">
+          <div class="k-stat__value" data-sg-membres aria-live="polite"></div>
+          <div class="k-aside__sub" data-sg-part></div>
+        </section>
+        <section class="k-aside__section">
+          <h3 class="k-aside__title">Comment chaque groupe réduit l'audience</h3>
+          <ul class="k-bars k-bars--compact" data-live data-sg-entonnoir style="margin-top:var(--k-space-3);--_rate:60px"></ul>
+        </section>
+        <section class="k-aside__section">
+          <div class="k-aside__head"><h3 class="k-aside__title">Exemples de membres</h3><span class="k-aside__sub k-tabular" data-sg-exemples-n></span></div>
+          <ul class="k-timeline" data-sg-exemples><li class="k-timeline__item"><span class="k-avatar k-avatar--sm k-avatar--rose">CG</span><div><div class="k-timeline__title">Camille Garnier</div><div class="k-timeline__meta k-tabular">+32 400 00 00 11</div></div><span class="k-timeline__time">690 € dépensés</span></li><li class="k-timeline__item"><span class="k-avatar k-avatar--sm k-avatar--orange">ZT</span><div><div class="k-timeline__title">Zoé Thomas</div><div class="k-timeline__meta k-tabular">+33 6 00 00 00 09</div></div><span class="k-timeline__time">410 € dépensés</span></li><li class="k-timeline__item"><span class="k-avatar k-avatar--sm k-avatar--blue">LM</span><div><div class="k-timeline__title">Léa Martin</div><div class="k-timeline__meta k-tabular">+33 6 00 00 00 01</div></div><span class="k-timeline__time">312 € dépensés</span></li><li class="k-timeline__item"><span class="k-avatar k-avatar--sm k-avatar--rose">SF</span><div><div class="k-timeline__title">Sarah Fournier</div><div class="k-timeline__meta k-tabular">+33 6 00 00 00 05</div></div><span class="k-timeline__time">228 € dépensés</span></li></ul>
+          <p class="k-table__secondary" data-sg-vide hidden>Aucun contact ne correspond à ces conditions.</p>
+          <a class="k-link" href="contacts.html" data-sg-voir style="font-size:var(--k-text-small)"></a>
+        </section>
+      </div>
+      <div class="k-aside__foot">
+        <button type="button" class="k-button k-button--secondary k-button--icon" aria-label="Exporter en CSV" data-k-tooltip="Exporter en CSV" data-k-toast="Export lancé : le fichier arrive par e-mail"><k-icon name="arrow-down-tray"></k-icon></button>
+        <a class="k-button k-button--primary" href="campagne-nouvelle.html" data-sg-envoyer></a>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<!-- [S7] Décrire le segment à l'agent IA -->
+<div class="k-popover" id="sg-lumi" popover role="dialog" aria-label="Décrire le segment à Lumi" style="width:360px">
+  <form data-sg-lumi style="display:flex;flex-direction:column;gap:var(--k-space-3)">
+    <div class="k-field"><label class="k-field__label" for="sg-lumi-texte">Qui cherchez-vous ?</label><textarea class="k-textarea" id="sg-lumi-texte" rows="3" placeholder="Les clients qui ont déjà commandé mais ne lisent plus mes messages depuis deux mois" required></textarea><span class="k-field__hint">Lumi remplace les groupes en place par sa proposition.</span></div>
+    <div class="k-popover__foot"><button type="button" class="k-button k-button--ghost k-button--sm" popovertarget="sg-lumi" popovertargetaction="hide">Annuler</button><button type="submit" class="k-button k-button--primary k-button--sm"><k-icon name="sparkles"></k-icon>Proposer</button></div>
+  </form>
+</div>
+
+<!-- Modale et menu de la barre de navigation : les mêmes sur toutes les pages -->
+<!-- Qualité du numéro et limite d'envoi de Meta : la même modale sur toutes les pages. Elle s'ouvre depuis « Quality », dans la barre -->
+<dialog class="k-modal k-modal--sm" id="mod-qualite" aria-labelledby="mod-qualite-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="mod-qualite-t">Qualité du numéro</h2></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+    <!-- Le niveau, en grand : un anneau, un mot, une phrase -->
+    <div class="k-stack" style="align-items:center;gap:var(--k-space-3);text-align:center">
+      <span class="k-gauge" aria-hidden="true"><span class="k-ring k-ring--lg" data-quality="high"></span><k-icon name="check"></k-icon></span>
+      <div><div class="k-modal__title" data-q-niveau>Élevée</div><p style="margin-top:var(--k-space-1);color:var(--k-ink-2)" data-q-texte>Vos clients lisent vos messages et les signalent peu. Continuez ainsi.</p></div>
+    </div>
+    <ol class="k-scale" aria-label="Les trois niveaux de qualité"><li class="k-scale__step" data-tone="danger">Basse</li><li class="k-scale__step" data-tone="warning" style="text-align:center">Moyenne</li><li class="k-scale__step" data-tone="success" aria-current="true" style="text-align:end">Élevée</li></ol>
+    <!-- Les envois du jour : une ligne, une jauge, une phrase -->
+    <div class="k-inset">
+      <div class="k-inset__row"><span class="k-inset__label">Envois sur 24 h</span><span class="k-inset__value"><b data-q-envoyes>4 812</b> sur <span data-q-limite>100 000</span></span></div>
+      <div class="k-progress k-progress--ink" role="progressbar" aria-label="Part de la limite d'envoi utilisée sur 24 heures" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="--k-value:0.05" data-q-jauge><span></span></div>
+      <p class="k-inset__hint" data-q-suite>Cette limite augmente toute seule à mesure que vous envoyez.</p>
+    </div>
+  </div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--primary" data-k-close>Compris</button></footer>
+</dialog>
+<div class="k-menu" id="menu-compte" popover role="menu">
+  <div class="k-menu__label">Maison Lumen · Scale plan</div>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#general"><k-icon name="user"></k-icon><span class="k-menu__text">Mon profil</span></a>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#facturation"><k-icon name="credit-card"></k-icon><span class="k-menu__text">Facturation</span></a>
+  <a class="k-menu__item" role="menuitem" href="forfaits.html"><k-icon name="star"></k-icon><span class="k-menu__text">Changer de forfait</span></a>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Passer à Kanal iMessage</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="arrow-left"></k-icon><span class="k-menu__text">Se déconnecter</span></button>
+</div>
+<script src="assets/segment.js?v=20261117-19"></script>
+<div id="k-fin" hidden></div>
+</body>
+</html>

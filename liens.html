@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La maquette est publiée pour Kite (GitHub Pages) : elle ne doit pas être référencée -->
+<meta name="robots" content="noindex, nofollow">
+<title>Liens magiques · Kanal</title>
+<!--
+  NOTES D'INTÉGRATION — Liens magiques, dans le design system Kanal
+
+  Assemblée avec les seuls composants du système. Script : assets/liens.js, qui porte aussi les données des
+  liens pour lien.html (window.KanalLiens). assets/courbe.js est encore chargé en bas de page mais ne sert plus
+  ici : la courbe des clics est sur la page du lien.
+  Un lien magique est un lien court getkanal.com qui ouvre WhatsApp avec un message déjà écrit : le client n'a
+  plus qu'à envoyer. Le message contient le mot-clé d'une automatisation, qui lui répond.
+  Champs de l'API repris ici : name, short_url, pre_filled_message, is_active, click_count,
+  matching_automations (avec leur état). Le lien court est généré par Kanal : on ne le choisit pas.
+
+  [K1] En-tête : « Créer un lien », bouton principal (modale [K8]).
+  [K2] Trois cartes disent comment ça marche, puis un bandeau de quatre chiffres : liens actifs, clics sur
+       30 jours, clics au total, liens sans réponse (actifs, mais qu'aucune automatisation active ne suit).
+       Les quatre se calculent sur les liens (la variation de 12 % est fixe).
+  [K3] Barre d'outils : actifs ou désactivés en segmenté, et la recherche.
+  [K4] Tableau : nom et lien court, message déjà écrit, ce qu'il déclenche, clics au total, clics sur 30 jours,
+       bouton pour copier, interrupteur. Pas de menu par ligne : tout le reste se fait sur la page du lien.
+  [K5] « Ce qu'il déclenche » : le nom de l'automatisation dont le message contient le mot-clé (vert) ; en
+       orange si elle est en pause (elle ne répond rien) ou s'il n'y en a aucune (le message arrive à l'équipe).
+  [K6] Ouvrir un lien : son nom est un lien vers lien.html?id=… (la page entière du lien, repères [M1] à
+       [M10]) ; un clic ailleurs sur la ligne y mène aussi. Il n'y a plus de fiche à droite (décision
+       d'Erevan, 16/11) : définition, QR code, clics et modification sont sur la page du lien.
+  [K7] Désactiver plutôt que supprimer : un lien désactivé affiche une page d'erreur au lieu d'ouvrir
+       WhatsApp. Il est peut-être déjà imprimé. La réactivation le fait remarcher tel quel.
+  [K8] Créer : une modale courte, un nom (interne) et le message. Pendant la saisie, elle dit quelle
+       automatisation répondra, ou prévient qu'aucune ne le fera. Une fois le lien créé, on arrive sur sa
+       page. Modifier un lien se fait sur sa page, plus dans cette modale.
+
+  Maquette : les changements (création, message, désactivation, suppression) sont gardés le temps de l'onglet
+  (sessionStorage), pour que la liste et la page d'un lien disent la même chose. Dans l'app, c'est l'API.
+  Les QR codes de assets/img/qr-*.svg sont de vrais QR codes des liens fictifs. Seul le nombre de clics existe
+  dans l'API : pas de conversations ni de ventes par lien ici.
+-->
+<link rel="icon" href="assets/img/logo-kanal-min-black.svg">
+<!-- La première image attend la fin du document (#k-fin) : la page arrive complète, y compris dans une transition -->
+<link rel="expect" href="#k-fin" blocking="render">
+<link rel="stylesheet" href="assets/jetons.css?v=20261117-19">
+<link rel="stylesheet" href="assets/composants.css?v=20261117-19">
+<script src="assets/composants.js?v=20261117-19"></script>
+</head>
+<body class="k-app">
+<script src="assets/icones.js?v=20261117-19"></script>
+
+<!-- Bandeau d'annonce : le logo de la barre le montre et le cache (data-k-announce-toggle) -->
+<div class="k-announce" role="region" aria-label="Nouveauté">
+  <span class="k-announce__tag">Nouveau</span>
+  <span class="k-announce__text"><b>Kanal se pilote depuis Claude.</b> Créez vos campagnes et vos automatisations en une phrase : inclus dans Scale et Business.</span>
+  <a class="k-announce__link" href="forfaits.html">Voir les forfaits<k-icon name="arrow-right" set="micro"></k-icon></a>
+  <button type="button" class="k-announce__close" aria-label="Masquer l'annonce" data-k-announce-toggle><k-icon name="x-mark" set="micro"></k-icon></button>
+</div>
+<div class="k-shell">
+  <nav class="k-rail" aria-label="Navigation">
+    <div class="k-rail__head">
+      <button type="button" class="k-rail__logo" aria-label="Kanal : montrer ou masquer l'annonce" data-k-announce-toggle><img src="assets/img/logo-kanal-min-white.svg" alt=""></button>
+      <button type="button" class="k-rail__pin" aria-pressed="false" aria-label="Épingler la navigation" data-k-rail-pin data-k-tooltip="Épingler la navigation" data-k-tooltip-side="bottom"><k-icon name="pin"></k-icon></button>
+    </div>
+    <div class="k-rail__main">
+      <a class="k-rail__item" href="accueil.html" aria-label="Home"><k-icon name="home"></k-icon><span class="k-rail__label">Home</span></a>
+      <a class="k-rail__item" href="inbox.html" aria-label="Inbox, 3 conversations à traiter"><k-icon name="inbox"></k-icon><span class="k-rail__label">Inbox</span><span class="k-count k-count--danger k-rail__count">3</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="automatisations.html" aria-label="Automations"><k-icon name="bolt"></k-icon><span class="k-rail__label">Automations</span></a>
+      <a class="k-rail__item" href="exemple.html" aria-label="Campaigns"><k-icon name="megaphone"></k-icon><span class="k-rail__label">Campaigns</span></a>
+      <a class="k-rail__item" href="agent.html" aria-label="AI Agent"><k-icon name="sparkles"></k-icon><span class="k-rail__label">AI Agent</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="contacts.html" aria-label="Contacts"><k-icon name="users"></k-icon><span class="k-rail__label">Contacts</span></a>
+      <a class="k-rail__item" href="listes.html" aria-label="Lists &amp; segments"><k-icon name="queue-list"></k-icon><span class="k-rail__label">Lists &amp; segments</span></a>
+      <a class="k-rail__item" href="liens.html" aria-current="page" aria-label="Magic links"><k-icon name="link"></k-icon><span class="k-rail__label">Magic links</span></a>
+    </div>
+    <div class="k-rail__end">
+      <button type="button" class="k-rail__item" aria-label="Qualité du numéro : élevée. 4 812 messages sur 100 000 en 24 h" aria-haspopup="dialog" data-k-open="mod-qualite"><span class="k-ring" data-quality="high"></span><span class="k-rail__label">Quality</span><span class="k-rail__meta" data-quality="high" data-rail-qualite>High</span></button>
+      <a class="k-rail__item" href="reglages.html" aria-label="Settings"><k-icon name="cog-6-tooth"></k-icon><span class="k-rail__label">Settings</span></a>
+      <a class="k-rail__item" href="avis.html" aria-label="Claim my 20 €"><k-icon name="gift"></k-icon><span class="k-rail__label">Claim my 20 €</span></a>
+      <button type="button" class="k-rail__item" aria-label="Menu du compte : Camille Roux, Maison Lumen" aria-haspopup="menu" data-k-menu="menu-compte" data-k-placement="right-end"><span class="k-avatar k-avatar--blue">CR<span class="k-avatar__status"></span></span><span class="k-rail__label">Camille Roux</span></button>
+    </div>
+  </nav>
+
+  <main class="k-main">
+    <div class="k-main__scroll">
+      <div class="k-page">
+        <!-- [K1] -->
+        <header class="k-page__header">
+          <div>
+            <h1 class="k-page__title">Liens magiques</h1>
+            <p class="k-page__subtitle">Un lien court qui ouvre WhatsApp avec un message déjà écrit. Le client n'a plus qu'à l'envoyer.</p>
+          </div>
+          <div class="k-page__actions">
+            <button type="button" class="k-button k-button--primary" data-lk-creer><k-icon name="plus"></k-icon>Créer un lien</button>
+          </div>
+        </header>
+
+        <!-- [K2] -->
+        <section class="k-section" aria-label="Comment ça marche">
+          <div class="k-grid">
+            <div class="k-card k-card--muted"><div class="k-table__who"><span class="k-timeline__icon"><k-icon name="link"></k-icon></span><div><div class="k-card__title">Vous publiez le lien</div><p class="k-card__desc">Dans votre bio, sur un colis en QR code, dans un e-mail ou une publicité.</p></div></div></div>
+            <div class="k-card k-card--muted"><div class="k-table__who"><span class="k-timeline__icon"><k-icon name="chat-bubble-left"></k-icon></span><div><div class="k-card__title">Le client arrive dans WhatsApp</div><p class="k-card__desc">Le message est déjà écrit. Il n'a plus qu'à appuyer sur Envoyer.</p></div></div></div>
+            <div class="k-card k-card--muted"><div class="k-table__who"><span class="k-timeline__icon"><k-icon name="bolt"></k-icon></span><div><div class="k-card__title">Une automatisation lui répond</div><p class="k-card__desc">Celle dont le mot-clé est dans le message. Le contact est abonné.</p></div></div></div>
+          </div>
+          <div class="k-kpis k-kpis--4">
+            <div class="k-kpis__item"><span class="k-kpis__label">Liens actifs</span><span class="k-kpis__value"><span data-lk-actifs>4</span><span class="k-delta" data-lk-actifs-detail>sur 5</span></span></div>
+            <div class="k-kpis__item"><span class="k-kpis__label">Clics, 30 jours</span><span class="k-kpis__value"><span data-lk-clics30>3 180</span><span class="k-delta k-delta--up"><k-icon name="arrow-up-right" set="micro"></k-icon>12 %</span></span></div>
+            <div class="k-kpis__item"><span class="k-kpis__label">Clics au total</span><span class="k-kpis__value"><span data-lk-clics>18 460</span><span class="k-delta">depuis février 2026</span></span></div>
+            <div class="k-kpis__item"><span class="k-kpis__label">Liens sans réponse</span><span class="k-kpis__value"><span data-lk-sans>2</span><span class="k-delta" data-k-tooltip="Actifs, mais aucune automatisation active ne répond à leur message">à vérifier</span></span></div>
+          </div>
+        </section>
+
+        <section class="k-section" aria-label="Vos liens">
+          <!-- [K3] -->
+          <div class="k-section__header">
+            <div class="k-segmented" role="tablist" aria-label="État" data-lk-statuts>
+              <span class="k-segmented__thumb"></span>
+              <button type="button" class="k-segmented__item" role="tab" aria-selected="true" data-statut="tous">Tous <span class="k-segmented__count" data-lk-n="tous"></span></button>
+              <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-statut="actifs">Actifs <span class="k-segmented__count" data-lk-n="actifs"></span></button>
+              <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-statut="inactifs">Désactivés <span class="k-segmented__count" data-lk-n="inactifs"></span></button>
+            </div>
+            <div class="k-page__actions">
+              <div class="k-input-group" style="width:260px"><k-icon name="magnifying-glass"></k-icon><input class="k-input" type="search" id="lk-recherche" placeholder="Nom, lien ou message" aria-label="Chercher un lien" data-lk-recherche autocomplete="off"></div>
+            </div>
+          </div>
+          <!-- [K4] [K6] Le nom de chaque ligne mène à lien.html?id=… -->
+          <div class="k-table-wrap">
+            <div class="k-table-wrap__scroll">
+              <table class="k-table">
+                <thead><tr><th style="width:26%">Lien</th><th>Message déjà écrit</th><th>Ce qu'il déclenche</th><th class="k-table__num">Clics</th><th class="k-table__num">30 jours</th><th class="k-table__actions"><span class="k-sr-only">Copier, actif</span></th></tr></thead>
+                <tbody data-lk-lignes></tbody>
+              </table>
+            </div>
+            <div class="k-table-footer"><span data-lk-pied></span></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- [K8] Créer un lien : une fois validé, on arrive sur sa page (lien.html) -->
+<dialog class="k-modal" id="lk-modale" aria-labelledby="lk-modale-t">
+  <form data-lk-form novalidate>
+    <header class="k-modal__header">
+      <div><h2 class="k-modal__title" id="lk-modale-t">Créer un lien magique</h2><p class="k-modal__desc">Kanal crée le lien court. Vous écrivez le message que le client enverra.</p></div>
+      <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+    </header>
+    <div class="k-modal__body">
+      <div class="k-grid k-grid--2">
+        <div class="k-stack">
+          <div class="k-field"><label class="k-field__label" for="lk-nom">Nom</label><input class="k-input" id="lk-nom" type="text" placeholder="Bio Instagram" autocomplete="off" data-lk-form-nom><span class="k-field__hint">Pour vous y retrouver. Le client ne le voit pas.</span></div>
+          <div class="k-field"><label class="k-field__label" for="lk-message">Message déjà écrit</label><textarea class="k-textarea" id="lk-message" rows="4" maxlength="2048" placeholder="Bonjour ! Je voudrais mes 10 % de BIENVENUE" data-lk-form-message></textarea><span class="k-field__hint" data-lk-form-compte></span></div>
+        </div>
+        <div class="k-stack">
+          <div class="k-wa" style="width:100%"><div class="k-wa__bubble k-wa__bubble--out"><div class="k-wa__body" data-lk-form-apercu></div></div></div>
+          <div data-lk-form-suite></div>
+        </div>
+      </div>
+    </div>
+    <footer class="k-modal__footer"><button type="button" class="k-button k-button--ghost" data-k-close>Annuler</button><button type="submit" class="k-button k-button--primary" data-lk-form-valider disabled>Créer le lien</button></footer>
+  </form>
+</dialog>
+
+<!-- Modale et menu de la barre de navigation : les mêmes sur toutes les pages -->
+<!-- Qualité du numéro et limite d'envoi de Meta : la même modale sur toutes les pages. Elle s'ouvre depuis « Quality », dans la barre -->
+<dialog class="k-modal k-modal--sm" id="mod-qualite" aria-labelledby="mod-qualite-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="mod-qualite-t">Qualité du numéro</h2></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+    <!-- Le niveau, en grand : un anneau, un mot, une phrase -->
+    <div class="k-stack" style="align-items:center;gap:var(--k-space-3);text-align:center">
+      <span class="k-gauge" aria-hidden="true"><span class="k-ring k-ring--lg" data-quality="high"></span><k-icon name="check"></k-icon></span>
+      <div><div class="k-modal__title" data-q-niveau>Élevée</div><p style="margin-top:var(--k-space-1);color:var(--k-ink-2)" data-q-texte>Vos clients lisent vos messages et les signalent peu. Continuez ainsi.</p></div>
+    </div>
+    <ol class="k-scale" aria-label="Les trois niveaux de qualité"><li class="k-scale__step" data-tone="danger">Basse</li><li class="k-scale__step" data-tone="warning" style="text-align:center">Moyenne</li><li class="k-scale__step" data-tone="success" aria-current="true" style="text-align:end">Élevée</li></ol>
+    <!-- Les envois du jour : une ligne, une jauge, une phrase -->
+    <div class="k-inset">
+      <div class="k-inset__row"><span class="k-inset__label">Envois sur 24 h</span><span class="k-inset__value"><b data-q-envoyes>4 812</b> sur <span data-q-limite>100 000</span></span></div>
+      <div class="k-progress k-progress--ink" role="progressbar" aria-label="Part de la limite d'envoi utilisée sur 24 heures" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="--k-value:0.05" data-q-jauge><span></span></div>
+      <p class="k-inset__hint" data-q-suite>Cette limite augmente toute seule à mesure que vous envoyez.</p>
+    </div>
+  </div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--primary" data-k-close>Compris</button></footer>
+</dialog>
+<div class="k-menu" id="menu-compte" popover role="menu">
+  <div class="k-menu__label">Maison Lumen · Scale plan</div>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#general"><k-icon name="user"></k-icon><span class="k-menu__text">Mon profil</span></a>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#facturation"><k-icon name="credit-card"></k-icon><span class="k-menu__text">Facturation</span></a>
+  <a class="k-menu__item" role="menuitem" href="forfaits.html"><k-icon name="star"></k-icon><span class="k-menu__text">Changer de forfait</span></a>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Passer à Kanal iMessage</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="arrow-left"></k-icon><span class="k-menu__text">Se déconnecter</span></button>
+</div>
+<script src="assets/courbe.js?v=20261117-19"></script>
+<script src="assets/liens.js?v=20261117-19"></script>
+<div id="k-fin" hidden></div>
+</body>
+</html>

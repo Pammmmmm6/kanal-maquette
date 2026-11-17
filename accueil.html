@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La maquette est publiée pour Kite (GitHub Pages) : elle ne doit pas être référencée -->
+<meta name="robots" content="noindex, nofollow">
+<title>Accueil · Kanal</title>
+<!--
+  NOTES D'INTÉGRATION — Accueil, dans le design system Kanal
+
+  Le même accueil que kanal/dashboard.html (compte neuf, mise en route par le MCP) et
+  kanal/dashboard-compte-actif.html (compte actif), réunis en une page et refaits avec les composants du
+  design system. Les règles de INTEGRATION.md §5 s'appliquent toujours ; les repères [A1] à [A9] sont repris.
+  Aucun style propre à cette page. Script : assets/accueil.js. Textes en français, comme les autres écrans
+  du design system (la maquette d'origine était en anglais).
+
+  TROIS ÉTATS, selon deux signaux : un agent IA est connecté au MCP Kanal, puis le compte est configuré.
+    1  Aucun agent connecté   : bannière [A5] bloquée (un clic secoue l'encart [A7]), encart [A7], cartes [A8].
+    2  Agent connecté         : bannière [A5] qui ouvre la modale [A6] ; les blocs « Top » remplacent les cartes,
+                                vides tant que rien n'a tourné.
+    3  Compte configuré, actif : plus de bannière ; chiffres, tops et dernières commandes.
+  Le signal « agent connecté » existe déjà dans l'app. Le signal « compte configuré » reste À DÉFINIR.
+  [A0] Les trois petites icônes dans le coin en haut à droite de l'îlot changent d'état pour la démonstration
+       (sans agent IA, agent connecté, compte actif). Presque invisibles au repos : NE PAS LES PORTER.
+
+  [A1] Bandeau de chiffres (.k-kpis) : chiffre d'affaires, ROAS, taux de conversion, commandes, messages, contacts,
+       sur 30 jours. Les variations n'apparaissent que sur un compte actif. La pastille verte sans signification
+       de la maquette d'origine n'est pas reprise.
+  [A2] « Suggérer une idée » : l'ampoule seule, dans un bouton rond à fond gris, avec son nom en infobulle au
+       survol. Au clic, elle ouvre un panneau (résumé d'au moins 4 caractères pour envoyer, détails,
+       capture, notification de suivi cochée, zone, priorité). Aucun stockage des idées n'existe : à créer.
+  [A3] Salutation selon l'heure (seuils déjà programmés dans l'app : les garder) et accroche selon l'état.
+  [A4] Les actions de l'en-tête, dans cet ordre : l'ampoule « Suggérer une idée » [A2], « Parrainer un ami »
+       [A13] en bouton secondaire, « Créer avec Claude » [A14] sur un compte configuré, puis « Parler à un expert », bouton principal (lien déjà existant dans
+       l'app : ne pas y toucher). « Créer une campagne » et « Ouvrir
+       l'inbox » ont été retirés de l'accueil le 16/11/2026 : ces deux pages sont dans la barre de navigation.
+  [A5] Bannière d'appel (.k-hero). Toute la bannière est cliquable.
+  [A6] Modale de mise en route, 3 étapes : choix des automatisations (9, 3 cochées), options (4 interrupteurs),
+       prompt à copier (« Copier le prompt », « Ouvrir Claude » vers https://claude.ai/new).
+       Le prompt affiché est un texte fixe (assets/accueil-prompt.js). Dans l'app il sera généré par l'IA de
+       Kanal à partir des choix : mode de génération À DÉFINIR avec Erevan.
+  [A7] Encart « Connectez d'abord un agent IA » : état 1 seulement, sous la bannière.
+  [A8] Cartes Claude / ChatGPT / Codex (.k-connect) : ouvrent la modale de connexion (adresse du serveur MCP
+       https://api.getkanal.com/mcp et marche à suivre par client). L'adresse du plugin ChatGPT est provisoire :
+       reprendre celle de Réglages › API et webhooks.
+  [A9] Bouton flottant (.k-fab) : ouvre le widget de support déjà présent dans l'app.
+  [A10] Tops de la période et dernières commandes attribuées : mêmes sources que l'accueil actuel.
+  [A11] Graphique des chiffres : l'icône en haut à droite du bandeau ouvre, sous la rangée et dans la même carte,
+        la courbe par jour du chiffre choisi. Cliquer une case choisit ce chiffre (et ouvre le graphique s'il est
+        fermé) ; la case choisie porte aria-pressed="true". Au survol de la courbe : un repère et la valeur du jour.
+        Ici la courbe est tracée par accueil.js à partir de données fixes ; dans l'app, prendre la bibliothèque
+        de graphiques en place et lui appliquer les règles de la page « Données ».
+        Fermé par défaut ; retenir le choix de chaque utilisateur. Compte neuf : état vide à la place de la courbe.
+        Le total des contacts a un axe qui ne part pas de zéro ; son aire en dégradé descend au bas de l'échelle.
+
+  Chiffres de démo cohérents avec les autres écrans : 27 940 € de campagnes + 15 430 € d'automatisations
+  + 1 250 € de l'agent IA = 44 620 €. Données : boutique Maison Lumen, utilisatrice Camille Roux.
+        La courbe est lissée sans dépassement (interpolation monotone) : arrondie, mais elle passe par chaque jour
+        et ne descend jamais sous zéro.
+  [A12] Période : un seul sélecteur, au-dessus du bandeau, pour toute la page. Il pilote les chiffres [A1] et leurs
+        écarts, la courbe [A11] et les deux tops [A10] ; les dernières commandes n'en dépendent pas. Par défaut,
+        30 derniers jours. Choix : 7, 30 ou 90 derniers jours, ce mois-ci, le mois dernier, ou deux dates (champs
+        natifs, bornés à aujourd'hui ; « Appliquer » reste éteint tant que la fin précède le début).
+        L'écart d'un chiffre compare à la période précédente de même durée ; sans période précédente, pas d'écart.
+        Top campagnes : celles dont du chiffre d'affaires tombe dans la période, les trois premières ; aucune,
+        une ligne le dit. À faire dans l'app : retenir la période de chaque utilisateur, et demander à l'API les
+        chiffres, la série par jour et les tops de la période. Les données de accueil.js sont fictives.
+  [A14] « Créer avec Claude » : bouton secondaire, le logo de Claude à gauche du texte, entre « Parrainer un ami » et
+        « Parler à un expert ». Il n'existe que sur un compte configuré (état 3) et ouvre Claude dans un nouvel onglet
+        (https://claude.ai/new), où le connecteur Kanal crée campagnes et automatisations. Le compte actif n'a plus
+        d'accroche sous la salutation (la phrase « Depuis votre dernière visite… » est retirée).
+  [A13] Parrainer un ami : ouvre une modale avec le lien de parrainage (à copier) et une invitation par e-mail
+        (« Envoyer » reste éteint tant que l'adresse n'est pas valide ; un toast confirme l'envoi). Rien de tout
+        cela n'existe côté serveur : le lien, l'envoi et le suivi des parrainages sont à créer.
+        À CONFIRMER avec Erevan avant de porter : la récompense (« 50 € de crédit de messages chacun » est un
+        exemple posé pour la maquette) et le format du lien.
+-->
+<link rel="icon" href="assets/img/logo-kanal-min-black.svg">
+<!-- La première image attend la fin du document (#k-fin) : la page arrive complète, y compris dans une transition -->
+<link rel="expect" href="#k-fin" blocking="render">
+<link rel="stylesheet" href="assets/jetons.css?v=20261117-19">
+<link rel="stylesheet" href="assets/composants.css?v=20261117-19">
+<script src="assets/composants.js?v=20261117-19"></script>
+<script src="assets/accueil-prompt.js?v=20261117-19" defer></script>
+<script src="assets/accueil.js?v=20261117-19" defer></script>
+</head>
+<body class="k-app">
+<script src="assets/icones.js?v=20261117-19"></script>
+
+<!-- Bandeau d'annonce : le logo de la barre le montre et le cache (data-k-announce-toggle) -->
+<div class="k-announce" role="region" aria-label="Nouveauté">
+  <span class="k-announce__tag">Nouveau</span>
+  <span class="k-announce__text"><b>Kanal se pilote depuis Claude.</b> Créez vos campagnes et vos automatisations en une phrase : inclus dans Scale et Business.</span>
+  <a class="k-announce__link" href="forfaits.html">Voir les forfaits<k-icon name="arrow-right" set="micro"></k-icon></a>
+  <button type="button" class="k-announce__close" aria-label="Masquer l'annonce" data-k-announce-toggle><k-icon name="x-mark" set="micro"></k-icon></button>
+</div>
+<div class="k-shell">
+  <nav class="k-rail" aria-label="Navigation">
+    <div class="k-rail__head">
+      <button type="button" class="k-rail__logo" aria-label="Kanal : montrer ou masquer l'annonce" data-k-announce-toggle><img src="assets/img/logo-kanal-min-white.svg" alt=""></button>
+      <button type="button" class="k-rail__pin" aria-pressed="false" aria-label="Épingler la navigation" data-k-rail-pin data-k-tooltip="Épingler la navigation" data-k-tooltip-side="bottom"><k-icon name="pin"></k-icon></button>
+    </div>
+    <div class="k-rail__main">
+      <a class="k-rail__item" href="accueil.html" aria-current="page" aria-label="Home"><k-icon name="home"></k-icon><span class="k-rail__label">Home</span></a>
+      <a class="k-rail__item" href="inbox.html" aria-label="Inbox, 3 conversations à traiter"><k-icon name="inbox"></k-icon><span class="k-rail__label">Inbox</span><span class="k-count k-count--danger k-rail__count">3</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="automatisations.html" aria-label="Automations"><k-icon name="bolt"></k-icon><span class="k-rail__label">Automations</span></a>
+      <a class="k-rail__item" href="exemple.html" aria-label="Campaigns"><k-icon name="megaphone"></k-icon><span class="k-rail__label">Campaigns</span></a>
+      <a class="k-rail__item" href="agent.html" aria-label="AI Agent"><k-icon name="sparkles"></k-icon><span class="k-rail__label">AI Agent</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="contacts.html" aria-label="Contacts"><k-icon name="users"></k-icon><span class="k-rail__label">Contacts</span></a>
+      <a class="k-rail__item" href="listes.html" aria-label="Lists &amp; segments"><k-icon name="queue-list"></k-icon><span class="k-rail__label">Lists &amp; segments</span></a>
+      <a class="k-rail__item" href="liens.html" aria-label="Magic links"><k-icon name="link"></k-icon><span class="k-rail__label">Magic links</span></a>
+    </div>
+    <div class="k-rail__end">
+      <button type="button" class="k-rail__item" aria-label="Qualité du numéro : élevée. 4 812 messages sur 100 000 en 24 h" aria-haspopup="dialog" data-k-open="mod-qualite"><span class="k-ring" data-quality="high"></span><span class="k-rail__label">Quality</span><span class="k-rail__meta" data-quality="high" data-rail-qualite>High</span></button>
+      <a class="k-rail__item" href="reglages.html" aria-label="Settings"><k-icon name="cog-6-tooth"></k-icon><span class="k-rail__label">Settings</span></a>
+      <a class="k-rail__item" href="avis.html" aria-label="Claim my 20 €"><k-icon name="gift"></k-icon><span class="k-rail__label">Claim my 20 €</span></a>
+      <button type="button" class="k-rail__item" aria-label="Menu du compte : Camille Roux, Maison Lumen" aria-haspopup="menu" data-k-menu="menu-compte" data-k-placement="right-end"><span class="k-avatar k-avatar--blue">CR<span class="k-avatar__status"></span></span><span class="k-rail__label">Camille Roux</span></button>
+    </div>
+  </nav>
+
+  <main class="k-main">
+    <div class="k-main__scroll">
+      <div class="k-page" data-ac-page data-etat="3">
+
+        <!-- [A3] [A4] -->
+        <header class="k-page__header">
+          <div>
+            <h1 class="k-page__title" data-ac-salut>Bonjour, Camille</h1>
+            <p class="k-page__subtitle" data-ac-accroche></p>
+          </div>
+          <div class="k-page__actions">
+            <!-- [A2] -->
+            <button type="button" class="k-button k-button--secondary k-button--icon" aria-label="Suggérer une idée" aria-haspopup="dialog" data-k-menu="ac-idee" data-k-placement="bottom-end" data-k-tooltip="Suggérer une idée" data-k-tooltip-side="bottom"><k-icon name="light-bulb"></k-icon></button>
+            <!-- [A13] -->
+            <button type="button" class="k-button k-button--secondary" data-k-open="ac-parrainage"><k-icon name="user-plus"></k-icon>Parrainer un ami</button>
+            <!-- [A14] compte configuré : créer une campagne ou une automatisation depuis Claude -->
+            <a class="k-button k-button--secondary" href="https://claude.ai/new" target="_blank" rel="noopener" data-ac-etat="3"><img src="assets/img/claude.svg" alt="">Créer avec Claude</a>
+            <!-- [A4] -->
+            <a class="k-button k-button--primary" href="#">Parler à un expert</a>
+          </div>
+        </header>
+
+        <!-- [A1] -->
+        <section class="k-section" aria-label="Chiffres, 30 derniers jours" data-ac-chiffres>
+          <!-- [A12] La période de toute la page -->
+          <div class="k-period">
+            <button type="button" class="k-button k-button--outline k-button--sm" aria-haspopup="menu" data-k-menu="ac-periode" data-k-placement="bottom-start"><k-icon name="calendar"></k-icon><span data-ac-periode-nom>30 derniers jours</span><k-icon name="chevron-down" set="micro"></k-icon></button>
+            <span class="k-period__dates" data-ac-periode-dates><span data-ac-periode-plage>17 oct. – 16 nov. 2026</span></span>
+          </div>
+          <div class="k-kpis" data-ac-kpis>
+            <button type="button" class="k-kpis__item" aria-pressed="false" data-ac-serie="ca"><span class="k-kpis__label">Chiffre d'affaires</span><span class="k-kpis__value"><span data-ac-kpi="ca"></span><span data-ac-delta hidden></span></span></button>
+            <button type="button" class="k-kpis__item" aria-pressed="false" data-ac-serie="roas"><span class="k-kpis__label">ROAS</span><span class="k-kpis__value"><span data-ac-kpi="roas"></span><span data-ac-delta hidden></span></span></button>
+            <button type="button" class="k-kpis__item" aria-pressed="false" data-ac-serie="conversion"><span class="k-kpis__label">Taux de conversion</span><span class="k-kpis__value"><span data-ac-kpi="conversion"></span><span data-ac-delta hidden></span></span></button>
+            <button type="button" class="k-kpis__item" aria-pressed="false" data-ac-serie="commandes"><span class="k-kpis__label">Commandes</span><span class="k-kpis__value"><span data-ac-kpi="commandes"></span><span data-ac-delta hidden></span></span></button>
+            <button type="button" class="k-kpis__item" aria-pressed="false" data-ac-serie="messages"><span class="k-kpis__label">Messages</span><span class="k-kpis__value"><span data-ac-kpi="messages"></span><span data-ac-delta hidden></span></span></button>
+            <button type="button" class="k-kpis__item" aria-pressed="false" data-ac-serie="contacts"><span class="k-kpis__label">Contacts</span><span class="k-kpis__value"><span data-ac-kpi="contacts"></span></span></button>
+            <!-- [A11] Le graphique du chiffre choisi -->
+            <div class="k-kpis__panel" id="ac-graphique" data-ac-graphique hidden>
+              <div class="k-kpis__panel-head"><span class="k-kpis__panel-title" data-ac-graphique-titre></span><span class="k-kpis__panel-meta" data-ac-periode-plage>17 oct. – 16 nov. 2026</span></div>
+              <div class="k-chart" data-ac-trace></div>
+              <div class="k-empty" data-ac-graphique-vide hidden><p class="k-empty__title">Pas encore de données sur cette période</p><p class="k-empty__desc">La courbe apparaîtra dès vos premiers envois.</p></div>
+            </div>
+            <button type="button" class="k-button k-button--ghost k-button--icon k-button--sm k-kpis__toggle" aria-label="Afficher le graphique" aria-expanded="false" aria-controls="ac-graphique" data-ac-graphique-bouton data-k-tooltip="Afficher le graphique"><k-icon name="chart-bar"></k-icon></button>
+          </div>
+        </section>
+
+        <!-- [A5] [A7] États 1 et 2 -->
+        <section class="k-section" data-ac-etat="1 2" aria-label="Mise en route">
+          <button type="button" class="k-hero" data-ac-banniere>
+            <span><span class="k-hero__title" style="display:block">Configurez votre compte en un clic</span><span class="k-hero__desc" style="display:block">Choisissez vos automatisations, copiez le prompt, collez-le dans Claude : le MCP Kanal construit tout pour vous.</span></span>
+            <span class="k-hero__actions"><span class="k-button k-button--inverse">Configurer mon compte<k-icon name="arrow-right"></k-icon></span></span>
+          </button>
+          <div class="k-banner k-banner--warning" data-ac-etat="1" data-ac-encart>
+            <k-icon name="exclamation-triangle"></k-icon>
+            <div class="k-banner__text"><span class="k-banner__title">Connectez d'abord un agent IA.</span> La mise en route en un clic passe par Claude, ChatGPT ou Codex : c'est lui qui construit vos automatisations. Choisissez-en un ci-dessous.</div>
+          </div>
+        </section>
+
+        <!-- [A8] État 1 -->
+        <section class="k-section" data-ac-etat="1">
+          <div><h2 class="k-section__title">Connecter un agent IA</h2><p class="k-section__desc">Votre agent agit dans Kanal par le serveur MCP : il crée, vous validez.</p></div>
+          <div class="k-grid">
+            <div class="k-connect">
+              <div class="k-connect__head"><span class="k-logo"><img src="assets/img/claude.svg" alt=""></span><div><div class="k-connect__name">Claude</div><div class="k-connect__by">par Anthropic</div></div></div>
+              <p class="k-connect__desc">Demandez à Claude de construire vos flows, vos segments et vos campagnes, puis de les lancer pour vous.</p>
+              <button type="button" class="k-button k-button--outline" data-ac-connecter="Claude">Connecter Claude</button>
+            </div>
+            <div class="k-connect">
+              <div class="k-connect__head"><span class="k-logo"><img src="assets/img/chatgpt.svg" alt=""></span><div><div class="k-connect__name">ChatGPT</div><div class="k-connect__by">par OpenAI</div></div></div>
+              <p class="k-connect__desc">Analysez vos résultats et rédigez vos campagnes depuis ChatGPT, par prompt.</p>
+              <button type="button" class="k-button k-button--outline" data-ac-connecter="ChatGPT">Connecter ChatGPT</button>
+            </div>
+            <div class="k-connect">
+              <div class="k-connect__head"><span class="k-logo"><img src="assets/img/codex.svg" alt=""></span><div><div class="k-connect__name">Codex</div><div class="k-connect__by">par OpenAI</div></div></div>
+              <p class="k-connect__desc">Gérez vos automatisations, vos modèles et vos campagnes depuis Codex, par prompt.</p>
+              <button type="button" class="k-button k-button--outline" data-ac-connecter="Codex">Connecter Codex</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- [A10] État 2 : les tops, encore vides -->
+        <section class="k-section" data-ac-etat="2">
+          <div><h2 class="k-section__title">Top automatisations de la période</h2><p class="k-section__desc" data-ac-periode-plage>17 oct. – 16 nov. 2026</p></div>
+          <div class="k-card"><div class="k-empty" style="padding-block:var(--k-space-8)"><span class="k-empty__icon"><k-icon name="bolt" size="24"></k-icon></span><p class="k-empty__title">Aucune automatisation n'a encore tourné</p><p class="k-empty__desc">Vos trois meilleures automatisations apparaîtront ici dès leurs premiers envois.</p></div></div>
+        </section>
+        <section class="k-section" data-ac-etat="2">
+          <div><h2 class="k-section__title">Top campagnes de la période</h2><p class="k-section__desc" data-ac-periode-plage>17 oct. – 16 nov. 2026</p></div>
+          <div class="k-card"><div class="k-empty" style="padding-block:var(--k-space-8)"><span class="k-empty__icon"><k-icon name="megaphone" size="24"></k-icon></span><p class="k-empty__title">Aucune campagne envoyée</p><p class="k-empty__desc">Une campagne envoie un modèle WhatsApp à une liste de contacts.</p><div class="k-empty__actions"><a class="k-button k-button--secondary" href="exemple.html">Créer une campagne</a></div></div></div>
+        </section>
+
+        <!-- [A10] État 3 : compte actif -->
+        <section class="k-section" data-ac-etat="3">
+          <div class="k-section__header"><div><h2 class="k-section__title">Top automatisations de la période</h2><p class="k-section__desc" data-ac-periode-plage>17 oct. – 16 nov. 2026</p></div><a class="k-button k-button--outline k-button--sm" href="automatisations.html">Tout voir</a></div>
+          <div class="k-table-wrap"><div class="k-table-wrap__scroll"><table class="k-table">
+            <thead><tr><th>Automatisation</th><th>Statut</th><th class="k-table__num">Délivrés</th><th class="k-table__num">Chiffre d'affaires attribué</th><th class="k-table__num">ROAS</th><th class="k-table__num">Évolution</th></tr></thead>
+            <tbody data-ac-top-autos>
+              <tr><td class="k-table__primary">Panier abandonné</td><td><span class="k-badge k-badge--success">Active</span></td><td class="k-table__num">2 140</td><td class="k-table__num"><div>9 860 €</div><div class="k-table__secondary">4,61 € par destinataire</div></td><td class="k-table__num">×18,2</td><td class="k-table__num"><span class="k-delta k-delta--up"><k-icon name="arrow-up-right" set="micro"></k-icon>12 %</span></td></tr>
+              <tr><td class="k-table__primary">Confirmation de commande</td><td><span class="k-badge k-badge--success">Active</span></td><td class="k-table__num">3 020</td><td class="k-table__num"><div>3 120 €</div><div class="k-table__secondary">1,03 € par destinataire</div></td><td class="k-table__num">×9,4</td><td class="k-table__num"><span class="k-delta k-delta--up"><k-icon name="arrow-up-right" set="micro"></k-icon>4 %</span></td></tr>
+              <tr><td class="k-table__primary">Bienvenue aux nouveaux abonnés</td><td><span class="k-badge k-badge--success">Active</span></td><td class="k-table__num">1 180</td><td class="k-table__num"><div>2 040 €</div><div class="k-table__secondary">1,73 € par destinataire</div></td><td class="k-table__num">×7,1</td><td class="k-table__num"><span class="k-delta k-delta--down"><k-icon name="arrow-down-right" set="micro"></k-icon>3 %</span></td></tr>
+              <tr><td class="k-table__primary">Relance d'avis client</td><td><span class="k-badge">Désactivée</span></td><td class="k-table__num">640</td><td class="k-table__num"><div>410 €</div><div class="k-table__secondary">0,64 € par destinataire</div></td><td class="k-table__num">×2,3</td><td class="k-table__num"><span class="k-delta">Stable</span></td></tr>
+            </tbody>
+          </table></div></div>
+        </section>
+        <section class="k-section" data-ac-etat="3">
+          <div class="k-section__header"><div><h2 class="k-section__title">Top campagnes de la période</h2><p class="k-section__desc" data-ac-periode-plage>17 oct. – 16 nov. 2026</p></div><a class="k-button k-button--outline k-button--sm" href="exemple.html">Tout voir</a></div>
+          <div class="k-table-wrap"><div class="k-table-wrap__scroll"><table class="k-table">
+            <thead><tr><th>Campagne</th><th>Statut</th><th class="k-table__num">Délivrés</th><th class="k-table__num">Chiffre d'affaires attribué</th><th class="k-table__num">ROAS</th><th class="k-table__num">Évolution</th></tr></thead>
+            <tbody data-ac-top-campagnes>
+              <tr><td class="k-table__primary">Black Friday, accès anticipé</td><td><span class="k-badge k-badge--success">Envoyée</span></td><td class="k-table__num">13 428</td><td class="k-table__num"><div>21 820 €</div><div class="k-table__secondary">1,62 € par destinataire</div></td><td class="k-table__num">×5,8</td><td class="k-table__num"><span class="k-delta k-delta--up"><k-icon name="arrow-up-right" set="micro"></k-icon>22 %</span></td></tr>
+              <tr><td class="k-table__primary">Retour en stock, bougie Ambre</td><td><span class="k-badge k-badge--orange">En cours</span></td><td class="k-table__num">4 812</td><td class="k-table__num"><div>6 120 €</div><div class="k-table__secondary">1,27 € par destinataire</div></td><td class="k-table__num">×4,1</td><td class="k-table__num"><span class="k-delta k-delta--up"><k-icon name="arrow-up-right" set="micro"></k-icon>8 %</span></td></tr>
+              <tr><td class="k-table__primary">Coffrets de Noël</td><td><span class="k-badge k-badge--violet">Programmée</span></td><td class="k-table__num">0</td><td class="k-table__num">0 €</td><td class="k-table__num">×0</td><td class="k-table__num"><span class="k-delta">À venir</span></td></tr>
+            </tbody>
+          </table></div></div>
+        </section>
+        <section class="k-section" data-ac-etat="3">
+          <div><h2 class="k-section__title">Dernières commandes attribuées</h2><p class="k-section__desc">Une commande est attribuée quand elle suit un clic dans un message, dans les 3 jours.</p></div>
+          <div class="k-table-wrap"><div class="k-table-wrap__scroll"><table class="k-table k-table--compact">
+            <thead><tr><th>Commande</th><th>Origine</th><th>Client</th><th>Date</th><th class="k-table__num">Chiffre d'affaires attribué</th></tr></thead>
+            <tbody>
+              <tr><td class="k-table__primary">n°10482</td><td><span class="k-badge k-badge--accent">Automatisation</span> Panier abandonné</td><td>Léa Martin</td><td>16 nov., 14:32</td><td class="k-table__num">86 €</td></tr>
+              <tr><td class="k-table__primary">n°10481</td><td><span class="k-badge k-badge--orange">Campagne</span> Black Friday, accès anticipé</td><td>Thomas Bernard</td><td>16 nov., 13:10</td><td class="k-table__num">142 €</td></tr>
+              <tr><td class="k-table__primary">n°10479</td><td><span class="k-badge k-badge--violet">Agent IA</span> Lumi</td><td>Inès Robert</td><td>16 nov., 11:48</td><td class="k-table__num">59 €</td></tr>
+              <tr><td class="k-table__primary">n°10477</td><td><span class="k-badge k-badge--accent">Automatisation</span> Confirmation de commande</td><td>Hugo Petit</td><td>16 nov., 10:05</td><td class="k-table__num">118 €</td></tr>
+            </tbody>
+          </table></div></div>
+        </section>
+      </div>
+    </div>
+    <!-- [A0] Bascule de démonstration, discrète, dans le coin : à ne pas porter -->
+    <div class="k-segmented k-segmented--sm k-demo-switch" role="tablist" aria-label="Maquette : état de l'accueil" data-ac-etats>
+      <span class="k-segmented__thumb"></span>
+      <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-etat="1" aria-label="Maquette : sans agent IA" data-k-tooltip="Maquette : sans agent IA" data-k-tooltip-side="bottom"><k-icon name="no-symbol" size="14"></k-icon></button>
+      <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-etat="2" aria-label="Maquette : agent connecté" data-k-tooltip="Maquette : agent connecté" data-k-tooltip-side="bottom"><k-icon name="sparkles" size="14"></k-icon></button>
+      <button type="button" class="k-segmented__item" role="tab" aria-selected="true" data-etat="3" aria-label="Maquette : compte actif" data-k-tooltip="Maquette : compte actif" data-k-tooltip-side="bottom"><k-icon name="chart-bar" size="14"></k-icon></button>
+    </div>
+    <!-- [A9] -->
+    <button type="button" class="k-fab" aria-label="Ouvrir l'aide" data-k-tooltip="Besoin d'aide ?" data-k-tooltip-side="left" data-k-toast="Dans l'app, ce bouton ouvre le widget de support"><k-icon name="chat-bubble-oval-left"></k-icon></button>
+  </main>
+</div>
+
+<!-- [A2] Suggérer une idée -->
+<!-- [A12] Menu de la période : cinq périodes toutes faites, ou deux dates -->
+<div class="k-menu k-menu--wide" id="ac-periode" popover role="menu" aria-label="Période" data-ac-periode-menu>
+  <button type="button" class="k-menu__item" role="menuitemradio" aria-checked="false" data-value="7j"><span class="k-menu__text">7 derniers jours</span><span class="k-menu__end"><k-icon class="k-menu__check" name="check" set="micro"></k-icon></span></button>
+  <button type="button" class="k-menu__item" role="menuitemradio" aria-checked="true" data-value="30j"><span class="k-menu__text">30 derniers jours</span><span class="k-menu__end"><k-icon class="k-menu__check" name="check" set="micro"></k-icon></span></button>
+  <button type="button" class="k-menu__item" role="menuitemradio" aria-checked="false" data-value="90j"><span class="k-menu__text">90 derniers jours</span><span class="k-menu__end"><k-icon class="k-menu__check" name="check" set="micro"></k-icon></span></button>
+  <button type="button" class="k-menu__item" role="menuitemradio" aria-checked="false" data-value="mois"><span class="k-menu__text">Ce mois-ci</span><span class="k-menu__end"><k-icon class="k-menu__check" name="check" set="micro"></k-icon></span></button>
+  <button type="button" class="k-menu__item" role="menuitemradio" aria-checked="false" data-value="mois-1"><span class="k-menu__text">Le mois dernier</span><span class="k-menu__end"><k-icon class="k-menu__check" name="check" set="micro"></k-icon></span></button>
+  <div class="k-menu__sep"></div>
+  <div class="k-menu__label">Période personnalisée</div>
+  <form class="k-menu__form" data-ac-periode-perso>
+    <div class="k-field"><label class="k-field__label" for="ac-du">Du</label><input class="k-input k-input--sm" type="date" id="ac-du" data-ac-du required></div>
+    <div class="k-field"><label class="k-field__label" for="ac-au">Au</label><input class="k-input k-input--sm" type="date" id="ac-au" data-ac-au required></div>
+    <button type="submit" class="k-button k-button--primary k-button--sm">Appliquer</button>
+  </form>
+</div>
+<div class="k-popover" id="ac-idee" popover role="dialog" aria-label="Suggérer une idée" style="width:360px">
+  <form data-ac-idee style="display:flex;flex-direction:column;gap:var(--k-space-3)">
+    <div style="display:flex;align-items:center;justify-content:space-between"><b style="font:var(--k-weight-bold) var(--k-text-title-3)/var(--k-leading-title-3) var(--k-font-display);letter-spacing:var(--k-tracking-title)">Suggérer une idée</b><a class="k-link" href="#" style="font-size:var(--k-text-small)">Voir la feuille de route</a></div>
+    <div class="k-field"><label class="k-field__label" for="ac-idee-resume">Votre idée, en une phrase</label><input class="k-input" id="ac-idee-resume" type="text" placeholder="Pouvoir programmer une note interne" data-ac-idee-resume autocomplete="off"></div>
+    <div class="k-field"><label class="k-field__label" for="ac-idee-details">Détails <span class="k-field__optional">(facultatif)</span></label><textarea class="k-textarea" id="ac-idee-details" rows="3" placeholder="Dans quel cas cela vous aiderait"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--k-space-3)">
+      <div class="k-field"><label class="k-field__label" for="ac-idee-zone">Zone</label><select class="k-select" id="ac-idee-zone"><option>Inbox</option><option>Campagnes</option><option>Automatisations</option><option>Agent IA</option><option>Autre</option></select></div>
+      <div class="k-field"><label class="k-field__label" for="ac-idee-priorite">Pour vous, c'est</label><select class="k-select" id="ac-idee-priorite"><option>Un confort</option><option>Important</option><option>Bloquant</option></select></div>
+    </div>
+    <label class="k-check"><input class="k-checkbox" type="checkbox" checked><span class="k-check__label">Me prévenir quand l'idée avance</span></label>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--k-space-2)"><button type="button" class="k-button k-button--ghost k-button--sm"><k-icon name="photo"></k-icon>Joindre une capture</button><button type="submit" class="k-button k-button--primary k-button--sm" data-ac-idee-envoyer disabled>Envoyer</button></div>
+  </form>
+</div>
+
+<!-- [A6] Mise en route en trois étapes -->
+<dialog class="k-modal k-modal--lg" id="ac-setup" aria-labelledby="ac-setup-t">
+  <header class="k-modal__header">
+    <div>
+      <ol class="k-steps" aria-label="Étapes" style="margin-bottom:var(--k-space-3)">
+        <li class="k-steps__item" data-ac-pas="1" aria-current="step"><span class="k-steps__num">1</span>Automatisations</li>
+        <li class="k-steps__sep" aria-hidden="true"></li>
+        <li class="k-steps__item" data-ac-pas="2"><span class="k-steps__num">2</span>Options</li>
+        <li class="k-steps__sep" aria-hidden="true"></li>
+        <li class="k-steps__item" data-ac-pas="3"><span class="k-steps__num">3</span>Prompt</li>
+      </ol>
+      <h2 class="k-modal__title" id="ac-setup-t">Configurer votre compte</h2>
+      <p class="k-modal__desc" data-ac-setup-desc></p>
+    </div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body">
+    <div class="k-grid" data-ac-etape="1">
+      <label class="k-choice"><input class="k-checkbox" type="checkbox" checked><span><span class="k-check__label">Panier abandonné</span><span class="k-check__hint">Ramène les clients à leur panier.</span></span></label>
+      <label class="k-choice"><input class="k-checkbox" type="checkbox"><span><span class="k-check__label">Retour en stock</span><span class="k-check__hint">Prévient les clients en liste d'attente.</span></span></label>
+      <label class="k-choice"><input class="k-checkbox" type="checkbox"><span><span class="k-check__label">Reconquête</span><span class="k-check__hint">Relance les clients après 60 jours.</span></span></label>
+      <label class="k-choice"><input class="k-checkbox" type="checkbox" checked><span><span class="k-check__label">Confirmation de commande</span><span class="k-check__hint">Confirme chaque commande payée.</span></span></label>
+      <label class="k-choice"><input class="k-checkbox" type="checkbox"><span><span class="k-check__label">Suivi de livraison</span><span class="k-check__hint">Prévient à l'expédition et à la livraison.</span></span></label>
+      <label class="k-choice"><input class="k-checkbox" type="checkbox" checked><span><span class="k-check__label">Série de bienvenue</span><span class="k-check__hint">Accueille les nouveaux abonnés WhatsApp.</span></span></label>
+      <label class="k-choice"><input class="k-checkbox" type="checkbox"><span><span class="k-check__label">Demande d'avis</span><span class="k-check__hint">Demande un avis après la livraison.</span></span></label>
+      <label class="k-choice"><input class="k-checkbox" type="checkbox"><span><span class="k-check__label">Club VIP</span><span class="k-check__hint">Récompense vos meilleurs clients.</span></span></label>
+      <label class="k-choice"><input class="k-checkbox" type="checkbox"><span><span class="k-check__label">Offre après achat</span><span class="k-check__hint">Une offre en un clic après la commande.</span></span></label>
+    </div>
+    <div class="k-settings" data-ac-etape="2" hidden>
+      <label class="k-settings__row" for="ac-opt-ia"><span class="k-settings__text"><span class="k-settings__label">Agent IA</span><span class="k-settings__desc">Répond à vos clients à toute heure sur WhatsApp et récupère des ventes.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="ac-opt-ia" checked></span></label>
+      <label class="k-settings__row" for="ac-opt-popup"><span class="k-settings__text"><span class="k-settings__label">Pop-up d'opt-in</span><span class="k-settings__desc">Collecte des abonnés WhatsApp avec une fenêtre sur votre boutique.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="ac-opt-popup" checked></span></label>
+      <label class="k-settings__row" for="ac-opt-heures"><span class="k-settings__text"><span class="k-settings__label">Heures calmes</span><span class="k-settings__desc">N'envoie les messages marketing qu'entre 9 h et 21 h.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="ac-opt-heures" checked></span></label>
+      <label class="k-settings__row" for="ac-opt-codes"><span class="k-settings__text"><span class="k-settings__label">Codes de réduction</span><span class="k-settings__desc">Crée un code unique pour chaque offre. Vous validez les montants avant.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="ac-opt-codes"></span></label>
+    </div>
+    <div data-ac-etape="3" hidden>
+      <pre class="k-code" data-ac-prompt tabindex="0" aria-label="Prompt à copier"></pre>
+    </div>
+  </div>
+  <footer class="k-modal__footer">
+    <span class="k-modal__note" data-ac-setup-note></span>
+    <button type="button" class="k-button k-button--ghost" data-ac-retour>Annuler</button>
+    <a class="k-button k-button--secondary" href="https://claude.ai/new" target="_blank" rel="noopener" data-ac-ouvrir-claude hidden>Ouvrir Claude<k-icon name="arrow-top-right-on-square"></k-icon></a>
+    <button type="button" class="k-button k-button--primary" data-ac-suivant>Suivant</button>
+  </footer>
+</dialog>
+
+<!-- [A8] Connexion d'un agent -->
+<!-- [A13] Parrainer un ami -->
+<dialog class="k-modal" id="ac-parrainage" aria-labelledby="ac-parrainage-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="ac-parrainage-t">Parrainer un ami</h2><p class="k-modal__desc">Partagez votre lien. Quand votre ami envoie sa première campagne, vous recevez chacun 50 € de crédit de messages.</p></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body" style="display:flex;flex-direction:column;gap:var(--k-space-5)">
+    <div class="k-field"><span class="k-field__label">Votre lien de parrainage</span><div class="k-copyfield"><span class="k-copyfield__value">https://getkanal.com/r/maison-lumen</span><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Copier le lien" data-k-tooltip="Copier" data-k-copy="https://getkanal.com/r/maison-lumen"><k-icon name="document-duplicate"></k-icon></button></div></div>
+    <form class="k-field" data-ac-parrainage novalidate>
+      <label class="k-field__label" for="ac-parrainage-email">Ou invitez-le par e-mail</label>
+      <div style="display:flex;gap:var(--k-space-2)"><input class="k-input" style="flex:1;min-width:0" id="ac-parrainage-email" type="email" placeholder="prenom@boutique.fr" autocomplete="off" data-ac-parrainage-email><button type="submit" class="k-button k-button--secondary" data-ac-parrainage-envoyer disabled>Envoyer</button></div>
+      <span class="k-field__hint">Il reçoit votre lien par e-mail, avec le nom de votre boutique.</span>
+    </form>
+  </div>
+  <footer class="k-modal__footer">
+    <button type="button" class="k-button k-button--ghost" data-k-close>Fermer</button>
+    <button type="button" class="k-button k-button--primary" data-k-copy="https://getkanal.com/r/maison-lumen"><k-icon name="link"></k-icon>Copier le lien</button>
+  </footer>
+</dialog>
+
+<dialog class="k-modal" id="ac-connexion" aria-labelledby="ac-connexion-t">
+  <header class="k-modal__header">
+    <div style="display:flex;align-items:center;gap:var(--k-space-3)"><span class="k-logo"><img src="assets/img/claude.svg" alt="" data-ac-cx-logo></span><div><h2 class="k-modal__title" id="ac-connexion-t" data-ac-cx-titre>Connecter Claude</h2><p class="k-modal__desc" data-ac-cx-note></p></div></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body" style="display:flex;flex-direction:column;gap:var(--k-space-5)">
+    <div class="k-field"><span class="k-field__label">Adresse du serveur MCP</span><div class="k-copyfield"><span class="k-copyfield__value">https://api.getkanal.com/mcp</span><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Copier l'adresse" data-k-tooltip="Copier" data-k-copy="https://api.getkanal.com/mcp"><k-icon name="document-duplicate"></k-icon></button></div></div>
+    <ol class="k-olist" data-ac-cx-etapes></ol>
+  </div>
+  <footer class="k-modal__footer">
+    <button type="button" class="k-button k-button--ghost" data-k-close>Fermer</button>
+    <a class="k-button k-button--primary" href="#" target="_blank" rel="noopener" data-ac-cx-ouvrir>Ouvrir Claude</a>
+  </footer>
+</dialog>
+
+<!-- Modale et menu de la barre de navigation : les mêmes sur toutes les pages -->
+<!-- Qualité du numéro et limite d'envoi de Meta : la même modale sur toutes les pages. Elle s'ouvre depuis « Quality », dans la barre -->
+<dialog class="k-modal k-modal--sm" id="mod-qualite" aria-labelledby="mod-qualite-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="mod-qualite-t">Qualité du numéro</h2></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+    <!-- Le niveau, en grand : un anneau, un mot, une phrase -->
+    <div class="k-stack" style="align-items:center;gap:var(--k-space-3);text-align:center">
+      <span class="k-gauge" aria-hidden="true"><span class="k-ring k-ring--lg" data-quality="high"></span><k-icon name="check"></k-icon></span>
+      <div><div class="k-modal__title" data-q-niveau>Élevée</div><p style="margin-top:var(--k-space-1);color:var(--k-ink-2)" data-q-texte>Vos clients lisent vos messages et les signalent peu. Continuez ainsi.</p></div>
+    </div>
+    <ol class="k-scale" aria-label="Les trois niveaux de qualité"><li class="k-scale__step" data-tone="danger">Basse</li><li class="k-scale__step" data-tone="warning" style="text-align:center">Moyenne</li><li class="k-scale__step" data-tone="success" aria-current="true" style="text-align:end">Élevée</li></ol>
+    <!-- Les envois du jour : une ligne, une jauge, une phrase -->
+    <div class="k-inset">
+      <div class="k-inset__row"><span class="k-inset__label">Envois sur 24 h</span><span class="k-inset__value"><b data-q-envoyes>4 812</b> sur <span data-q-limite>100 000</span></span></div>
+      <div class="k-progress k-progress--ink" role="progressbar" aria-label="Part de la limite d'envoi utilisée sur 24 heures" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="--k-value:0.05" data-q-jauge><span></span></div>
+      <p class="k-inset__hint" data-q-suite>Cette limite augmente toute seule à mesure que vous envoyez.</p>
+    </div>
+  </div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--primary" data-k-close>Compris</button></footer>
+</dialog>
+<div class="k-menu" id="menu-compte" popover role="menu">
+  <div class="k-menu__label">Maison Lumen · Scale plan</div>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#general"><k-icon name="user"></k-icon><span class="k-menu__text">Mon profil</span></a>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#facturation"><k-icon name="credit-card"></k-icon><span class="k-menu__text">Facturation</span></a>
+  <a class="k-menu__item" role="menuitem" href="forfaits.html"><k-icon name="star"></k-icon><span class="k-menu__text">Changer de forfait</span></a>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Passer à Kanal iMessage</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="arrow-left"></k-icon><span class="k-menu__text">Se déconnecter</span></button>
+</div>
+<div id="k-fin" hidden></div>
+</body>
+</html>

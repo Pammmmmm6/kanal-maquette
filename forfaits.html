@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La maquette est publiée pour Kite (GitHub Pages) : elle ne doit pas être référencée -->
+<meta name="robots" content="noindex, nofollow">
+<title>Forfaits · Kanal</title>
+<!--
+  NOTES D'INTÉGRATION — Forfaits (« Plans »), dans le design system Kanal
+
+  La page « Plans » de l'app, refaite avec les composants du design system, d'après une capture de l'app actuelle
+  (en anglais). Textes en français, vouvoiement, comme les autres écrans du design system ; la barre de navigation
+  reste en anglais. Script : assets/forfaits.js. « HYPOTHÈSE », « À CONFIRMER » et « À DÉFINIR » marquent ce que
+  la capture ne tranche pas : ne pas l'inventer, demander à Erevan.
+  Route de la page : celle de la page « Plans » actuelle. On y arrive par le menu du compte : AUCUNE entrée de la
+  barre de navigation ne porte aria-current sur cette page.
+
+  PIÈCES AJOUTÉES AU SYSTÈME pour cette page (elles sont dans composants.css, section 10) :
+    .k-plan         carte de forfait : __head, __top, __name, __desc, __price, __amount, __period, __body, __label,
+                    __foot, __secure ; variante .k-plan--featured (forfait mis en avant)
+    .k-features     liste de fonctions, une coche par ligne : __item, __text ; variante .k-features__item--lost
+                    (ce qu'on perd, précédé d'une croix)
+    .k-logo-stack   pile de petits logos de services tiers
+  Le système n'a pas d'accordéon : la FAQ [F7] est une liste simple, faite avec .k-settings.
+
+  DONNÉES DE DÉMO. Boutique Maison Lumen, utilisatrice Camille Roux. Forfait actuel : Scale, 149 € par mois.
+  Période en cours : du 1er au 30 novembre 2026, prochain prélèvement le 1er décembre 2026 ; nous sommes le
+  16 novembre, il reste 15 jours sur 30. 18 240 messages envoyés sur 25 000 ce mois-ci (73 %). Équipe de
+  3 personnes (reglages.html). Ces chiffres sont ceux de reglages.html, section Facturation : les garder d'accord.
+
+  [F1] En-tête (.k-page__header) : le titre « Forfaits. Simples et flexibles. », seconde moitié en gris
+       (--k-ink-3, sur blanc seulement), et le bouton « Parler à notre équipe ». Ce que le bouton ouvre (prise de
+       rendez-vous, chat, e-mail) : À DÉFINIR ; ici il n'ouvre rien, un toast le dit. Pas de sélecteur
+       mensuel / annuel : l'app n'en a pas.
+  [F2] Les trois cartes (.k-plan dans une .k-grid de trois colonnes, même hauteur, côte à côte dès 1280 px).
+       Nom, phrase, prix par mois, ce qui est compris (.k-features), puis en pied le bouton pleine largeur de
+       44 px et « Paiement sécurisé par Shopify ». Prix et listes repris de la capture :
+         Pro        89 €   « sans engagement » (la capture ne le dit que pour Pro : pour Scale et Business, À CONFIRMER)
+         Scale      149 €  étiquette « Le plus choisi » (Most popular). Multi-marché : +50 € par mois et par marché.
+         Business   350 €  étiquette « Clé en main » (Done for you). Multi-marché sans supplément affiché :
+                           compris ou non, À CONFIRMER.
+       Vocabulaire : « flows » de la capture = « automatisations » dans le design system.
+       La pile de logos de la ligne « Intégrations » (Shopify, Klaviyo, Gorgias, Slack) est posée sur Scale comme
+       dans la capture, et aussi sur Business, pour que deux lignes identiques se ressemblent. Les logos sont
+       ceux de assets/img/ ; la liste réelle des intégrations de chaque forfait : À CONFIRMER.
+  [F3] Le forfait mis en avant (.k-plan--featured, sur Scale). Dans l'app, c'est un contour en dégradé ; ici PAS
+       de dégradé : fond bleu très clair (--k-accent-soft) et filet bleu (--k-accent), le dessin d'un choix coché
+       (.k-choice). La mise en avant suit le forfait « le plus choisi », pas le forfait actuel : elle ne bouge pas
+       quand on change de forfait.
+  [F4] L'état de chaque carte, écrit par le script à partir du forfait actuel (data-fo-plan sur la carte) :
+         forfait actuel        badge « Forfait actuel » à côté du nom, bouton désactivé « ✓ Forfait actuel ».
+                               Le badge est un ajout : le libellé d'un bouton désactivé est trop pâle pour être
+                               la seule marque du forfait actuel.
+         forfait au-dessus     bouton principal « Passer à {forfait} », ouvre la confirmation [F5]
+         forfait en dessous    bouton secondaire « Passer à {forfait} », ouvre la confirmation [F6]
+         changement programmé  bouton désactivé « Prévu le 1er déc. 2026 », et le bandeau [F6] au-dessus des cartes
+       Dans la démo : Pro en dessous, Scale actuel, Business au-dessus.
+  [F5] Passer au forfait supérieur (dialog #fo-monter). Rappelle le prix, les messages compris, le montant à
+       régler aujourd'hui et la suite. PRORATA SIMPLE, HYPOTHÈSE : différence de prix entre les deux forfaits
+       × jours restants ÷ jours de la période, soit (350 − 149) × 15 ÷ 30 = 100,50 €. C'est Shopify qui facture :
+       reprendre le montant qu'il renvoie, ne pas le recalculer. Le bouton « Continuer vers Shopify » envoie, dans
+       l'app, vers la page de validation du paiement de Shopify ; le forfait change au retour, une fois le paiement
+       validé. Ici : pas de redirection, la carte devient « Forfait actuel », un toast le dit, l'usage [F8] et les
+       menus de la barre passent au nouveau forfait. Un changement programmé [F6] est alors abandonné.
+  [F6] Passer au forfait inférieur (dialog #fo-descendre). Dit ce qu'on perd (liste par couple de forfaits, dans
+       le script), et que le changement prend effet à la fin de la période en cours, le 1er déc. 2026 : d'ici là,
+       rien ne change. Après confirmation : un toast avec « Annuler », le bandeau bleu au-dessus des cartes avec
+       « Annuler le changement », et le bouton de la carte devient « Prévu le 1er déc. 2026 ». Le bandeau et le
+       bouton « Prévu » sont une PROPOSITION (la capture ne montre pas cet état).
+       À CONFIRMER : ce que deviennent, à la date d'effet, les membres de l'équipe au-delà du nombre compris, les
+       automatisations au-delà de la limite de Pro (limite inconnue), les segments et les marchés existants.
+  [F7] Questions fréquentes : liste simple (dl dans .k-settings, lignes --stack), le système n'ayant pas
+       d'accordéon. Réponses À VALIDER, elles reprennent les règles de [F5], [F6] et [F8].
+  [F8] Messages (deux .k-stat) : les messages envoyés dans le mois, et la limite d'envoi de Meta. AUCUN FORFAIT NE
+       PLAFONNE LES MESSAGES (dit par Erevan le 17/11/2026) : la seule limite est celle de Meta, par 24 heures
+       (250, 2 000, 10 000, puis 100 000 et sans limite), et elle monte d'elle-même avec l'usage. Le lien ouvre
+       la modale de qualité du numéro, commune à toutes les pages.
+  INCOHÉRENCE CONNUE, à trancher avec Erevan : reglages.html (Facturation) montre une carte Visa et des factures
+  propres à Kanal, alors que la capture dit « Secure payment through Shopify ». Cette page suit la capture.
+  LIENS VERS CETTE PAGE, à poser ailleurs (non faits ici, les autres fichiers n'ont pas été touchés) : le menu
+  du compte, et le bouton « Changer de forfait » de reglages.html (Facturation).
+
+  À BRANCHER CÔTÉ APP : le forfait actuel et la date de fin de période ; les prix et les contenus des forfaits ;
+  l'usage du mois ; la création de l'abonnement Shopify et le retour après validation ; la programmation et
+  l'annulation d'un passage au forfait inférieur.
+  À NE PAS PORTER : les toasts de démonstration, les tableaux PLANS et PERTES du script tels quels (données fictives).
+-->
+<link rel="icon" href="assets/img/logo-kanal-min-black.svg">
+<!-- La première image attend la fin du document (#k-fin) : la page arrive complète, y compris dans une transition -->
+<link rel="expect" href="#k-fin" blocking="render">
+<link rel="stylesheet" href="assets/jetons.css?v=20261117-19">
+<link rel="stylesheet" href="assets/composants.css?v=20261117-19">
+<!-- Pièces en attente d'être versées dans composants.css : .k-plan, .k-features, .k-logo-stack -->
+<script src="assets/composants.js?v=20261117-19"></script>
+</head>
+<body class="k-app">
+<script src="assets/icones.js?v=20261117-19"></script>
+
+<!-- La barre de navigation : aucune page ouverte, on arrive ici par le menu du compte -->
+<!-- Bandeau d'annonce : le logo de la barre le montre et le cache (data-k-announce-toggle) -->
+<div class="k-announce" role="region" aria-label="Nouveauté">
+  <span class="k-announce__tag">Nouveau</span>
+  <span class="k-announce__text"><b>Kanal se pilote depuis Claude.</b> Créez vos campagnes et vos automatisations en une phrase : inclus dans Scale et Business.</span>
+  <a class="k-announce__link" href="forfaits.html">Voir les forfaits<k-icon name="arrow-right" set="micro"></k-icon></a>
+  <button type="button" class="k-announce__close" aria-label="Masquer l'annonce" data-k-announce-toggle><k-icon name="x-mark" set="micro"></k-icon></button>
+</div>
+<div class="k-shell">
+  <nav class="k-rail" aria-label="Navigation">
+    <div class="k-rail__head">
+      <button type="button" class="k-rail__logo" aria-label="Kanal : montrer ou masquer l'annonce" data-k-announce-toggle><img src="assets/img/logo-kanal-min-white.svg" alt=""></button>
+      <button type="button" class="k-rail__pin" aria-pressed="false" aria-label="Épingler la navigation" data-k-rail-pin data-k-tooltip="Épingler la navigation" data-k-tooltip-side="bottom"><k-icon name="pin"></k-icon></button>
+    </div>
+    <div class="k-rail__main">
+      <a class="k-rail__item" href="accueil.html" aria-label="Home"><k-icon name="home"></k-icon><span class="k-rail__label">Home</span></a>
+      <a class="k-rail__item" href="inbox.html" aria-label="Inbox, 3 conversations à traiter"><k-icon name="inbox"></k-icon><span class="k-rail__label">Inbox</span><span class="k-count k-count--danger k-rail__count">3</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="automatisations.html" aria-label="Automations"><k-icon name="bolt"></k-icon><span class="k-rail__label">Automations</span></a>
+      <a class="k-rail__item" href="exemple.html" aria-label="Campaigns"><k-icon name="megaphone"></k-icon><span class="k-rail__label">Campaigns</span></a>
+      <a class="k-rail__item" href="agent.html" aria-label="AI Agent"><k-icon name="sparkles"></k-icon><span class="k-rail__label">AI Agent</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="contacts.html" aria-label="Contacts"><k-icon name="users"></k-icon><span class="k-rail__label">Contacts</span></a>
+      <a class="k-rail__item" href="listes.html" aria-label="Lists &amp; segments"><k-icon name="queue-list"></k-icon><span class="k-rail__label">Lists &amp; segments</span></a>
+      <a class="k-rail__item" href="liens.html" aria-label="Magic links"><k-icon name="link"></k-icon><span class="k-rail__label">Magic links</span></a>
+    </div>
+    <div class="k-rail__end">
+      <button type="button" class="k-rail__item" aria-label="Qualité du numéro : élevée. 4 812 messages sur 100 000 en 24 h" aria-haspopup="dialog" data-k-open="mod-qualite"><span class="k-ring" data-quality="high"></span><span class="k-rail__label">Quality</span><span class="k-rail__meta" data-quality="high" data-rail-qualite>High</span></button>
+      <a class="k-rail__item" href="reglages.html" aria-label="Settings"><k-icon name="cog-6-tooth"></k-icon><span class="k-rail__label">Settings</span></a>
+      <a class="k-rail__item" href="avis.html" aria-label="Claim my 20 €"><k-icon name="gift"></k-icon><span class="k-rail__label">Claim my 20 €</span></a>
+      <button type="button" class="k-rail__item" aria-label="Menu du compte : Camille Roux, Maison Lumen" aria-haspopup="menu" data-k-menu="menu-compte" data-k-placement="right-end"><span class="k-avatar k-avatar--blue">CR<span class="k-avatar__status"></span></span><span class="k-rail__label">Camille Roux</span></button>
+    </div>
+  </nav>
+
+  <main class="k-main">
+    <div class="k-main__scroll">
+      <div class="k-page" data-fo-page>
+
+        <!-- [F1] En-tête -->
+        <header class="k-page__header">
+          <div>
+            <h1 class="k-page__title">Forfaits. <span style="color:var(--k-ink-3)">Simples et flexibles.</span></h1>
+          </div>
+          <div class="k-page__actions">
+            <button type="button" class="k-button k-button--secondary" data-k-toast="Dans l'app, ce bouton ouvre la prise de contact avec l'équipe Kanal"><k-icon name="chat-bubble-left-right"></k-icon>Parler à notre équipe</button>
+          </div>
+        </header>
+
+        <section class="k-section" aria-label="Forfaits">
+
+          <!-- [F6] Bandeau d'un passage au forfait inférieur programmé (PROPOSITION). Écrit par le script. -->
+          <div class="k-banner k-banner--info" data-fo-prevu hidden>
+            <k-icon name="clock"></k-icon>
+            <div class="k-banner__text" data-fo-prevu-texte></div>
+            <div class="k-banner__actions"><button type="button" class="k-button k-button--outline k-button--sm" data-fo-annuler>Annuler le changement</button></div>
+          </div>
+
+          <!-- [F2] Les trois cartes -->
+          <div class="k-grid">
+
+            <!-- Pro : en dessous du forfait actuel -->
+            <article class="k-plan" data-fo-plan="pro" aria-labelledby="fo-pro-t" tabindex="-1">
+              <header class="k-plan__head">
+                <div class="k-plan__top">
+                  <h2 class="k-plan__name" id="fo-pro-t">Pro</h2>
+                  <span class="k-badge k-badge--outline" data-fo-actuel hidden><k-icon name="check" set="micro"></k-icon>Forfait actuel</span>
+                </div>
+                <p class="k-plan__desc">Pour les marques qui démarrent sur WhatsApp.</p>
+              </header>
+              <p class="k-plan__price"><span class="k-plan__amount">89 €</span><span class="k-plan__period">par mois, sans engagement</span></p>
+              <div class="k-plan__body">
+                <h3 class="k-plan__label">Ce qui est compris</h3>
+                <ul class="k-features">
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">1 utilisateur</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Widget de chat et inbox</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Relance de panier abandonné</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Campagnes WhatsApp</span></li>
+                </ul>
+              </div>
+              <footer class="k-plan__foot">
+                <!-- [F4] -->
+                <button type="button" class="k-button k-button--secondary k-button--lg k-button--block" data-fo-choisir>Passer à Pro</button>
+                <p class="k-plan__secure"><k-icon name="lock-closed" set="micro" size="12"></k-icon>Paiement sécurisé par Shopify</p>
+              </footer>
+            </article>
+
+            <!-- [F3] Scale : mis en avant (« Le plus choisi »), et forfait actuel dans la démo -->
+            <article class="k-plan k-plan--featured" data-fo-plan="scale" aria-labelledby="fo-scale-t" tabindex="-1">
+              <header class="k-plan__head">
+                <div class="k-plan__top">
+                  <h2 class="k-plan__name" id="fo-scale-t">Scale</h2>
+                  <span class="k-badge k-badge--outline" data-fo-actuel><k-icon name="check" set="micro"></k-icon>Forfait actuel</span>
+                  <span class="k-badge k-badge--solid">Le plus choisi</span>
+                </div>
+                <p class="k-plan__desc">Pour les marques en croissance qui automatisent davantage.</p>
+              </header>
+              <p class="k-plan__price"><span class="k-plan__amount">149 €</span><span class="k-plan__period">par mois</span></p>
+              <div class="k-plan__body">
+                <h3 class="k-plan__label">Tout ce qu'il y a dans Pro, et :</h3>
+                <ul class="k-features">
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">5 utilisateurs</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Multi-marché, +50 € par mois et par marché</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Segments</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Automatisations illimitées</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Automatisations avancées</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Intégration Klaviyo</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Kanal MCP</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Agent IA</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Intégrations</span><span class="k-logo-stack" role="img" aria-label="Shopify, Klaviyo, Gorgias, Slack"><img src="assets/img/shopify.svg" alt=""><img src="assets/img/klaviyo.png" alt=""><img src="assets/img/gorgias.png" alt=""><img src="assets/img/slack.svg" alt=""></span></li>
+                </ul>
+              </div>
+              <footer class="k-plan__foot">
+                <!-- [F4] -->
+                <button type="button" class="k-button k-button--lg k-button--block" data-fo-choisir disabled><k-icon name="check" set="micro"></k-icon>Forfait actuel</button>
+                <p class="k-plan__secure"><k-icon name="lock-closed" set="micro" size="12"></k-icon>Paiement sécurisé par Shopify</p>
+              </footer>
+            </article>
+
+            <!-- Business : au-dessus du forfait actuel, porte le bouton principal de la page -->
+            <article class="k-plan" data-fo-plan="business" aria-labelledby="fo-business-t" tabindex="-1">
+              <header class="k-plan__head">
+                <div class="k-plan__top">
+                  <h2 class="k-plan__name" id="fo-business-t">Business</h2>
+                  <span class="k-badge k-badge--outline" data-fo-actuel hidden><k-icon name="check" set="micro"></k-icon>Forfait actuel</span>
+                  <span class="k-badge k-badge--solid k-badge--neutral">Clé en main</span>
+                </div>
+                <p class="k-plan__desc">Clé en main : nos experts pilotent vos automatisations.</p>
+              </header>
+              <p class="k-plan__price"><span class="k-plan__amount">350 €</span><span class="k-plan__period">par mois</span></p>
+              <div class="k-plan__body">
+                <h3 class="k-plan__label">Tout ce qu'il y a dans Scale, et :</h3>
+                <ul class="k-features">
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Utilisateurs illimités</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Multi-marché</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Mise en place de vos automatisations par nos experts</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Optimisation continue</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Campagnes à la demande</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Kanal MCP</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Agent IA</span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Intégrations</span><span class="k-logo-stack" role="img" aria-label="Shopify, Klaviyo, Gorgias, Slack"><img src="assets/img/shopify.svg" alt=""><img src="assets/img/klaviyo.png" alt=""><img src="assets/img/gorgias.png" alt=""><img src="assets/img/slack.svg" alt=""></span></li>
+                  <li class="k-features__item"><k-icon name="check" set="micro"></k-icon><span class="k-features__text">Chargé de compte dédié</span></li>
+                </ul>
+              </div>
+              <footer class="k-plan__foot">
+                <!-- [F4] -->
+                <button type="button" class="k-button k-button--primary k-button--lg k-button--block" data-fo-choisir>Passer à Business</button>
+                <p class="k-plan__secure"><k-icon name="lock-closed" set="micro" size="12"></k-icon>Paiement sécurisé par Shopify</p>
+              </footer>
+            </article>
+
+          </div>
+        </section>
+
+        <!-- [F8] Messages : aucun quota dans les forfaits. La seule limite est celle de Meta -->
+        <section class="k-section" aria-labelledby="fo-usage-t">
+          <div class="k-section__header">
+            <div>
+              <h2 class="k-section__title" id="fo-usage-t">Vos messages</h2>
+              <p class="k-section__desc">Aucun forfait ne plafonne vos envois : Pro, Scale et Business envoient autant de messages que vous voulez.</p>
+            </div>
+            <a class="k-button k-button--ghost k-button--sm" href="reglages.html#facturation">Voir la facturation<k-icon name="arrow-right" set="micro"></k-icon></a>
+          </div>
+          <div class="k-grid k-grid--2">
+            <div class="k-stat">
+              <div class="k-stat__label">Messages envoyés en novembre</div>
+              <div class="k-stat__value k-tabular">18 240</div>
+              <div class="k-stat__meta"><span>Sans limite côté Kanal, quel que soit le forfait.</span></div>
+            </div>
+            <div class="k-stat">
+              <div class="k-stat__label">Limite fixée par Meta</div>
+              <div class="k-stat__value k-tabular">100 000<span class="k-stat__unit">contacts par 24 h</span></div>
+              <div class="k-stat__meta"><span>Quatrième palier sur cinq. Meta débloque le suivant de lui-même. <button type="button" class="k-link" data-k-open="mod-qualite">Voir la qualité du numéro</button></span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- [F7] Questions fréquentes : liste simple, le système n'a pas d'accordéon -->
+        <section class="k-section" aria-labelledby="fo-faq-t">
+          <div><h2 class="k-section__title" id="fo-faq-t">Questions fréquentes</h2></div>
+          <dl class="k-settings">
+            <div class="k-settings__row k-settings__row--stack">
+              <dt class="k-settings__label">Puis-je changer de forfait à tout moment ?</dt>
+              <dd class="k-settings__desc">Oui. Un passage au forfait supérieur est actif tout de suite : vous ne réglez que la différence pour les jours qui restent dans le mois. Un passage au forfait inférieur prend effet à la fin de la période en cours, et vous gardez tout jusque-là.</dd>
+            </div>
+            <div class="k-settings__row k-settings__row--stack">
+              <dt class="k-settings__label">Y a-t-il une limite de messages ?</dt>
+              <dd class="k-settings__desc">Pas chez Kanal : aucun forfait ne plafonne vos envois. La seule limite est celle de Meta, par 24 heures : 250 contacts au départ, puis 2 000, 10 000, 100 000, et enfin sans limite. Elle monte d'elle-même quand vous envoyez régulièrement, avec une bonne qualité.</dd>
+            </div>
+            <div class="k-settings__row k-settings__row--stack">
+              <dt class="k-settings__label">Comment se passe le paiement ?</dt>
+              <dd class="k-settings__desc">Par Shopify : vous validez le forfait dans votre admin Shopify, qui sécurise le paiement. Le détail de vos factures est dans <a class="k-link" href="reglages.html#facturation">Réglages, Facturation</a>.</dd>
+            </div>
+            <div class="k-settings__row k-settings__row--stack">
+              <dt class="k-settings__label">Que fait l'équipe Kanal avec le forfait Business ?</dt>
+              <dd class="k-settings__desc">Nos experts mettent en place vos automatisations, les optimisent en continu et préparent vos campagnes à la demande. Un chargé de compte dédié suit votre boutique.</dd>
+            </div>
+          </dl>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- [F5] Passer au forfait supérieur : le titre, les quatre lignes et la note sont écrits par le script. Prorata : HYPOTHÈSE -->
+<dialog class="k-modal k-modal--sm" id="fo-monter" aria-labelledby="fo-monter-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="fo-monter-t" data-fo-m="titre">Passer à Business</h2><p class="k-modal__desc">Le nouveau forfait est actif dès que le paiement est validé.</p></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body">
+    <div class="k-stack">
+      <dl class="k-details k-details--wrap k-tabular">
+        <dt>Forfait</dt><dd><span data-fo-m="forfait">Business, 350 € par mois</span></dd>
+        <dt>Messages</dt><dd><span>Sans limite, comme aujourd'hui</span></dd>
+        <dt>À régler aujourd'hui</dt><dd><span data-fo-m="prorata">100,50 €</span></dd>
+        <dt>Chaque mois ensuite</dt><dd><span data-fo-m="suite">350 €, à partir du 1er déc. 2026</span></dd>
+      </dl>
+      <div class="k-banner">
+        <k-icon name="information-circle"></k-icon>
+        <div class="k-banner__text k-tabular" data-fo-m="note">Il reste 15 jours sur 30 dans la période en cours : vous ne réglez aujourd'hui que la différence entre les deux forfaits (201 € par mois), pour ces 15 jours. Shopify s'ouvre ensuite pour valider le paiement.</div>
+      </div>
+    </div>
+  </div>
+  <footer class="k-modal__footer">
+    <button type="button" class="k-button k-button--ghost" data-k-close>Annuler</button>
+    <button type="button" class="k-button k-button--primary" data-fo-m-valider>Continuer vers Shopify<k-icon name="arrow-top-right-on-square"></k-icon></button>
+  </footer>
+</dialog>
+
+<!-- [F6] Passer au forfait inférieur : le titre, la phrase, la liste et les boutons sont écrits par le script -->
+<dialog class="k-modal k-modal--sm" id="fo-descendre" aria-labelledby="fo-descendre-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="fo-descendre-t" data-fo-d="titre">Passer à Pro ?</h2><p class="k-modal__desc" data-fo-d="phrase">Le changement prendra effet le 1er déc. 2026, à la fin de la période en cours. D'ici là, vous gardez tout le forfait Scale.</p></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body">
+    <div class="k-stack">
+      <div class="k-stack" style="gap:var(--k-space-3)">
+        <h3 class="k-card__title" id="fo-descendre-pertes" data-fo-d="quand">Ce que vous perdez le 1er déc. 2026</h3>
+        <ul class="k-features" aria-labelledby="fo-descendre-pertes" data-fo-d="pertes">
+          <li class="k-features__item k-features__item--lost"><k-icon name="x-mark" set="micro"></k-icon><span class="k-features__text">2 des 3 membres de votre équipe : Pro ne comprend qu'un utilisateur</span></li>
+          <li class="k-features__item k-features__item--lost"><k-icon name="x-mark" set="micro"></k-icon><span class="k-features__text">Le multi-marché</span></li>
+          <li class="k-features__item k-features__item--lost"><k-icon name="x-mark" set="micro"></k-icon><span class="k-features__text">Les segments</span></li>
+          <li class="k-features__item k-features__item--lost"><k-icon name="x-mark" set="micro"></k-icon><span class="k-features__text">Les automatisations illimitées et les automatisations avancées</span></li>
+          <li class="k-features__item k-features__item--lost"><k-icon name="x-mark" set="micro"></k-icon><span class="k-features__text">L'intégration Klaviyo et les autres intégrations</span></li>
+          <li class="k-features__item k-features__item--lost"><k-icon name="x-mark" set="micro"></k-icon><span class="k-features__text">Kanal MCP et l'agent IA</span></li>
+        </ul>
+      </div>
+      <div class="k-banner">
+        <k-icon name="information-circle"></k-icon>
+        <div class="k-banner__text k-tabular" data-fo-d="prix">À partir du 1er déc. 2026, vous paierez 89 € par mois au lieu de 149 €.</div>
+      </div>
+    </div>
+  </div>
+  <footer class="k-modal__footer">
+    <button type="button" class="k-button k-button--ghost" data-k-close data-fo-d="garder">Garder Scale</button>
+    <button type="button" class="k-button k-button--primary" data-fo-d-valider>Confirmer le passage à Pro</button>
+  </footer>
+</dialog>
+
+<!-- Modale et menu de la barre de navigation : les mêmes sur toutes les pages -->
+<!-- Qualité du numéro et limite d'envoi de Meta : la même modale sur toutes les pages. Elle s'ouvre depuis « Quality », dans la barre -->
+<dialog class="k-modal k-modal--sm" id="mod-qualite" aria-labelledby="mod-qualite-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="mod-qualite-t">Qualité du numéro</h2></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+    <!-- Le niveau, en grand : un anneau, un mot, une phrase -->
+    <div class="k-stack" style="align-items:center;gap:var(--k-space-3);text-align:center">
+      <span class="k-gauge" aria-hidden="true"><span class="k-ring k-ring--lg" data-quality="high"></span><k-icon name="check"></k-icon></span>
+      <div><div class="k-modal__title" data-q-niveau>Élevée</div><p style="margin-top:var(--k-space-1);color:var(--k-ink-2)" data-q-texte>Vos clients lisent vos messages et les signalent peu. Continuez ainsi.</p></div>
+    </div>
+    <ol class="k-scale" aria-label="Les trois niveaux de qualité"><li class="k-scale__step" data-tone="danger">Basse</li><li class="k-scale__step" data-tone="warning" style="text-align:center">Moyenne</li><li class="k-scale__step" data-tone="success" aria-current="true" style="text-align:end">Élevée</li></ol>
+    <!-- Les envois du jour : une ligne, une jauge, une phrase -->
+    <div class="k-inset">
+      <div class="k-inset__row"><span class="k-inset__label">Envois sur 24 h</span><span class="k-inset__value"><b data-q-envoyes>4 812</b> sur <span data-q-limite>100 000</span></span></div>
+      <div class="k-progress k-progress--ink" role="progressbar" aria-label="Part de la limite d'envoi utilisée sur 24 heures" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="--k-value:0.05" data-q-jauge><span></span></div>
+      <p class="k-inset__hint" data-q-suite>Cette limite augmente toute seule à mesure que vous envoyez.</p>
+    </div>
+  </div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--primary" data-k-close>Compris</button></footer>
+</dialog>
+<div class="k-menu" id="menu-compte" popover role="menu">
+  <div class="k-menu__label">Maison Lumen · Scale plan</div>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#general"><k-icon name="user"></k-icon><span class="k-menu__text">Mon profil</span></a>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#facturation"><k-icon name="credit-card"></k-icon><span class="k-menu__text">Facturation</span></a>
+  <a class="k-menu__item" role="menuitem" href="forfaits.html"><k-icon name="star"></k-icon><span class="k-menu__text">Changer de forfait</span></a>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Passer à Kanal iMessage</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="arrow-left"></k-icon><span class="k-menu__text">Se déconnecter</span></button>
+</div>
+<script src="assets/forfaits.js?v=20261117-19"></script>
+<div id="k-fin" hidden></div>
+</body>
+</html>

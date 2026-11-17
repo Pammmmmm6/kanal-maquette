@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La maquette est publiée pour Kite (GitHub Pages) : elle ne doit pas être référencée -->
+<meta name="robots" content="noindex, nofollow">
+<title>Agent IA · Kanal</title>
+<!--
+  NOTES D'INTÉGRATION — Agent IA, dans le design system Kanal
+
+  Assemblée avec les seuls composants du système (aucun style propre, pas de feuille d'ajouts). Script : assets/agent.js.
+  La page où le marchand suit et règle Lumi, l'agent IA qui répond seule aux clients sur WhatsApp et passe la
+  main à l'équipe quand elle ne sait pas. Comme dans l'inbox et les réglages, Lumi est au féminin.
+  Les blocs suivent ce que l'API de l'agent expose réellement (connecteur Kanal : get_ai_agent, test_ai_agent,
+  explain_ai_reply, list_ai_knowledge_gaps). Ce qui n'y figure pas est marqué HYPOTHÈSE.
+
+  [N1]  En-tête : l'interrupteur dit si Lumi répond (champ « answering »), et « Tester l'agent » ouvre [N12].
+        Couper l'interrupteur met Lumi en pause : un bandeau le rappelle en tête de page, avec « Réactiver ».
+        Un second bandeau, bleu, dit quand elle ne fait que proposer des brouillons [N8].
+        Quand answering est faux, l'API donne la raison : coupée par l'équipe (ce que montre la maquette), pas
+        encore activée par Kanal, ou aucune boutique Shopify reliée. Les deux dernières restent à dessiner :
+        interrupteur désactivé et bandeau qui dit quoi faire.
+  [N2]  Trois onglets (.k-tabs) : Suivi, Connaissances, Réglages. Dans l'app, trois routes (l'API parle de
+        settings_url et de knowledge_url) ; ici, agent.html#connaissances et agent.html#reglages ouvrent l'onglet.
+  [N3]  Bandeau de chiffres sur 30 jours (.k-kpis.k-kpis--4). 1 284 conversations = 1 000 résolues sans humain
+        + 282 passées à l'équipe + 2 en cours (les deux « Gérées par l'IA » de l'inbox).
+        HYPOTHÈSE : ces quatre chiffres ne viennent d'aucun des quatre outils lus ; à brancher sur les statistiques.
+  [N4]  Questions sans réponse (list_ai_knowledge_gaps) : les questions que Lumi a cherchées dans ses connaissances
+        sans rien trouver, regroupées, classées par fréquence, avec le nombre de fois où elles ont fini chez un
+        humain et la dernière fois qu'elles ont été posées. Période : 30 jours (l'API accepte de 1 à 90). Les tests
+        de [N12] ne comptent pas. « Répondre » ouvre [N13] ; le menu propose les deux autres façons de combler le
+        manque (une page du site, un document) et « Ignorer ». HYPOTHÈSE : « Ignorer » n'existe pas dans l'API.
+  [N5]  Pourquoi Lumi passe la main : les 282 passations par raison. Les 118 « Réponse introuvable » sont la somme
+        des passations des questions de [N4]. HYPOTHÈSE : l'API explique chaque passation (explain_ai_reply), elle
+        ne donne pas ce regroupement ; les quatre raisons reprennent celles de l'inbox.
+  [N6]  Sources (get_ai_agent, base de connaissances) : produits Shopify activés pour l'IA, pages du site lues,
+        questions-réponses écrites par l'équipe, documents. Une source en échec le dit dans la colonne État, nomme
+        ce qui a échoué sous son nom, et propose « Relancer ». L'ajout d'une page, l'import d'un document et le
+        choix des produits ne sont pas dessinés.
+  [N7]  L'essentiel de la boutique : le « contexte » de l'API (livraison, retours, horaires, promotions), en
+        quatre zones de texte.
+  [N8]  Ce que Lumi a le droit de faire (.k-choice) : répondre seule, proposer un brouillon, en pause. C'est le
+        même état que l'interrupteur de [N1] : « En pause » le coupe, le rallumer rend le dernier mode choisi.
+        HYPOTHÈSE : l'API ne connaît que « répond » ou « ne répond pas » ; le mode brouillon est à confirmer.
+        Le bandeau gris dit deux règles réelles : Lumi ne répond pas à un message qu'un mot-clé d'automatisation
+        a pris, ni à un contact qui attend un humain.
+  [N9]  Personnalité : nom, ton, vouvoiement, emojis, longueur des réponses, message d'accueil, consignes.
+        L'API porte aussi une signature, une voix de marque et un vocabulaire : non dessinés, à ajouter ici.
+  [N10] Passation : passer à l'équipe ou renvoyer vers l'e-mail, nombre d'essais avant de passer la main, reprise
+        automatique, e-mails prévenus (.k-taginput). HYPOTHÈSE sur le sens exact de la reprise automatique
+        (« auto-reset ») : délai après lequel Lumi reprend une conversation passée.
+  [N11] Heures. HYPOTHÈSE : l'API ne décrit pas de plage où Lumi répond ; les horaires d'ouverture, eux, existent
+        (Réglages, Horaires d'ouverture).
+  [N12] Tester l'agent (dialog.k-modal.k-modal--drawer, test_ai_agent) : on écrit comme un client, Lumi répond, et
+        sous chaque réponse « Pourquoi cette réponse » (.k-summary) dit ce qu'elle a compris, ses sources, si elle
+        passerait la main et pourquoi, et si le message vaut désabonnement. Rien n'est envoyé ni enregistré ;
+        Lumi n'y voit les commandes d'aucun client ; un réglage modifié met jusqu'à 5 minutes à s'y voir.
+        Les tours précédents sont renvoyés à chaque message (champ « history »).
+        HYPOTHÈSE : test_ai_agent rend l'intention, la passation et le désabonnement, pas les sources ; celles-ci
+        viennent d'explain_ai_reply, qui ne porte que sur une vraie conversation. À réunir côté app.
+        HYPOTHÈSE : après une passation, le test s'arrête (dans une vraie conversation, Lumi se tait).
+  [N13] Répondre à une question : une question, une réponse. Enregistrée, elle rejoint les questions-réponses de
+        [N6], la question quitte [N4], et le test de [N12] s'en sert.
+  [N14] Enregistrement, comme dans les réglages : un interrupteur ou un choix dans une section sans bouton
+        s'enregistre tout de suite ; une section qui a des champs de texte a son bouton « Enregistrer », désactivé
+        tant que rien n'a changé.
+
+  À brancher côté app : état et réglages de l'agent, chiffres, questions sans réponse, sources, test.
+  À reporter ailleurs : dans la barre des autres pages, « AI Agent » pointe encore sur « # » ; dans les réglages
+  (Inbox), « Configurer l'agent IA » devrait mener à agent.html#reglages.
+  Les réponses du test sont écrites à la main dans agent.js. Données fictives (boutique Maison Lumen).
+-->
+<link rel="icon" href="assets/img/logo-kanal-min-black.svg">
+<!-- La première image attend la fin du document (#k-fin) : la page arrive complète, y compris dans une transition -->
+<link rel="expect" href="#k-fin" blocking="render">
+<link rel="stylesheet" href="assets/jetons.css?v=20261117-19">
+<link rel="stylesheet" href="assets/composants.css?v=20261117-19">
+<script src="assets/composants.js?v=20261117-19"></script>
+</head>
+<body class="k-app">
+<script src="assets/icones.js?v=20261117-19"></script>
+
+<!-- Bandeau d'annonce : le logo de la barre le montre et le cache (data-k-announce-toggle) -->
+<div class="k-announce" role="region" aria-label="Nouveauté">
+  <span class="k-announce__tag">Nouveau</span>
+  <span class="k-announce__text"><b>Kanal se pilote depuis Claude.</b> Créez vos campagnes et vos automatisations en une phrase : inclus dans Scale et Business.</span>
+  <a class="k-announce__link" href="forfaits.html">Voir les forfaits<k-icon name="arrow-right" set="micro"></k-icon></a>
+  <button type="button" class="k-announce__close" aria-label="Masquer l'annonce" data-k-announce-toggle><k-icon name="x-mark" set="micro"></k-icon></button>
+</div>
+<div class="k-shell">
+  <nav class="k-rail" aria-label="Navigation">
+    <div class="k-rail__head">
+      <button type="button" class="k-rail__logo" aria-label="Kanal : montrer ou masquer l'annonce" data-k-announce-toggle><img src="assets/img/logo-kanal-min-white.svg" alt=""></button>
+      <button type="button" class="k-rail__pin" aria-pressed="false" aria-label="Épingler la navigation" data-k-rail-pin data-k-tooltip="Épingler la navigation" data-k-tooltip-side="bottom"><k-icon name="pin"></k-icon></button>
+    </div>
+    <div class="k-rail__main">
+      <a class="k-rail__item" href="accueil.html" aria-label="Home"><k-icon name="home"></k-icon><span class="k-rail__label">Home</span></a>
+      <a class="k-rail__item" href="inbox.html" aria-label="Inbox, 3 conversations à traiter"><k-icon name="inbox"></k-icon><span class="k-rail__label">Inbox</span><span class="k-count k-count--danger k-rail__count">3</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="automatisations.html" aria-label="Automations"><k-icon name="bolt"></k-icon><span class="k-rail__label">Automations</span></a>
+      <a class="k-rail__item" href="exemple.html" aria-label="Campaigns"><k-icon name="megaphone"></k-icon><span class="k-rail__label">Campaigns</span></a>
+      <a class="k-rail__item" href="agent.html" aria-current="page" aria-label="AI Agent"><k-icon name="sparkles"></k-icon><span class="k-rail__label">AI Agent</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="contacts.html" aria-label="Contacts"><k-icon name="users"></k-icon><span class="k-rail__label">Contacts</span></a>
+      <a class="k-rail__item" href="listes.html" aria-label="Lists &amp; segments"><k-icon name="queue-list"></k-icon><span class="k-rail__label">Lists &amp; segments</span></a>
+      <a class="k-rail__item" href="liens.html" aria-label="Magic links"><k-icon name="link"></k-icon><span class="k-rail__label">Magic links</span></a>
+    </div>
+    <div class="k-rail__end">
+      <button type="button" class="k-rail__item" aria-label="Qualité du numéro : élevée. 4 812 messages sur 100 000 en 24 h" aria-haspopup="dialog" data-k-open="mod-qualite"><span class="k-ring" data-quality="high"></span><span class="k-rail__label">Quality</span><span class="k-rail__meta" data-quality="high" data-rail-qualite>High</span></button>
+      <a class="k-rail__item" href="reglages.html" aria-label="Settings"><k-icon name="cog-6-tooth"></k-icon><span class="k-rail__label">Settings</span></a>
+      <a class="k-rail__item" href="avis.html" aria-label="Claim my 20 €"><k-icon name="gift"></k-icon><span class="k-rail__label">Claim my 20 €</span></a>
+      <button type="button" class="k-rail__item" aria-label="Menu du compte : Camille Roux, Maison Lumen" aria-haspopup="menu" data-k-menu="menu-compte" data-k-placement="right-end"><span class="k-avatar k-avatar--blue">CR<span class="k-avatar__status"></span></span><span class="k-rail__label">Camille Roux</span></button>
+    </div>
+  </nav>
+
+  <main class="k-main">
+    <div class="k-main__scroll">
+      <div class="k-page">
+        <!-- [N1] -->
+        <header class="k-page__header">
+          <div>
+            <h1 class="k-page__title">Agent IA</h1>
+            <p class="k-page__subtitle">Lumi répond à vos clients sur WhatsApp à toute heure, et passe la main à votre équipe quand elle ne sait pas.</p>
+          </div>
+          <div class="k-page__actions">
+            <label class="k-check" for="ag-actif"><input class="k-switch" type="checkbox" role="switch" id="ag-actif" checked data-ag-actif><span class="k-check__label" data-ag-etat>Lumi répond</span></label>
+            <button type="button" class="k-button k-button--primary" data-k-open="ag-test"><k-icon name="beaker"></k-icon>Tester l'agent</button>
+          </div>
+        </header>
+
+        <div class="k-banner k-banner--warning" data-ag-bandeau="pause" hidden style="margin-bottom:var(--k-space-6)"><k-icon name="pause"></k-icon><div class="k-banner__text"><span class="k-banner__title">Lumi est en pause.</span> Chaque nouveau message arrive directement à votre équipe, dans l'inbox.</div><div class="k-banner__actions"><button type="button" class="k-button k-button--outline k-button--sm" data-ag-reactiver>Réactiver</button></div></div>
+        <div class="k-banner k-banner--info" data-ag-bandeau="brouillon" hidden style="margin-bottom:var(--k-space-6)"><k-icon name="pencil-square"></k-icon><div class="k-banner__text"><span class="k-banner__title">Lumi propose des brouillons.</span> Rien ne part tant qu'une personne de l'équipe n'a pas relu et envoyé.</div><div class="k-banner__actions"><a class="k-button k-button--outline k-button--sm" href="inbox.html">Ouvrir l'inbox</a></div></div>
+
+        <!-- [N2] -->
+        <div class="k-tabs" role="tablist" aria-label="Agent IA" data-ag-onglets style="margin-bottom:var(--k-space-6)">
+          <span class="k-tabs__bar"></span>
+          <button type="button" class="k-tabs__item" role="tab" aria-selected="true" aria-controls="ag-suivi" data-onglet="suivi">Suivi</button>
+          <button type="button" class="k-tabs__item" role="tab" aria-selected="false" aria-controls="ag-connaissances" data-onglet="connaissances">Connaissances</button>
+          <button type="button" class="k-tabs__item" role="tab" aria-selected="false" aria-controls="ag-reglages" data-onglet="reglages">Réglages</button>
+        </div>
+
+        <!-- ================= SUIVI ================= -->
+        <div id="ag-suivi" role="tabpanel" aria-label="Suivi">
+          <!-- [N3] -->
+          <section class="k-section" aria-label="Chiffres des 30 derniers jours">
+            <div><h2 class="k-section__title">Les 30 derniers jours</h2></div>
+            <div class="k-kpis k-kpis--4">
+              <div class="k-kpis__item"><span class="k-kpis__label">Conversations gérées par Lumi</span><span class="k-kpis__value"><span>1 284</span><span class="k-delta">2 en cours</span></span></div>
+              <div class="k-kpis__item"><span class="k-kpis__label">Résolues sans humain</span><span class="k-kpis__value"><span>78 %</span><span class="k-delta">1 000 conversations</span></span></div>
+              <div class="k-kpis__item"><span class="k-kpis__label">Passées à l'équipe</span><span class="k-kpis__value"><span>282</span><span class="k-delta">22 %</span></span></div>
+              <div class="k-kpis__item"><span class="k-kpis__label">Délai de réponse</span><span class="k-kpis__value"><span>8 s</span><span class="k-delta">14 min pour l'équipe</span></span></div>
+            </div>
+          </section>
+
+          <section class="k-section" aria-label="Passations et questions sans réponse">
+            <div class="k-duo">
+              <!-- [N4] -->
+              <div class="k-card k-card--flush">
+                <div class="k-card__head" style="padding:var(--k-space-5) var(--k-space-5) 0">
+                  <div><h2 class="k-card__title">Questions sans réponse</h2><p class="k-card__desc">Ce que vos clients ont demandé et que Lumi n'a trouvé nulle part dans ses connaissances. Répondez une fois : elle saura la prochaine.</p></div>
+                  <span class="k-badge k-tabular" data-ag-q-total></span>
+                </div>
+                <div class="k-table-wrap__scroll">
+                  <table class="k-table">
+                    <thead><tr><th>Question</th><th class="k-table__num">Posée</th><th class="k-table__num">Passée à l'équipe</th><th class="k-table__actions"><span class="k-sr-only">Actions</span></th></tr></thead>
+                    <tbody data-ag-questions></tbody>
+                  </table>
+                </div>
+                <div class="k-table-footer"><span data-ag-q-pied></span><span>Vos tests ne comptent pas</span></div>
+              </div>
+              <!-- [N5] -->
+              <div class="k-card">
+                <div class="k-card__head"><div><h2 class="k-card__title">Pourquoi Lumi passe la main</h2><p class="k-card__desc">282 passations. Les réponses introuvables viennent des questions ci-contre.</p></div></div>
+                <ul class="k-bars k-bars--compact">
+                  <li class="k-bars__row" style="--k-value:0.418"><span class="k-bars__label">Réponse introuvable</span><span class="k-bars__bar"><span></span></span><span class="k-bars__value">118</span><span class="k-bars__rate">42 %</span></li>
+                  <li class="k-bars__row" style="--k-value:0.262"><span class="k-bars__label">Demande un humain</span><span class="k-bars__bar"><span></span></span><span class="k-bars__value">74</span><span class="k-bars__rate">26 %</span></li>
+                  <li class="k-bars__row" style="--k-value:0.220"><span class="k-bars__label">Réservé à l'équipe</span><span class="k-bars__bar"><span></span></span><span class="k-bars__value">62</span><span class="k-bars__rate">22 %</span></li>
+                  <li class="k-bars__row" style="--k-value:0.099"><span class="k-bars__label">Client mécontent</span><span class="k-bars__bar"><span></span></span><span class="k-bars__value">28</span><span class="k-bars__rate">10 %</span></li>
+                </ul>
+                <div class="k-card__foot"><a class="k-button k-button--secondary k-button--sm" href="inbox.html">Voir les conversations dans l'inbox</a></div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- ================= CONNAISSANCES ================= -->
+        <div id="ag-connaissances" role="tabpanel" aria-label="Connaissances" hidden>
+          <!-- [N6] -->
+          <section class="k-section" aria-label="Sources">
+            <div class="k-section__header">
+              <div><h2 class="k-section__title">Sources</h2><p class="k-section__desc">Ce que Lumi lit avant de répondre à un client.</p></div>
+              <button type="button" class="k-button k-button--secondary" aria-haspopup="menu" data-k-menu="ag-menu-source" data-k-placement="bottom-end"><k-icon name="plus"></k-icon>Ajouter une source</button>
+            </div>
+            <div class="k-table-wrap">
+              <div class="k-table-wrap__scroll">
+                <table class="k-table">
+                  <thead><tr><th>Source</th><th>Contenu</th><th>État</th><th>Mise à jour</th><th class="k-table__actions"><span class="k-sr-only">Actions</span></th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><div class="k-table__who"><span class="k-logo"><img src="assets/img/shopify.svg" alt=""></span><div><div class="k-table__primary">Produits Shopify</div><div class="k-table__secondary">Le nom, la description, le prix et le stock de chaque produit</div></div></div></td>
+                      <td class="k-tabular">48 produits sur 52</td>
+                      <td><span class="k-badge k-badge--success"><span class="k-badge__dot"></span>À jour</span></td>
+                      <td><span class="k-table__secondary">il y a 1 h</span></td>
+                      <td class="k-table__actions"><button type="button" class="k-button k-button--secondary k-button--sm" data-k-toast="Le choix des produits n'est pas encore dans cette maquette">Choisir les produits</button></td>
+                    </tr>
+                    <tr>
+                      <td><div class="k-table__who"><span class="k-logo"><k-icon name="globe-alt"></k-icon></span><div><div class="k-table__primary">Pages du site</div><div class="k-table__secondary" data-ag-pages-detail>maisonlumen.fr · la page « Entretien de vos bougies » est introuvable</div></div></div></td>
+                      <td class="k-tabular" data-ag-pages>23 pages sur 24</td>
+                      <td data-ag-pages-etat><span class="k-badge k-badge--danger"><span class="k-badge__dot"></span>1 page en échec</span></td>
+                      <td><span class="k-table__secondary" data-ag-pages-date>hier</span></td>
+                      <td class="k-table__actions"><button type="button" class="k-button k-button--secondary k-button--sm" data-ag-relancer><k-icon name="arrow-path"></k-icon>Relancer</button></td>
+                    </tr>
+                    <tr>
+                      <td><div class="k-table__who"><span class="k-logo"><k-icon name="chat-bubble-left-right"></k-icon></span><div><div class="k-table__primary">Questions-réponses</div><div class="k-table__secondary">Les réponses écrites par votre équipe</div></div></div></td>
+                      <td class="k-tabular" data-ag-qr>18 réponses</td>
+                      <td><span class="k-badge k-badge--success"><span class="k-badge__dot"></span>À jour</span></td>
+                      <td><span class="k-table__secondary" data-ag-qr-date>12 nov.</span></td>
+                      <td class="k-table__actions"><button type="button" class="k-button k-button--secondary k-button--sm" data-ag-nouvelle-reponse><k-icon name="plus"></k-icon>Ajouter</button></td>
+                    </tr>
+                    <tr>
+                      <td><div class="k-table__who"><span class="k-logo"><k-icon name="document-text"></k-icon></span><div><div class="k-table__primary">Documents</div><div class="k-table__secondary">Guide d'entretien des bougies, conditions générales de vente</div></div></div></td>
+                      <td class="k-tabular">2 documents</td>
+                      <td><span class="k-badge k-badge--success"><span class="k-badge__dot"></span>À jour</span></td>
+                      <td><span class="k-table__secondary">3 nov.</span></td>
+                      <td class="k-table__actions"><button type="button" class="k-button k-button--secondary k-button--sm" data-k-toast="Import : choisissez un fichier PDF"><k-icon name="arrow-up-tray"></k-icon>Importer</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="k-table-footer"><span>4 sources · quand Lumi n'y trouve rien, la question rejoint les questions sans réponse de l'onglet Suivi</span></div>
+            </div>
+          </section>
+
+          <!-- [N7] -->
+          <section class="k-section" aria-label="L'essentiel de la boutique" data-ag-section>
+            <div class="k-section__header">
+              <div><h2 class="k-section__title">L'essentiel de la boutique</h2><p class="k-section__desc">Quatre sujets sur lesquels Lumi ne doit jamais se tromper. Écrivez-les en une ou deux phrases.</p></div>
+              <button type="button" class="k-button k-button--primary k-button--sm" data-ag-enregistrer disabled>Enregistrer</button>
+            </div>
+            <div class="k-settings">
+              <div class="k-settings__row k-settings__row--stack"><label class="k-settings__label" for="ag-livraison">Livraison</label><textarea class="k-textarea" id="ag-livraison" rows="2">Les commandes partent sous 24 h et arrivent en 2 à 3 jours ouvrés en France. La livraison est offerte dès 60 € d'achat.</textarea></div>
+              <div class="k-settings__row k-settings__row--stack"><label class="k-settings__label" for="ag-retours">Retours</label><textarea class="k-textarea" id="ag-retours" rows="2">30 jours pour retourner un article qui n'a pas été allumé. Le retour est gratuit en France.</textarea></div>
+              <div class="k-settings__row k-settings__row--stack"><label class="k-settings__label" for="ag-horaires">Horaires</label><textarea class="k-textarea" id="ag-horaires" rows="2">L'équipe répond du lundi au vendredi de 9 h à 18 h, et le samedi de 10 h à 13 h.</textarea></div>
+              <div class="k-settings__row k-settings__row--stack"><label class="k-settings__label" for="ag-promos">Promotions en cours</label><textarea class="k-textarea" id="ag-promos" rows="2">Code LUMEN10 : 10 % sur les bougies, hors articles déjà à prix réduit. Black Friday : 20 % sur toute la boutique jusqu'à dimanche minuit.</textarea></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- ================= RÉGLAGES ================= -->
+        <div id="ag-reglages" role="tabpanel" aria-label="Réglages" hidden>
+          <!-- [N8] -->
+          <section class="k-section" aria-label="Ce que Lumi a le droit de faire">
+            <div><h2 class="k-section__title">Ce que Lumi a le droit de faire</h2><p class="k-section__desc">Le choix s'applique tout de suite, à toutes les conversations.</p></div>
+            <div class="k-grid" role="radiogroup" aria-label="Mode de l'agent">
+              <label class="k-choice"><input class="k-radio" type="radio" name="ag-mode" value="seule" checked><span><span class="k-check__label">Répondre seule</span><span class="k-check__hint">Lumi envoie ses réponses au client, et passe la main quand elle ne sait pas.</span></span></label>
+              <label class="k-choice"><input class="k-radio" type="radio" name="ag-mode" value="brouillon"><span><span class="k-check__label">Proposer un brouillon</span><span class="k-check__hint">Lumi prépare la réponse dans l'inbox. Une personne de l'équipe la relit, puis l'envoie.</span></span></label>
+              <label class="k-choice"><input class="k-radio" type="radio" name="ag-mode" value="pause"><span><span class="k-check__label">En pause</span><span class="k-check__hint">Lumi n'écrit plus rien. Chaque message arrive à votre équipe.</span></span></label>
+            </div>
+            <div class="k-banner"><k-icon name="information-circle"></k-icon><div class="k-banner__text">Dans tous les cas, Lumi laisse passer un message qu'une automatisation a déjà pris par mot-clé, et ne répond jamais à un client qui attend un humain.</div></div>
+          </section>
+
+          <!-- [N9] -->
+          <section class="k-section" aria-label="Personnalité" data-ag-section>
+            <div class="k-section__header">
+              <div><h2 class="k-section__title">Personnalité</h2><p class="k-section__desc">Comment Lumi se présente et comment elle écrit.</p></div>
+              <button type="button" class="k-button k-button--primary k-button--sm" data-ag-enregistrer disabled>Enregistrer</button>
+            </div>
+            <div class="k-settings">
+              <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="ag-nom">Nom</label><span class="k-settings__desc">Tel que vos clients et votre équipe le voient.</span></span><span class="k-settings__control"><input class="k-input" id="ag-nom" type="text" value="Lumi" autocomplete="off"></span></div>
+              <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="ag-ton">Ton</label></span><span class="k-settings__control"><select class="k-select" id="ag-ton"><option selected>Chaleureux</option><option>Professionnel</option><option>Décontracté</option><option>Enthousiaste</option></select></span></div>
+              <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Vouvoiement</span><span class="k-settings__desc">Comment Lumi s'adresse à vos clients.</span></span><div class="k-settings__control"><div class="k-segmented" role="radiogroup" aria-label="Vouvoiement"><span class="k-segmented__thumb"></span><button type="button" class="k-segmented__item" role="radio" aria-checked="true">Vous</button><button type="button" class="k-segmented__item" role="radio" aria-checked="false">Tu</button></div></div></div>
+              <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Longueur des réponses</span></span><div class="k-settings__control"><div class="k-segmented" role="radiogroup" aria-label="Longueur des réponses"><span class="k-segmented__thumb"></span><button type="button" class="k-segmented__item" role="radio" aria-checked="true">Courtes</button><button type="button" class="k-segmented__item" role="radio" aria-checked="false">Moyennes</button><button type="button" class="k-segmented__item" role="radio" aria-checked="false">Détaillées</button></div></div></div>
+              <label class="k-settings__row" for="ag-emojis"><span class="k-settings__text"><span class="k-settings__label">Emojis</span><span class="k-settings__desc">Un emoji de temps en temps, comme dans vos propres messages.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="ag-emojis" checked data-ag-emojis></span></label>
+              <div class="k-settings__row k-settings__row--stack"><div><label class="k-settings__label" for="ag-accueil">Message d'accueil</label><span class="k-settings__desc">Ce que Lumi répond à un client qui la salue.</span></div><textarea class="k-textarea" id="ag-accueil" rows="2" data-ag-accueil>Bonjour ! Je suis Lumi, l'assistante de Maison Lumen. Comment puis-je vous aider ?</textarea></div>
+              <div class="k-settings__row k-settings__row--stack"><div><label class="k-settings__label" for="ag-consignes">Consignes</label><span class="k-settings__desc">Ce que Lumi doit toujours faire, ou ne jamais faire. Une consigne par ligne.</span></div><textarea class="k-textarea" id="ag-consignes" rows="3">Ne jamais promettre un remboursement ni modifier une commande déjà payée : passer la main à l'équipe.
+Ne donner le code LUMEN10 que si le client demande une réduction.</textarea></div>
+            </div>
+          </section>
+
+          <!-- [N10] -->
+          <section class="k-section" aria-label="Passation" data-ag-section>
+            <div class="k-section__header">
+              <div><h2 class="k-section__title">Passation</h2><p class="k-section__desc">Ce que fait Lumi quand elle ne trouve pas la réponse, ou qu'un client demande quelqu'un.</p></div>
+              <button type="button" class="k-button k-button--primary k-button--sm" data-ag-enregistrer disabled>Enregistrer</button>
+            </div>
+            <div class="k-settings">
+              <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="ag-escalade">Quand Lumi ne sait pas</label><span class="k-settings__desc">Passer la conversation à l'équipe dans l'inbox, ou donner au client l'adresse e-mail du support.</span></span><span class="k-settings__control"><select class="k-select" id="ag-escalade" data-ag-escalade><option value="equipe" selected>Passer à l'équipe</option><option value="email">Renvoyer vers l'e-mail</option></select></span></div>
+              <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="ag-essais">Essais avant de passer la main</label><span class="k-settings__desc">Lumi demande d'abord une précision au client.</span></span><span class="k-settings__control"><select class="k-select" id="ag-essais" data-ag-essais><option value="1">1 essai</option><option value="2" selected>2 essais</option><option value="3">3 essais</option></select></span></div>
+              <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="ag-reprise">Reprise automatique</label><span class="k-settings__desc">Après une passation, Lumi reprend la conversation une fois ce délai écoulé sans nouveau message.</span></span><span class="k-settings__control"><select class="k-select" id="ag-reprise"><option>Jamais</option><option>Après 12 heures</option><option selected>Après 24 heures</option><option>Après 48 heures</option></select></span></div>
+              <div class="k-settings__row k-settings__row--stack"><div><label class="k-settings__label" for="ag-prevenus">E-mails prévenus</label><span class="k-settings__desc">Ces adresses reçoivent un e-mail à chaque passation.</span></div><div class="k-taginput"><span class="k-tag">camille@maisonlumen.fr<button type="button" class="k-tag__remove" aria-label="Retirer camille@maisonlumen.fr"><k-icon name="x-mark" set="micro"></k-icon></button></span><span class="k-tag">theo@maisonlumen.fr<button type="button" class="k-tag__remove" aria-label="Retirer theo@maisonlumen.fr"><k-icon name="x-mark" set="micro"></k-icon></button></span><input id="ag-prevenus" type="email" placeholder="Ajouter une adresse, puis Entrée" autocomplete="off"></div></div>
+              <a class="k-settings__row" href="reglages.html#inbox"><span class="k-settings__text"><span class="k-settings__label">Assignation et résumé de passation</span><span class="k-settings__desc">Qui reçoit les conversations que Lumi passe, et ce qu'elle leur laisse en tête du fil.</span></span><span class="k-settings__control"><k-icon name="chevron-right" set="micro" size="16"></k-icon></span></a>
+            </div>
+          </section>
+
+          <!-- [N11] -->
+          <section class="k-section" aria-label="Heures" data-ag-section>
+            <div><h2 class="k-section__title">Heures</h2></div>
+            <div class="k-settings">
+              <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="ag-heures">Quand Lumi répond</label><span class="k-settings__desc">À toute heure, ou seulement quand votre équipe est absente ou présente.</span></span><span class="k-settings__control"><select class="k-select" id="ag-heures"><option selected>À toute heure</option><option>Hors horaires d'ouverture</option><option>Pendant les horaires</option></select></span></div>
+              <div class="k-settings__row k-settings__row--sub"><span class="k-settings__text"><span class="k-settings__label">Horaires d'ouverture</span><span class="k-settings__desc">Du lundi au vendredi de 9:00 à 18:00, le samedi de 10:00 à 13:00.</span></span><span class="k-settings__control"><a class="k-button k-button--secondary k-button--sm" href="reglages.html#horaires">Modifier</a></span></div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- [N6] Ajouter une source -->
+<div class="k-menu" id="ag-menu-source" popover role="menu" aria-label="Ajouter une source">
+  <button type="button" class="k-menu__item" role="menuitem" data-ag-nouvelle-reponse><k-icon name="chat-bubble-left-right"></k-icon><span class="k-menu__text">Une question-réponse</span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-k-toast="L'ajout d'une page n'est pas encore dans cette maquette"><k-icon name="globe-alt"></k-icon><span class="k-menu__text">Une page du site</span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-k-toast="Import : choisissez un fichier PDF"><k-icon name="document-text"></k-icon><span class="k-menu__text">Un document</span></button>
+</div>
+<!-- [N4] Autres façons de traiter une question sans réponse -->
+<div class="k-menu" id="ag-menu-question" popover role="menu" aria-label="Actions sur la question">
+  <button type="button" class="k-menu__item" role="menuitem" data-ag-q-action="page"><k-icon name="globe-alt"></k-icon><span class="k-menu__text">Répondre par une page du site</span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-ag-q-action="document"><k-icon name="document-text"></k-icon><span class="k-menu__text">Répondre par un document</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem" data-ag-q-action="ignorer"><k-icon name="eye-slash"></k-icon><span class="k-menu__text">Ignorer cette question</span></button>
+</div>
+
+<!-- [N12] Tester l'agent -->
+<dialog class="k-modal k-modal--drawer" id="ag-test" aria-labelledby="ag-test-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="ag-test-t">Tester Lumi</h2><p class="k-modal__desc">Écrivez comme le ferait un client. Rien n'est envoyé, aucune conversation n'est créée.</p></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body" data-ag-t-defile>
+    <div class="k-empty" data-ag-t-vide>
+      <span class="k-empty__icon"><k-icon name="chat-bubble-left-right" size="24"></k-icon></span>
+      <h3 class="k-empty__title">Posez une question à Lumi</h3>
+      <p class="k-empty__desc">Sous chaque réponse, vous verrez ce qu'elle a compris et d'où elle tire sa réponse. Un réglage modifié met jusqu'à 5 minutes à se voir ici.</p>
+      <div class="k-empty__actions" style="flex-direction:column;align-items:center">
+        <button type="button" class="k-button k-button--secondary k-button--sm" data-ag-t-exemple>Quels sont vos délais de livraison ?</button>
+        <button type="button" class="k-button k-button--secondary k-button--sm" data-ag-t-exemple>Livrez-vous en Suisse ?</button>
+        <button type="button" class="k-button k-button--secondary k-button--sm" data-ag-t-exemple>Où en est ma commande ?</button>
+        <button type="button" class="k-button k-button--secondary k-button--sm" data-ag-t-exemple>Je voudrais parler à quelqu'un</button>
+      </div>
+    </div>
+    <div class="k-thread" data-ag-t-fil hidden style="padding:0" aria-live="polite"></div>
+  </div>
+  <footer class="k-modal__footer">
+    <form class="k-composer" data-ag-t-form style="flex:1" novalidate>
+      <textarea class="k-composer__input" rows="2" aria-label="Message du client" placeholder="Écrire comme un client…" data-ag-t-champ></textarea>
+      <div class="k-composer__bar">
+        <button type="button" class="k-button k-button--ghost k-button--sm" data-ag-t-recommencer disabled><k-icon name="arrow-path"></k-icon>Recommencer</button>
+        <button type="submit" class="k-button k-button--primary k-button--sm" data-ag-t-envoyer disabled>Envoyer</button>
+      </div>
+    </form>
+  </footer>
+</dialog>
+
+<!-- [N13] Répondre à une question -->
+<dialog class="k-modal" id="ag-reponse" aria-labelledby="ag-reponse-t">
+  <form data-ag-r-form novalidate>
+    <header class="k-modal__header">
+      <div><h2 class="k-modal__title" id="ag-reponse-t" data-ag-r-titre>Répondre à cette question</h2><p class="k-modal__desc" data-ag-r-desc></p></div>
+      <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+    </header>
+    <div class="k-modal__body" style="display:flex;flex-direction:column;gap:var(--k-space-4)">
+      <div class="k-field"><label class="k-field__label" for="ag-r-question">Question du client</label><input class="k-input" id="ag-r-question" type="text" placeholder="Livrez-vous en Belgique ?" autocomplete="off" data-ag-r-question></div>
+      <div class="k-field"><label class="k-field__label" for="ag-r-texte">Réponse</label><textarea class="k-textarea" id="ag-r-texte" rows="4" placeholder="Donnez les faits, en une ou deux phrases." data-ag-r-texte></textarea><span class="k-field__hint">Lumi la redira avec son ton. Elle s'en sert au plus tard 5 minutes après l'enregistrement.</span></div>
+    </div>
+    <footer class="k-modal__footer"><button type="button" class="k-button k-button--ghost" data-k-close>Annuler</button><button type="submit" class="k-button k-button--primary" data-ag-r-enregistrer disabled>Enregistrer la réponse</button></footer>
+  </form>
+</dialog>
+
+<!-- Modale et menu de la barre de navigation : les mêmes sur toutes les pages -->
+<!-- Qualité du numéro et limite d'envoi de Meta : la même modale sur toutes les pages. Elle s'ouvre depuis « Quality », dans la barre -->
+<dialog class="k-modal k-modal--sm" id="mod-qualite" aria-labelledby="mod-qualite-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="mod-qualite-t">Qualité du numéro</h2></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+    <!-- Le niveau, en grand : un anneau, un mot, une phrase -->
+    <div class="k-stack" style="align-items:center;gap:var(--k-space-3);text-align:center">
+      <span class="k-gauge" aria-hidden="true"><span class="k-ring k-ring--lg" data-quality="high"></span><k-icon name="check"></k-icon></span>
+      <div><div class="k-modal__title" data-q-niveau>Élevée</div><p style="margin-top:var(--k-space-1);color:var(--k-ink-2)" data-q-texte>Vos clients lisent vos messages et les signalent peu. Continuez ainsi.</p></div>
+    </div>
+    <ol class="k-scale" aria-label="Les trois niveaux de qualité"><li class="k-scale__step" data-tone="danger">Basse</li><li class="k-scale__step" data-tone="warning" style="text-align:center">Moyenne</li><li class="k-scale__step" data-tone="success" aria-current="true" style="text-align:end">Élevée</li></ol>
+    <!-- Les envois du jour : une ligne, une jauge, une phrase -->
+    <div class="k-inset">
+      <div class="k-inset__row"><span class="k-inset__label">Envois sur 24 h</span><span class="k-inset__value"><b data-q-envoyes>4 812</b> sur <span data-q-limite>100 000</span></span></div>
+      <div class="k-progress k-progress--ink" role="progressbar" aria-label="Part de la limite d'envoi utilisée sur 24 heures" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="--k-value:0.05" data-q-jauge><span></span></div>
+      <p class="k-inset__hint" data-q-suite>Cette limite augmente toute seule à mesure que vous envoyez.</p>
+    </div>
+  </div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--primary" data-k-close>Compris</button></footer>
+</dialog>
+<div class="k-menu" id="menu-compte" popover role="menu">
+  <div class="k-menu__label">Maison Lumen · Scale plan</div>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#general"><k-icon name="user"></k-icon><span class="k-menu__text">Mon profil</span></a>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#facturation"><k-icon name="credit-card"></k-icon><span class="k-menu__text">Facturation</span></a>
+  <a class="k-menu__item" role="menuitem" href="forfaits.html"><k-icon name="star"></k-icon><span class="k-menu__text">Changer de forfait</span></a>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Passer à Kanal iMessage</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="arrow-left"></k-icon><span class="k-menu__text">Se déconnecter</span></button>
+</div>
+<script src="assets/agent.js?v=20261117-19"></script>
+<div id="k-fin" hidden></div>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La maquette est publiée pour Kite (GitHub Pages) : elle ne doit pas être référencée -->
+<meta name="robots" content="noindex, nofollow">
+<title>Listes et segments · Kanal</title>
+<!--
+  NOTES D'INTÉGRATION — Listes et segments, dans le design system Kanal
+
+  Assemblée avec les seuls composants du système (aucun style propre). Script : assets/listes.js.
+  Source des contenus : la maquette pen.dev d'Erevan (pen-dev/screens/06-lists-segments.png), reprise ici en
+  français et dans le nouveau design system. La page d'une liste est dans liste.html, l'éditeur de segment dans
+  segment.html. Décision d'Erevan du 16/11/2026 : une audience s'ouvre en page entière, plus dans un tiroir à droite.
+
+  [L1] En-tête : « Importer » et « Créer une audience », bouton principal (modale [L6]).
+  [L2] Barre d'outils : les familles en segmenté avec compteurs (toutes, listes, segments, synchronisées), la
+       recherche, et le tri dans un menu (dernière modification, nom, nombre de contacts).
+  [L3] Tableau : audience (vignette, nom, ce qu'elle contient), source, contacts avec leur part du total en
+       barre, évolution sur 30 jours, dernière modification, menu d'actions.
+       Quatre sources : Liste Kanal (on y ajoute des contacts), Segment (calculé par des conditions, « En direct »
+       quand il se recalcule en continu), Klaviyo et Shopify (synchronisées, avec le logo de l'outil).
+  [L4] Ouvrir une audience : son nom est un lien, et un clic ailleurs sur la ligne mène à la même page. Une liste
+       ou une audience synchronisée ouvre sa page (liste.html?id=<identifiant>) ; un segment ouvre son éditeur
+       (segment.html?id=<identifiant>). Il n'y a plus de panneau de détail sur cette page.
+       Le menu de la ligne (un seul menu, #ls-menu) est réglé sur l'audience de la ligne avant de s'ouvrir :
+       « Modifier la liste », « Modifier les conditions » ou « Voir l'audience » (synchronisée, en lecture seule)
+       mènent à cette page ; « Voir les membres » à sa section des membres (liste.html?id=…#membres), ou à Contacts
+       pour un segment ; « Envoyer une campagne » à campagne-nouvelle.html ; puis dupliquer, exporter, supprimer.
+       La maquette de segment.html montre toujours le segment « Meilleurs clients », quel que soit l'identifiant.
+  [L5] Suggestions de l'agent IA : trois segments proposés à partir des commandes et de l'engagement, à créer
+       d'un clic. À brancher sur l'agent ; sans suggestion, la section ne s'affiche pas.
+  [L6] Nouvelle audience : le choix entre liste et segment (.k-choice), puis un nom. Un segment ouvre ensuite
+       l'éditeur de segment (segment.html?nouveau).
+  [L7] Pied du tableau : nombre d'audiences et de contacts uniques.
+
+  À brancher côté app : audiences et compteurs, évolution, suggestions. Les huit audiences de listes.js
+  sont fictives (boutique Maison Lumen) ; liste.js et segment.js en portent le détail.
+-->
+<link rel="icon" href="assets/img/logo-kanal-min-black.svg">
+<!-- La première image attend la fin du document (#k-fin) : la page arrive complète, y compris dans une transition -->
+<link rel="expect" href="#k-fin" blocking="render">
+<link rel="stylesheet" href="assets/jetons.css?v=20261117-19">
+<link rel="stylesheet" href="assets/composants.css?v=20261117-19">
+<script src="assets/composants.js?v=20261117-19"></script>
+</head>
+<body class="k-app">
+<script src="assets/icones.js?v=20261117-19"></script>
+
+<!-- Bandeau d'annonce : le logo de la barre le montre et le cache (data-k-announce-toggle) -->
+<div class="k-announce" role="region" aria-label="Nouveauté">
+  <span class="k-announce__tag">Nouveau</span>
+  <span class="k-announce__text"><b>Kanal se pilote depuis Claude.</b> Créez vos campagnes et vos automatisations en une phrase : inclus dans Scale et Business.</span>
+  <a class="k-announce__link" href="forfaits.html">Voir les forfaits<k-icon name="arrow-right" set="micro"></k-icon></a>
+  <button type="button" class="k-announce__close" aria-label="Masquer l'annonce" data-k-announce-toggle><k-icon name="x-mark" set="micro"></k-icon></button>
+</div>
+<div class="k-shell">
+  <nav class="k-rail" aria-label="Navigation">
+    <div class="k-rail__head">
+      <button type="button" class="k-rail__logo" aria-label="Kanal : montrer ou masquer l'annonce" data-k-announce-toggle><img src="assets/img/logo-kanal-min-white.svg" alt=""></button>
+      <button type="button" class="k-rail__pin" aria-pressed="false" aria-label="Épingler la navigation" data-k-rail-pin data-k-tooltip="Épingler la navigation" data-k-tooltip-side="bottom"><k-icon name="pin"></k-icon></button>
+    </div>
+    <div class="k-rail__main">
+      <a class="k-rail__item" href="accueil.html" aria-label="Home"><k-icon name="home"></k-icon><span class="k-rail__label">Home</span></a>
+      <a class="k-rail__item" href="inbox.html" aria-label="Inbox, 3 conversations à traiter"><k-icon name="inbox"></k-icon><span class="k-rail__label">Inbox</span><span class="k-count k-count--danger k-rail__count">3</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="automatisations.html" aria-label="Automations"><k-icon name="bolt"></k-icon><span class="k-rail__label">Automations</span></a>
+      <a class="k-rail__item" href="exemple.html" aria-label="Campaigns"><k-icon name="megaphone"></k-icon><span class="k-rail__label">Campaigns</span></a>
+      <a class="k-rail__item" href="agent.html" aria-label="AI Agent"><k-icon name="sparkles"></k-icon><span class="k-rail__label">AI Agent</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="contacts.html" aria-label="Contacts"><k-icon name="users"></k-icon><span class="k-rail__label">Contacts</span></a>
+      <a class="k-rail__item" href="listes.html" aria-current="page" aria-label="Lists &amp; segments"><k-icon name="queue-list"></k-icon><span class="k-rail__label">Lists &amp; segments</span></a>
+      <a class="k-rail__item" href="liens.html" aria-label="Magic links"><k-icon name="link"></k-icon><span class="k-rail__label">Magic links</span></a>
+    </div>
+    <div class="k-rail__end">
+      <button type="button" class="k-rail__item" aria-label="Qualité du numéro : élevée. 4 812 messages sur 100 000 en 24 h" aria-haspopup="dialog" data-k-open="mod-qualite"><span class="k-ring" data-quality="high"></span><span class="k-rail__label">Quality</span><span class="k-rail__meta" data-quality="high" data-rail-qualite>High</span></button>
+      <a class="k-rail__item" href="reglages.html" aria-label="Settings"><k-icon name="cog-6-tooth"></k-icon><span class="k-rail__label">Settings</span></a>
+      <a class="k-rail__item" href="avis.html" aria-label="Claim my 20 €"><k-icon name="gift"></k-icon><span class="k-rail__label">Claim my 20 €</span></a>
+      <button type="button" class="k-rail__item" aria-label="Menu du compte : Camille Roux, Maison Lumen" aria-haspopup="menu" data-k-menu="menu-compte" data-k-placement="right-end"><span class="k-avatar k-avatar--blue">CR<span class="k-avatar__status"></span></span><span class="k-rail__label">Camille Roux</span></button>
+    </div>
+  </nav>
+
+  <main class="k-main">
+    <div class="k-main__scroll">
+      <div class="k-page">
+        <!-- [L1] -->
+        <header class="k-page__header">
+          <div>
+            <h1 class="k-page__title">Listes et segments</h1>
+            <p class="k-page__subtitle">Les audiences à qui vous envoyez vos campagnes : des listes que vous remplissez, des segments qui se calculent seuls.</p>
+          </div>
+          <div class="k-page__actions">
+            <button type="button" class="k-button k-button--secondary" data-k-toast="Import : choisissez un fichier CSV"><k-icon name="arrow-up-tray"></k-icon>Importer</button>
+            <button type="button" class="k-button k-button--primary" data-k-open="ls-nouvelle"><k-icon name="plus"></k-icon>Créer une audience</button>
+          </div>
+        </header>
+
+        <section class="k-section" aria-label="Vos audiences">
+          <!-- [L2] -->
+          <div class="k-section__header">
+            <div class="k-segmented" role="tablist" aria-label="Famille" data-ls-familles>
+              <span class="k-segmented__thumb"></span>
+              <button type="button" class="k-segmented__item" role="tab" aria-selected="true" data-famille="toutes">Toutes <span class="k-segmented__count">8</span></button>
+              <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-famille="listes">Listes <span class="k-segmented__count">3</span></button>
+              <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-famille="segments">Segments <span class="k-segmented__count">3</span></button>
+              <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-famille="synchro">Synchronisées <span class="k-segmented__count">2</span></button>
+            </div>
+            <div class="k-page__actions">
+              <div class="k-input-group" style="width:240px"><k-icon name="magnifying-glass"></k-icon><input class="k-input" type="search" id="ls-recherche" placeholder="Chercher une audience" aria-label="Chercher une audience" data-ls-recherche autocomplete="off"></div>
+              <button type="button" class="k-button k-button--secondary" aria-haspopup="menu" data-k-menu="ls-tri" data-k-placement="bottom-end"><k-icon name="bars-arrow-down"></k-icon><span data-ls-tri-nom>Dernière modification</span></button>
+            </div>
+          </div>
+          <!-- [L3] -->
+          <div class="k-table-wrap">
+            <div class="k-table-wrap__scroll">
+              <table class="k-table">
+                <thead><tr><th>Audience</th><th>Source</th><th class="k-table__num">Contacts</th><th class="k-table__num">30 jours</th><th>Modifiée</th><th class="k-table__actions"><span class="k-sr-only">Actions</span></th></tr></thead>
+                <tbody data-ls-lignes></tbody>
+              </table>
+            </div>
+            <!-- [L7] -->
+            <div class="k-table-footer"><span data-ls-pied></span></div>
+          </div>
+        </section>
+
+        <!-- [L5] -->
+        <section class="k-section" aria-label="Suggestions de l'agent IA">
+          <div><h2 class="k-section__title">Suggestions de Lumi</h2><p class="k-section__desc">Trois segments que votre agent IA a repérés dans vos commandes et vos messages.</p></div>
+          <div class="k-grid">
+            <div class="k-card"><div class="k-card__title">VIP endormis</div><p class="k-card__desc">Plus de 200 € dépensés · aucune commande depuis 60 jours</p><div class="k-card__foot"><span class="k-card__figure">212<small>contacts</small></span><button type="button" class="k-button k-button--outline k-button--sm" data-ls-suggestion="VIP endormis">Créer</button></div></div>
+            <div class="k-card"><div class="k-card__title">Premiers achats</div><p class="k-card__desc">Une seule commande · dans les 30 derniers jours</p><div class="k-card__foot"><span class="k-card__figure">1 480<small>contacts</small></span><button type="button" class="k-button k-button--outline k-button--sm" data-ls-suggestion="Premiers achats">Créer</button></div></div>
+            <div class="k-card"><div class="k-card__title">Visiteurs très intéressés</div><p class="k-card__desc">Ont cliqué un lien · pas de commande depuis 7 jours</p><div class="k-card__foot"><span class="k-card__figure">640<small>contacts</small></span><button type="button" class="k-button k-button--outline k-button--sm" data-ls-suggestion="Visiteurs très intéressés">Créer</button></div></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="k-menu" id="ls-tri" popover role="menu" aria-label="Trier par">
+  <div class="k-menu__label">Trier par</div>
+  <button type="button" class="k-menu__item" role="menuitemradio" aria-checked="true" data-value="modif"><span class="k-menu__text">Dernière modification</span><span class="k-menu__end"><k-icon class="k-menu__check" name="check" set="micro"></k-icon></span></button>
+  <button type="button" class="k-menu__item" role="menuitemradio" aria-checked="false" data-value="nom"><span class="k-menu__text">Nom</span><span class="k-menu__end"><k-icon class="k-menu__check" name="check" set="micro"></k-icon></span></button>
+  <button type="button" class="k-menu__item" role="menuitemradio" aria-checked="false" data-value="contacts"><span class="k-menu__text">Nombre de contacts</span><span class="k-menu__end"><k-icon class="k-menu__check" name="check" set="micro"></k-icon></span></button>
+</div>
+<!-- [L4] Menu d'une ligne : listes.js règle les deux liens marqués sur l'audience de la ligne -->
+<div class="k-menu" id="ls-menu" popover role="menu">
+  <a class="k-menu__item" role="menuitem" href="liste.html" data-ls-m-ouvrir><k-icon name="pencil-square"></k-icon><span class="k-menu__text">Modifier la liste</span></a>
+  <a class="k-menu__item" role="menuitem" href="campagne-nouvelle.html"><k-icon name="megaphone"></k-icon><span class="k-menu__text">Envoyer une campagne</span></a>
+  <a class="k-menu__item" role="menuitem" href="liste.html#membres" data-ls-m-membres><k-icon name="users"></k-icon><span class="k-menu__text">Voir les membres</span></a>
+  <button type="button" class="k-menu__item" role="menuitem" data-k-toast="Audience dupliquée"><k-icon name="document-duplicate"></k-icon><span class="k-menu__text">Dupliquer</span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-k-toast="Export lancé : le fichier arrive par e-mail"><k-icon name="arrow-down-tray"></k-icon><span class="k-menu__text">Exporter en CSV</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item k-menu__item--danger" role="menuitem" data-k-toast="Audience supprimée" data-k-toast-action="Annuler"><k-icon name="trash"></k-icon><span class="k-menu__text">Supprimer</span></button>
+</div>
+<!-- [L6] Nouvelle audience -->
+<dialog class="k-modal k-modal--sm" id="ls-nouvelle" aria-labelledby="ls-nouvelle-t">
+  <form data-ls-nouvelle novalidate>
+    <header class="k-modal__header">
+      <div><h2 class="k-modal__title" id="ls-nouvelle-t">Créer une audience</h2><p class="k-modal__desc">Une liste se remplit, un segment se calcule.</p></div>
+      <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+    </header>
+    <div class="k-modal__body" style="display:flex;flex-direction:column;gap:var(--k-space-3)">
+      <label class="k-choice"><input class="k-radio" type="radio" name="type" value="segment" checked><span><span class="k-check__label">Un segment</span><span class="k-check__hint">Des conditions choisissent les contacts, et il se met à jour seul.</span></span></label>
+      <label class="k-choice"><input class="k-radio" type="radio" name="type" value="liste"><span><span class="k-check__label">Une liste</span><span class="k-check__hint">Vous y ajoutez les contacts : import, à la main, ou par une automatisation.</span></span></label>
+      <div class="k-field" style="margin-top:var(--k-space-2)"><label class="k-field__label" for="ls-n-nom">Nom</label><input class="k-input" id="ls-n-nom" type="text" placeholder="Clients de Noël" autocomplete="off" data-ls-nouvelle-nom></div>
+    </div>
+    <footer class="k-modal__footer"><button type="button" class="k-button k-button--ghost" data-k-close>Annuler</button><button type="submit" class="k-button k-button--primary" data-ls-nouvelle-creer disabled>Créer</button></footer>
+  </form>
+</dialog>
+
+<!-- Modale et menu de la barre de navigation : les mêmes sur toutes les pages -->
+<!-- Qualité du numéro et limite d'envoi de Meta : la même modale sur toutes les pages. Elle s'ouvre depuis « Quality », dans la barre -->
+<dialog class="k-modal k-modal--sm" id="mod-qualite" aria-labelledby="mod-qualite-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="mod-qualite-t">Qualité du numéro</h2></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+    <!-- Le niveau, en grand : un anneau, un mot, une phrase -->
+    <div class="k-stack" style="align-items:center;gap:var(--k-space-3);text-align:center">
+      <span class="k-gauge" aria-hidden="true"><span class="k-ring k-ring--lg" data-quality="high"></span><k-icon name="check"></k-icon></span>
+      <div><div class="k-modal__title" data-q-niveau>Élevée</div><p style="margin-top:var(--k-space-1);color:var(--k-ink-2)" data-q-texte>Vos clients lisent vos messages et les signalent peu. Continuez ainsi.</p></div>
+    </div>
+    <ol class="k-scale" aria-label="Les trois niveaux de qualité"><li class="k-scale__step" data-tone="danger">Basse</li><li class="k-scale__step" data-tone="warning" style="text-align:center">Moyenne</li><li class="k-scale__step" data-tone="success" aria-current="true" style="text-align:end">Élevée</li></ol>
+    <!-- Les envois du jour : une ligne, une jauge, une phrase -->
+    <div class="k-inset">
+      <div class="k-inset__row"><span class="k-inset__label">Envois sur 24 h</span><span class="k-inset__value"><b data-q-envoyes>4 812</b> sur <span data-q-limite>100 000</span></span></div>
+      <div class="k-progress k-progress--ink" role="progressbar" aria-label="Part de la limite d'envoi utilisée sur 24 heures" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="--k-value:0.05" data-q-jauge><span></span></div>
+      <p class="k-inset__hint" data-q-suite>Cette limite augmente toute seule à mesure que vous envoyez.</p>
+    </div>
+  </div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--primary" data-k-close>Compris</button></footer>
+</dialog>
+<div class="k-menu" id="menu-compte" popover role="menu">
+  <div class="k-menu__label">Maison Lumen · Scale plan</div>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#general"><k-icon name="user"></k-icon><span class="k-menu__text">Mon profil</span></a>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#facturation"><k-icon name="credit-card"></k-icon><span class="k-menu__text">Facturation</span></a>
+  <a class="k-menu__item" role="menuitem" href="forfaits.html"><k-icon name="star"></k-icon><span class="k-menu__text">Changer de forfait</span></a>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Passer à Kanal iMessage</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="arrow-left"></k-icon><span class="k-menu__text">Se déconnecter</span></button>
+</div>
+<script src="assets/listes.js?v=20261117-19"></script>
+<div id="k-fin" hidden></div>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La maquette est publiée pour Kite (GitHub Pages) : elle ne doit pas être référencée -->
+<meta name="robots" content="noindex, nofollow">
+<title>Campagnes · Kanal (page d'exemple du design system)</title>
+<!--
+  NOTES D'INTÉGRATION — page d'exemple du design system Kanal
+
+  Une page complète assemblée avec les seuls composants du design system :
+  aucun style propre à cette page. Elle sert de modèle pour le gabarit « Page ».
+  [E1] Coquille : .k-shell > .k-rail + .k-main, sur fond noir (--k-shell). Pas de marge à gauche : l'îlot touche la barre.
+  [E2] Barre de navigation : noire, repliée par défaut (56 px, une colonne d'icônes pleines). Au survol, elle s'ouvre
+       par-dessus le contenu et montre les libellés ; l'épingle en haut à droite la garde ouverte (192 px).
+       Le nom de chaque page est dans son libellé et son aria-label. Page ouverte : case d'un noir plus clair (aria-current="page").
+       De haut en bas : logo, les pages par groupes. En bas : la QUALITÉ DU NUMÉRO (« Quality » : un anneau dont la couleur et
+       le remplissage disent le niveau, élevée, moyenne ou basse, et le niveau écrit à côté quand la barre est ouverte ;
+       un clic ouvre la modale de qualité, avec la limite d'envoi de Meta), réglages, Claim my 20 €, compte (pas de
+       notifications dans la barre). Il n'y a PAS de quota de messages : Kanal ne limite pas les envois. Le changement d'app (WhatsApp / iMessage) est dans le menu du compte.
+  [E3] En-tête de page : un seul bouton noir.
+  [E4] Tuiles : .k-grid--4 passe à 2 colonnes sous 1400 px.
+  [E5] Barre d'outils : segmenté de statut à gauche, recherche et filtres à droite.
+  [E6] Tableau : défile dans sa carte si la fenêtre est étroite.
+  [E7] Écran bas (moins de 760 px de haut) : les cases de la barre passent de 40 à 36 px pour que tout tienne sans défiler.
+  Données de démo : boutique Maison Lumen, utilisatrice Camille Roux.
+-->
+<link rel="icon" href="assets/img/logo-kanal-min-black.svg">
+<!-- La première image attend la fin du document (#k-fin) : la page arrive complète, y compris dans une transition -->
+<link rel="expect" href="#k-fin" blocking="render">
+<link rel="stylesheet" href="assets/jetons.css?v=20261117-19">
+<link rel="stylesheet" href="assets/composants.css?v=20261117-19">
+<script src="assets/composants.js?v=20261117-19"></script>
+</head>
+<body class="k-app">
+<script src="assets/icones.js?v=20261117-19"></script>
+
+<!-- [E1] [E2] -->
+<!-- Bandeau d'annonce : le logo de la barre le montre et le cache (data-k-announce-toggle) -->
+<div class="k-announce" role="region" aria-label="Nouveauté">
+  <span class="k-announce__tag">Nouveau</span>
+  <span class="k-announce__text"><b>Kanal se pilote depuis Claude.</b> Créez vos campagnes et vos automatisations en une phrase : inclus dans Scale et Business.</span>
+  <a class="k-announce__link" href="forfaits.html">Voir les forfaits<k-icon name="arrow-right" set="micro"></k-icon></a>
+  <button type="button" class="k-announce__close" aria-label="Masquer l'annonce" data-k-announce-toggle><k-icon name="x-mark" set="micro"></k-icon></button>
+</div>
+<div class="k-shell">
+  <nav class="k-rail" aria-label="Navigation">
+    <div class="k-rail__head">
+      <button type="button" class="k-rail__logo" aria-label="Kanal : montrer ou masquer l'annonce" data-k-announce-toggle><img src="assets/img/logo-kanal-min-white.svg" alt=""></button>
+      <button type="button" class="k-rail__pin" aria-pressed="false" aria-label="Épingler la navigation" data-k-rail-pin data-k-tooltip="Épingler la navigation" data-k-tooltip-side="bottom"><k-icon name="pin"></k-icon></button>
+    </div>
+    <div class="k-rail__main">
+      <a class="k-rail__item" href="accueil.html" aria-label="Home"><k-icon name="home"></k-icon><span class="k-rail__label">Home</span></a>
+      <a class="k-rail__item" href="inbox.html" aria-label="Inbox, 3 conversations à traiter"><k-icon name="inbox"></k-icon><span class="k-rail__label">Inbox</span><span class="k-count k-count--danger k-rail__count">3</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="automatisations.html" aria-label="Automations"><k-icon name="bolt"></k-icon><span class="k-rail__label">Automations</span></a>
+      <a class="k-rail__item" href="exemple.html" aria-current="page" aria-label="Campaigns"><k-icon name="megaphone"></k-icon><span class="k-rail__label">Campaigns</span></a>
+      <a class="k-rail__item" href="agent.html" aria-label="AI Agent"><k-icon name="sparkles"></k-icon><span class="k-rail__label">AI Agent</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="contacts.html" aria-label="Contacts"><k-icon name="users"></k-icon><span class="k-rail__label">Contacts</span></a>
+      <a class="k-rail__item" href="listes.html" aria-label="Lists &amp; segments"><k-icon name="queue-list"></k-icon><span class="k-rail__label">Lists &amp; segments</span></a>
+      <a class="k-rail__item" href="liens.html" aria-label="Magic links"><k-icon name="link"></k-icon><span class="k-rail__label">Magic links</span></a>
+    </div>
+    <div class="k-rail__end">
+      <button type="button" class="k-rail__item" aria-label="Qualité du numéro : élevée. 4 812 messages sur 100 000 en 24 h" aria-haspopup="dialog" data-k-open="mod-qualite"><span class="k-ring" data-quality="high"></span><span class="k-rail__label">Quality</span><span class="k-rail__meta" data-quality="high" data-rail-qualite>High</span></button>
+      <a class="k-rail__item" href="reglages.html" aria-label="Settings"><k-icon name="cog-6-tooth"></k-icon><span class="k-rail__label">Settings</span></a>
+      <a class="k-rail__item" href="avis.html" aria-label="Claim my 20 €"><k-icon name="gift"></k-icon><span class="k-rail__label">Claim my 20 €</span></a>
+      <button type="button" class="k-rail__item" aria-label="Menu du compte : Camille Roux, Maison Lumen" aria-haspopup="menu" data-k-menu="menu-compte" data-k-placement="right-end"><span class="k-avatar k-avatar--blue">CR<span class="k-avatar__status"></span></span><span class="k-rail__label">Camille Roux</span></button>
+    </div>
+  </nav>
+
+  <main class="k-main">
+    <div class="k-main__scroll">
+      <div class="k-page">
+        <!-- [E3] -->
+        <header class="k-page__header">
+          <div>
+            <h1 class="k-page__title">Campagnes</h1>
+            <p class="k-page__subtitle">Envoyez un modèle WhatsApp à une liste de contacts, maintenant ou à une date choisie.</p>
+          </div>
+          <div class="k-page__actions">
+            <button type="button" class="k-button k-button--secondary"><k-icon name="arrow-down-tray"></k-icon>Exporter</button>
+            <a class="k-button k-button--primary" href="campagne-nouvelle.html"><k-icon name="plus"></k-icon>Créer une campagne</a>
+          </div>
+        </header>
+
+        <!-- [E4] -->
+        <section class="k-section" aria-label="Chiffres des 30 derniers jours">
+          <div class="k-grid k-grid--4">
+            <div class="k-stat"><div class="k-stat__label">Messages délivrés</div><div class="k-stat__value">18 240</div><div class="k-stat__meta"><span class="k-delta k-delta--up"><k-icon name="arrow-up-right" set="micro"></k-icon>42 %</span>sur 30 jours</div></div>
+            <div class="k-stat"><div class="k-stat__label">Taux de lecture</div><div class="k-stat__value">71,4<span class="k-stat__unit">%</span></div><div class="k-stat__meta"><span class="k-delta k-delta--down"><k-icon name="arrow-down-right" set="micro"></k-icon>2,1 pts</span>sur 30 jours</div></div>
+            <div class="k-stat"><div class="k-stat__label">Taux de clic</div><div class="k-stat__value">24,8<span class="k-stat__unit">%</span></div><div class="k-stat__meta"><span class="k-delta k-delta--up"><k-icon name="arrow-up-right" set="micro"></k-icon>3,4 pts</span>sur 30 jours</div></div>
+            <div class="k-stat"><div class="k-stat__label">Chiffre d'affaires</div><div class="k-stat__value">27 940 €</div><div class="k-stat__meta"><span class="k-delta k-delta--up"><k-icon name="arrow-up-right" set="micro"></k-icon>18 %</span>sur 30 jours</div></div>
+          </div>
+        </section>
+
+        <section class="k-section" aria-label="Liste des campagnes">
+          <!-- [E5] -->
+          <div class="k-section__header">
+            <div class="k-segmented" role="tablist" aria-label="Statut">
+              <span class="k-segmented__thumb"></span>
+              <button type="button" class="k-segmented__item" role="tab" aria-selected="true">Toutes <span class="k-segmented__count">34</span></button>
+              <button type="button" class="k-segmented__item" role="tab" aria-selected="false">Programmées <span class="k-segmented__count">2</span></button>
+              <button type="button" class="k-segmented__item" role="tab" aria-selected="false">Brouillons <span class="k-segmented__count">5</span></button>
+            </div>
+            <div style="display:flex;gap:8px">
+              <div class="k-input-group" style="width:240px"><k-icon name="magnifying-glass"></k-icon><input class="k-input" type="search" id="ex-recherche" placeholder="Chercher une campagne" aria-label="Chercher une campagne"></div>
+              <button type="button" class="k-button k-button--secondary"><k-icon name="funnel"></k-icon>Filtres</button>
+            </div>
+          </div>
+          <!-- [E6] -->
+          <div class="k-table-wrap">
+            <div class="k-table-wrap__scroll">
+              <table class="k-table">
+                <thead><tr><th>Campagne</th><th>Statut</th><th class="k-table__num">Délivrés</th><th class="k-table__num">Lus</th><th class="k-table__num">Clics</th><th class="k-table__num">Chiffre d'affaires</th><th class="k-table__actions"><span class="k-sr-only">Actions</span></th></tr></thead>
+                <tbody>
+                  <tr><td><a class="k-table__primary" href="campagne.html">Black Friday, accès anticipé</a><div class="k-table__secondary">Tous les contacts abonnés · 14 nov. 2026</div></td><td><span class="k-badge k-badge--success">Envoyée</span></td><td class="k-table__num">13 428</td><td class="k-table__num">71,4 %</td><td class="k-table__num">24,8 %</td><td class="k-table__num">21 820 €</td><td class="k-table__actions"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions" data-k-menu="ex-menu" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></td></tr>
+                  <tr><td><a class="k-table__primary" href="campagne.html">Retour en stock, bougie Ambre</a><div class="k-table__secondary">Liste d'attente · 12 nov. 2026</div></td><td><span class="k-badge k-badge--orange">En cours</span></td><td class="k-table__num">4 812</td><td class="k-table__num">64,0 %</td><td class="k-table__num">31,2 %</td><td class="k-table__num">6 120 €</td><td class="k-table__actions"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions" data-k-menu="ex-menu" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></td></tr>
+                  <tr><td><div class="k-table__primary">Coffrets de Noël</div><div class="k-table__secondary">Tous les abonnés · 1 déc. 2026 à 9:00</div></td><td><span class="k-badge k-badge--violet">Programmée</span></td><td class="k-table__num">0</td><td class="k-table__num">0 %</td><td class="k-table__num">0 %</td><td class="k-table__num">0 €</td><td class="k-table__actions"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions" data-k-menu="ex-menu" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></td></tr>
+                  <tr><td><div class="k-table__primary">Nouvelle collection d'automne</div><div class="k-table__secondary">Nouveaux clients · 2 oct. 2026</div></td><td><span class="k-badge k-badge--success">Envoyée</span></td><td class="k-table__num">9 604</td><td class="k-table__num">68,9 %</td><td class="k-table__num">19,5 %</td><td class="k-table__num">11 480 €</td><td class="k-table__actions"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions" data-k-menu="ex-menu" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></td></tr>
+                  <tr><td><a class="k-table__primary" href="campagne-nouvelle.html">Soldes d'hiver, rappel</a><div class="k-table__secondary">Pas encore d'audience</div></td><td><span class="k-badge">Brouillon</span></td><td class="k-table__num">0</td><td class="k-table__num">0 %</td><td class="k-table__num">0 %</td><td class="k-table__num">0 €</td><td class="k-table__actions"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions" data-k-menu="ex-menu" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="k-table-footer"><span>5 campagnes sur 34</span><nav class="k-pagination" aria-label="Pages"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Page précédente" disabled><k-icon name="chevron-left"></k-icon></button><button type="button" class="k-pagination__page" aria-current="page">1</button><button type="button" class="k-pagination__page">2</button><button type="button" class="k-pagination__page">3</button><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Page suivante"><k-icon name="chevron-right"></k-icon></button></nav></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="k-menu" id="ex-menu" popover role="menu">
+  <a class="k-menu__item" role="menuitem" href="campagne.html"><k-icon name="chart-bar"></k-icon><span class="k-menu__text">Voir les résultats</span></a>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="document-duplicate"></k-icon><span class="k-menu__text">Dupliquer</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item k-menu__item--danger" role="menuitem" data-k-toast="Campagne supprimée" data-k-toast-action="Annuler"><k-icon name="trash"></k-icon><span class="k-menu__text">Supprimer</span></button>
+</div>
+
+<!-- Modale et menu de la barre de navigation : les mêmes sur toutes les pages -->
+<!-- Qualité du numéro et limite d'envoi de Meta : la même modale sur toutes les pages. Elle s'ouvre depuis « Quality », dans la barre -->
+<dialog class="k-modal k-modal--sm" id="mod-qualite" aria-labelledby="mod-qualite-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="mod-qualite-t">Qualité du numéro</h2></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+    <!-- Le niveau, en grand : un anneau, un mot, une phrase -->
+    <div class="k-stack" style="align-items:center;gap:var(--k-space-3);text-align:center">
+      <span class="k-gauge" aria-hidden="true"><span class="k-ring k-ring--lg" data-quality="high"></span><k-icon name="check"></k-icon></span>
+      <div><div class="k-modal__title" data-q-niveau>Élevée</div><p style="margin-top:var(--k-space-1);color:var(--k-ink-2)" data-q-texte>Vos clients lisent vos messages et les signalent peu. Continuez ainsi.</p></div>
+    </div>
+    <ol class="k-scale" aria-label="Les trois niveaux de qualité"><li class="k-scale__step" data-tone="danger">Basse</li><li class="k-scale__step" data-tone="warning" style="text-align:center">Moyenne</li><li class="k-scale__step" data-tone="success" aria-current="true" style="text-align:end">Élevée</li></ol>
+    <!-- Les envois du jour : une ligne, une jauge, une phrase -->
+    <div class="k-inset">
+      <div class="k-inset__row"><span class="k-inset__label">Envois sur 24 h</span><span class="k-inset__value"><b data-q-envoyes>4 812</b> sur <span data-q-limite>100 000</span></span></div>
+      <div class="k-progress k-progress--ink" role="progressbar" aria-label="Part de la limite d'envoi utilisée sur 24 heures" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="--k-value:0.05" data-q-jauge><span></span></div>
+      <p class="k-inset__hint" data-q-suite>Cette limite augmente toute seule à mesure que vous envoyez.</p>
+    </div>
+  </div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--primary" data-k-close>Compris</button></footer>
+</dialog>
+<div class="k-menu" id="menu-compte" popover role="menu">
+  <div class="k-menu__label">Maison Lumen · Scale plan</div>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#general"><k-icon name="user"></k-icon><span class="k-menu__text">Mon profil</span></a>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#facturation"><k-icon name="credit-card"></k-icon><span class="k-menu__text">Facturation</span></a>
+  <a class="k-menu__item" role="menuitem" href="forfaits.html"><k-icon name="star"></k-icon><span class="k-menu__text">Changer de forfait</span></a>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Passer à Kanal iMessage</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="arrow-left"></k-icon><span class="k-menu__text">Se déconnecter</span></button>
+</div>
+<div id="k-fin" hidden></div>
+</body>
+</html>

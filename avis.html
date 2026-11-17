@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La maquette est publiée pour Kite (GitHub Pages) : elle ne doit pas être référencée -->
+<meta name="robots" content="noindex, nofollow">
+<title>Avis · Kanal</title>
+<!--
+  NOTES D'INTÉGRATION — Avis (« Claim my 20 € »), dans le design system Kanal
+
+  La même page que kanal/reviews.html, refaite avec les composants du design system. Les règles de
+  INTEGRATION.md §6 s'appliquent toujours : mêmes états, mêmes règles, mêmes montants. Aucun style propre à
+  cette page (pas de feuille d'ajouts). Script : assets/avis.js. Textes en français, vouvoiement, comme les
+  autres écrans du design system (la maquette d'origine était en anglais) ; la barre de navigation reste en anglais.
+  « À CONFIRMER », « À FOURNIR », « À DÉFINIR » et « À CONCEVOIR » marquent ce que la maquette ne tranche pas :
+  ne pas l'inventer, demander à Erevan.
+
+  L'OFFRE. Récompense Black Friday, valable jusqu'à la fin du mois. Le marchand laisse un avis sur Kanal sur le
+  Shopify App Store et sur Trustpilot, dans l'ordre qu'il veut. Chaque avis publié crédite 10 € de messages, soit
+  20 € au total. Une récompense par plateforme et par workspace, créditée une fois l'avis publié ; toutes les notes
+  comptent pareil. Afficher ou non ces conditions sur la page : À CONFIRMER (la note des conditions a été retirée
+  de la page d'origine, ne pas la remettre sans accord).
+  Route de la page : à créer, nom À DÉFINIR.
+
+  CORRESPONDANCE avec les repères de kanal/reviews.html :
+    [V1] = [R0]   entrée « Claim my 20 € » de la barre de navigation
+    [V2] = [R1]   en-tête de l'offre
+    [V3] = [R2]   carte Shopify
+    [V4] = [R3]   carte Trustpilot
+    [V5] à [V8]   détail des états et des étapes, décrits dans [R2] et [R3]
+    [V0]          propre à cette maquette
+
+  [V0] Bascule de démonstration : les cinq petites icônes dans le coin en haut à droite de l'îlot font passer la
+       carte Shopify d'un état à l'autre (à faire, lien à coller, en vérification, crédité, déjà laissé). Presque
+       invisibles au repos : NE PAS LES PORTER. La carte Trustpilot reste dans l'état « déjà laissé », comme dans la
+       maquette d'origine ; pour la voir dans un autre état, changer son attribut data-etat dans le balisage
+       (a-faire, lien, verification, credite, deja) : le script gère les deux cartes de la même façon.
+  [V1] Entrée « Claim my 20 € » de la barre (icône cadeau). Dans kanal/, c'était un bouton bleu hors navigation et
+       aucune entrée n'était active sur la page ; ici c'est une entrée de la barre, qui porte aria-current="page".
+       QUAND L'AFFICHER : À CONFIRMER (proposition d'origine : pendant l'offre, tant qu'au moins une récompense
+       reste à obtenir). MONTANT : le libellé dit toujours 20 € ; afficher le montant restant ou garder 20 € :
+       À CONFIRMER, comme la règle sur les avis laissés avant l'offre (la démo laisse penser qu'ils ne rapportent rien).
+  [V2] En-tête de l'offre (.k-page__header) : le titre et la pastille « Offre Black Friday · jusqu'à la fin du
+       mois » sur une ligne, puis la description. Aligné à gauche. Pas de mention au-dessus du titre, pas de carte
+       « 0 € / 20 € gagnés » ni de jauges, pas de bloc d'affiliation : retirés à la demande d'Erevan, ne pas les remettre.
+  [V3] Carte Shopify et [V4] carte Trustpilot (.k-connect, dans une grille de deux colonnes) : même balisage, mêmes
+       états. L'état est porté par data-etat sur la carte. Chaque bloc marqué data-av-si="…" n'apparaît que dans
+       les états cités. Logo Trustpilot : À FOURNIR (assets/img/trustpilot.svg n'existe pas) ; une étoile du jeu
+       d'icônes le remplace en attendant.
+  [V5] Les états d'une carte, et ce qui fait passer de l'un à l'autre :
+         a-faire        étape 1 en cours : bouton « Écrire un avis sur {plateforme} ».          État initial.
+         lien           étape 1 cochée, étape 2 en cours : champ du lien et « Envoyer pour vérification ».
+                        Déclenché par le clic sur le bouton de l'étape 1.
+         verification   étapes 1 et 2 cochées, étape 3 en cours, message vert « Merci ! Dès que votre avis sera
+                        publié, 10 € seront crédités sur votre compte. » Déclenché par l'envoi d'un lien valide.
+         credite        NON DESSINÉ DANS LA MAQUETTE D'ORIGINE, À CONCEVOIR. Ce qui est montré ici (trois étapes
+                        cochées, badge « 10 € crédités », message vert) est une PROPOSITION, à valider avec Erevan.
+                        Déclenché par : avis vérifié, 10 € versés.
+         deja           trois étapes cochées, « Avis déjà laissé », « Merci ! ». Un avis existe déjà sur la
+                        plateforme (Trustpilot dans la démo). Ce qu'il rapporte s'il date d'avant l'offre : À CONFIRMER.
+       L'étape en cours porte aria-current="step", une étape faite porte data-done (.k-steps).
+       Écart avec l'origine : les trois étapes sont sur une ligne (.k-steps) et seul le contenu de l'étape en cours
+       est affiché dessous, au lieu de trois étapes empilées toutes décrites. Le badge d'état dans l'en-tête de la
+       carte (« En vérification », « 10 € crédités ») est un ajout de cette version ; le badge « Environ 1 min »
+       vient de l'origine.
+  [V6] Étape 1, « Laissez votre avis 5 étoiles » : le bouton ouvre la page d'avis de Kanal sur la plateforme, dans
+       un nouvel onglet. URL À FOURNIR pour Shopify comme pour Trustpilot : ici il n'ouvre rien, un toast le dit.
+       Il reste accessible aux étapes suivantes (« Rouvrir la page d'avis ») ; le rouvrir ne fait pas revenir les
+       étapes en arrière.
+       ATTENTION, titre voulu par Erevan pour la maquette, À VALIDER AVEC LUI AVANT LA MISE EN LIGNE : il contredit
+       la phrase juste en dessous (« Toutes les notes sont les bienvenues »). Une récompense liée à une note de
+       5 étoiles est contraire aux règles du Shopify App Store et de Trustpilot, et à la règle FTC 16 CFR 465 aux
+       États-Unis.
+  [V7] Étape 2, « Collez le lien de votre avis » : le lien doit contenir « shopify.com/ » suivi d'au moins un
+       caractère (Trustpilot : « trustpilot.com »). Sinon le champ passe en erreur (aria-invalid="true") avec son
+       message, et garde le focus ; l'erreur s'efface dès que l'on retape.
+  [V8] Étape 3, « Recevez vos 10 € » : message de vérification en cours, puis état crédité (PROPOSITION, voir [V5]).
+
+  À BRANCHER CÔTÉ APP, rien n'existe : enregistrer le lien soumis ; vérifier que l'avis est publié ; créditer
+  10 € de messages une seule fois par workspace et par plateforme ; renvoyer l'état de chaque plateforme pour le
+  workspace (à faire, lien soumis, crédité, avis déjà laissé).
+  À NE PAS PORTER : la bascule [V0], les toasts de démonstration.
+  Données de démo : boutique Maison Lumen, utilisatrice Camille Roux.
+-->
+<link rel="icon" href="assets/img/logo-kanal-min-black.svg">
+<!-- La première image attend la fin du document (#k-fin) : la page arrive complète, y compris dans une transition -->
+<link rel="expect" href="#k-fin" blocking="render">
+<link rel="stylesheet" href="assets/jetons.css?v=20261117-19">
+<link rel="stylesheet" href="assets/composants.css?v=20261117-19">
+<script src="assets/composants.js?v=20261117-19"></script>
+</head>
+<body class="k-app">
+<script src="assets/icones.js?v=20261117-19"></script>
+
+<!-- [V1] La barre de navigation : « Claim my 20 € » est la page ouverte -->
+<!-- Bandeau d'annonce : le logo de la barre le montre et le cache (data-k-announce-toggle) -->
+<div class="k-announce" role="region" aria-label="Nouveauté">
+  <span class="k-announce__tag">Nouveau</span>
+  <span class="k-announce__text"><b>Kanal se pilote depuis Claude.</b> Créez vos campagnes et vos automatisations en une phrase : inclus dans Scale et Business.</span>
+  <a class="k-announce__link" href="forfaits.html">Voir les forfaits<k-icon name="arrow-right" set="micro"></k-icon></a>
+  <button type="button" class="k-announce__close" aria-label="Masquer l'annonce" data-k-announce-toggle><k-icon name="x-mark" set="micro"></k-icon></button>
+</div>
+<div class="k-shell">
+  <nav class="k-rail" aria-label="Navigation">
+    <div class="k-rail__head">
+      <button type="button" class="k-rail__logo" aria-label="Kanal : montrer ou masquer l'annonce" data-k-announce-toggle><img src="assets/img/logo-kanal-min-white.svg" alt=""></button>
+      <button type="button" class="k-rail__pin" aria-pressed="false" aria-label="Épingler la navigation" data-k-rail-pin data-k-tooltip="Épingler la navigation" data-k-tooltip-side="bottom"><k-icon name="pin"></k-icon></button>
+    </div>
+    <div class="k-rail__main">
+      <a class="k-rail__item" href="accueil.html" aria-label="Home"><k-icon name="home"></k-icon><span class="k-rail__label">Home</span></a>
+      <a class="k-rail__item" href="inbox.html" aria-label="Inbox, 3 conversations à traiter"><k-icon name="inbox"></k-icon><span class="k-rail__label">Inbox</span><span class="k-count k-count--danger k-rail__count">3</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="automatisations.html" aria-label="Automations"><k-icon name="bolt"></k-icon><span class="k-rail__label">Automations</span></a>
+      <a class="k-rail__item" href="exemple.html" aria-label="Campaigns"><k-icon name="megaphone"></k-icon><span class="k-rail__label">Campaigns</span></a>
+      <a class="k-rail__item" href="agent.html" aria-label="AI Agent"><k-icon name="sparkles"></k-icon><span class="k-rail__label">AI Agent</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="contacts.html" aria-label="Contacts"><k-icon name="users"></k-icon><span class="k-rail__label">Contacts</span></a>
+      <a class="k-rail__item" href="listes.html" aria-label="Lists &amp; segments"><k-icon name="queue-list"></k-icon><span class="k-rail__label">Lists &amp; segments</span></a>
+      <a class="k-rail__item" href="liens.html" aria-label="Magic links"><k-icon name="link"></k-icon><span class="k-rail__label">Magic links</span></a>
+    </div>
+    <div class="k-rail__end">
+      <button type="button" class="k-rail__item" aria-label="Qualité du numéro : élevée. 4 812 messages sur 100 000 en 24 h" aria-haspopup="dialog" data-k-open="mod-qualite"><span class="k-ring" data-quality="high"></span><span class="k-rail__label">Quality</span><span class="k-rail__meta" data-quality="high" data-rail-qualite>High</span></button>
+      <a class="k-rail__item" href="reglages.html" aria-label="Settings"><k-icon name="cog-6-tooth"></k-icon><span class="k-rail__label">Settings</span></a>
+      <a class="k-rail__item" href="avis.html" aria-current="page" aria-label="Claim my 20 €"><k-icon name="gift"></k-icon><span class="k-rail__label">Claim my 20 €</span></a>
+      <button type="button" class="k-rail__item" aria-label="Menu du compte : Camille Roux, Maison Lumen" aria-haspopup="menu" data-k-menu="menu-compte" data-k-placement="right-end"><span class="k-avatar k-avatar--blue">CR<span class="k-avatar__status"></span></span><span class="k-rail__label">Camille Roux</span></button>
+    </div>
+  </nav>
+
+  <main class="k-main">
+    <div class="k-main__scroll">
+      <div class="k-page" data-av-page>
+
+        <!-- [V2] En-tête de l'offre -->
+        <header class="k-page__header">
+          <div>
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:var(--k-space-2) var(--k-space-3)">
+              <h1 class="k-page__title">Gagnez 20 € de messages gratuits</h1>
+              <span class="k-badge k-badge--warning"><k-icon name="clock" set="micro"></k-icon>Offre Black Friday · jusqu'à la fin du mois</span>
+            </div>
+            <p class="k-page__subtitle">Laissez un avis sincère sur Kanal sur Shopify et sur Trustpilot, dans l'ordre que vous voulez. Toutes les notes comptent autant, et chaque avis ajoute 10 € de messages à votre compte.</p>
+          </div>
+        </header>
+
+        <section class="k-section" aria-label="Plateformes d'avis">
+          <div class="k-grid k-grid--2">
+
+            <!-- [V3] Carte Shopify. État de départ : à faire -->
+            <article class="k-connect" data-av-carte="shopify" data-etat="a-faire" aria-labelledby="av-shopify-t">
+              <div class="k-connect__head">
+                <span class="k-logo"><img src="assets/img/shopify.svg" alt=""></span>
+                <div style="flex:1;min-width:0">
+                  <h2 class="k-connect__name" id="av-shopify-t">Shopify</h2>
+                  <div class="k-connect__by k-tabular"><span data-av-si="a-faire lien verification credite">+10 € de messages</span><span data-av-si="deja" hidden>Avis déjà laissé</span></div>
+                </div>
+                <span class="k-badge" data-av-si="a-faire lien">Environ 1 min</span>
+                <span class="k-badge k-badge--accent" data-av-si="verification" hidden><span class="k-badge__dot"></span>En vérification</span>
+                <span class="k-badge k-badge--success" data-av-si="credite" hidden><k-icon name="check" set="micro"></k-icon>10 € crédités</span>
+              </div>
+
+              <!-- [V5] Les trois étapes -->
+              <ol class="k-steps" aria-label="Étapes de l'avis Shopify" style="flex-wrap:wrap">
+                <li class="k-steps__item" data-av-pas="1" aria-current="step"><span class="k-steps__num">1</span>Laisser l'avis</li>
+                <li class="k-steps__sep" aria-hidden="true"></li>
+                <li class="k-steps__item" data-av-pas="2"><span class="k-steps__num">2</span>Coller le lien</li>
+                <li class="k-steps__sep" aria-hidden="true"></li>
+                <li class="k-steps__item" data-av-pas="3"><span class="k-steps__num">3</span>Recevoir 10 €</li>
+              </ol>
+
+              <div class="k-stack" aria-live="polite">
+                <!-- [V6] Étape 1 : écrire l'avis -->
+                <div class="k-stack" data-av-si="a-faire">
+                  <div>
+                    <h3 class="k-card__title">Laissez votre avis 5 étoiles</h3>
+                    <p class="k-card__desc">Ouvre le Shopify App Store dans un nouvel onglet. Toutes les notes sont les bienvenues.</p>
+                  </div>
+                  <div><button type="button" class="k-button k-button--primary" data-av-ecrire>Écrire un avis sur Shopify<k-icon name="arrow-top-right-on-square"></k-icon></button></div>
+                </div>
+
+                <!-- [V7] Étape 2 : coller le lien de l'avis -->
+                <form class="k-stack" data-av-si="lien" data-av-form novalidate hidden>
+                  <div class="k-field">
+                    <label class="k-field__label" for="av-shopify-lien">Collez le lien de votre avis</label>
+                    <div style="display:flex;gap:var(--k-space-2)">
+                      <input class="k-input" style="flex:1;min-width:0" id="av-shopify-lien" type="url" inputmode="url" placeholder="https://apps.shopify.com/…" autocomplete="off" aria-describedby="av-shopify-aide av-shopify-erreur" data-av-lien>
+                      <button type="submit" class="k-button k-button--primary">Envoyer pour vérification</button>
+                    </div>
+                    <span class="k-field__error" id="av-shopify-erreur" role="alert" data-av-erreur hidden><k-icon name="exclamation-triangle" set="micro" size="14"></k-icon>Collez le lien de votre avis Shopify.</span>
+                    <span class="k-field__hint" id="av-shopify-aide">Une fois l'avis laissé, copiez son lien pour que nous puissions le vérifier. Les 10 € sont crédités sur votre compte une fois votre avis publié.</span>
+                  </div>
+                  <div><button type="button" class="k-button k-button--ghost k-button--sm" data-av-ecrire>Rouvrir la page d'avis<k-icon name="arrow-top-right-on-square"></k-icon></button></div>
+                </form>
+
+                <!-- [V8] Étape 3 : en vérification -->
+                <div class="k-stack" data-av-si="verification" hidden>
+                  <h3 class="k-card__title">Recevez vos 10 €</h3>
+                  <div class="k-banner k-banner--success">
+                    <k-icon name="check-circle"></k-icon>
+                    <div class="k-banner__text"><span class="k-banner__title">Merci !</span> Dès que votre avis sera publié, 10 € seront crédités sur votre compte.</div>
+                  </div>
+                  <div><button type="button" class="k-button k-button--ghost k-button--sm" data-av-ecrire>Rouvrir la page d'avis<k-icon name="arrow-top-right-on-square"></k-icon></button></div>
+                </div>
+
+                <!-- [V8] Crédité : PROPOSITION, état non dessiné dans la maquette d'origine (À CONCEVOIR) -->
+                <div class="k-stack" data-av-si="credite" hidden>
+                  <h3 class="k-card__title">Vos 10 € sont crédités</h3>
+                  <div class="k-banner k-banner--success">
+                    <k-icon name="check-circle"></k-icon>
+                    <div class="k-banner__text">Votre avis est publié : 10 € de messages ont été ajoutés à votre compte. Merci pour votre soutien !</div>
+                  </div>
+                </div>
+
+                <!-- [V5] Avis déjà laissé -->
+                <div data-av-si="deja" hidden>
+                  <h3 class="k-card__title">Merci !</h3>
+                  <p class="k-card__desc">Vous avez déjà laissé un avis sur Shopify : il n'y a rien à faire ici. Votre avis est en ligne, merci pour votre soutien.</p>
+                </div>
+              </div>
+            </article>
+
+            <!-- [V4] Carte Trustpilot. État de départ dans la démo : avis déjà laissé -->
+            <article class="k-connect" data-av-carte="trustpilot" data-etat="deja" aria-labelledby="av-trustpilot-t">
+              <div class="k-connect__head">
+                <!-- Logo Trustpilot À FOURNIR : une étoile du jeu d'icônes en attendant -->
+                <span class="k-logo" style="color:var(--k-success)"><k-icon name="star"></k-icon></span>
+                <div style="flex:1;min-width:0">
+                  <h2 class="k-connect__name" id="av-trustpilot-t">Trustpilot</h2>
+                  <div class="k-connect__by k-tabular"><span data-av-si="a-faire lien verification credite" hidden>+10 € de messages</span><span data-av-si="deja">Avis déjà laissé</span></div>
+                </div>
+                <span class="k-badge" data-av-si="a-faire lien" hidden>Environ 1 min</span>
+                <span class="k-badge k-badge--accent" data-av-si="verification" hidden><span class="k-badge__dot"></span>En vérification</span>
+                <span class="k-badge k-badge--success" data-av-si="credite" hidden><k-icon name="check" set="micro"></k-icon>10 € crédités</span>
+              </div>
+
+              <!-- [V5] Les trois étapes, toutes cochées -->
+              <ol class="k-steps" aria-label="Étapes de l'avis Trustpilot" style="flex-wrap:wrap">
+                <li class="k-steps__item" data-av-pas="1" data-done><span class="k-steps__num"><k-icon name="check" set="micro"></k-icon></span>Laisser l'avis</li>
+                <li class="k-steps__sep" aria-hidden="true"></li>
+                <li class="k-steps__item" data-av-pas="2" data-done><span class="k-steps__num"><k-icon name="check" set="micro"></k-icon></span>Coller le lien</li>
+                <li class="k-steps__sep" aria-hidden="true"></li>
+                <li class="k-steps__item" data-av-pas="3" data-done><span class="k-steps__num"><k-icon name="check" set="micro"></k-icon></span>Recevoir 10 €</li>
+              </ol>
+
+              <div class="k-stack" aria-live="polite">
+                <!-- [V6] Étape 1 : écrire l'avis -->
+                <div class="k-stack" data-av-si="a-faire" hidden>
+                  <div>
+                    <h3 class="k-card__title">Laissez votre avis 5 étoiles</h3>
+                    <p class="k-card__desc">Ouvre Trustpilot dans un nouvel onglet. Toutes les notes sont les bienvenues.</p>
+                  </div>
+                  <div><button type="button" class="k-button k-button--primary" data-av-ecrire>Écrire un avis sur Trustpilot<k-icon name="arrow-top-right-on-square"></k-icon></button></div>
+                </div>
+
+                <!-- [V7] Étape 2 : coller le lien de l'avis -->
+                <form class="k-stack" data-av-si="lien" data-av-form novalidate hidden>
+                  <div class="k-field">
+                    <label class="k-field__label" for="av-trustpilot-lien">Collez le lien de votre avis</label>
+                    <div style="display:flex;gap:var(--k-space-2)">
+                      <input class="k-input" style="flex:1;min-width:0" id="av-trustpilot-lien" type="url" inputmode="url" placeholder="https://www.trustpilot.com/…" autocomplete="off" aria-describedby="av-trustpilot-aide av-trustpilot-erreur" data-av-lien>
+                      <button type="submit" class="k-button k-button--primary">Envoyer pour vérification</button>
+                    </div>
+                    <span class="k-field__error" id="av-trustpilot-erreur" role="alert" data-av-erreur hidden><k-icon name="exclamation-triangle" set="micro" size="14"></k-icon>Collez le lien de votre avis Trustpilot.</span>
+                    <span class="k-field__hint" id="av-trustpilot-aide">Une fois l'avis laissé, copiez son lien pour que nous puissions le vérifier. Les 10 € sont crédités sur votre compte une fois votre avis publié.</span>
+                  </div>
+                  <div><button type="button" class="k-button k-button--ghost k-button--sm" data-av-ecrire>Rouvrir la page d'avis<k-icon name="arrow-top-right-on-square"></k-icon></button></div>
+                </form>
+
+                <!-- [V8] Étape 3 : en vérification -->
+                <div class="k-stack" data-av-si="verification" hidden>
+                  <h3 class="k-card__title">Recevez vos 10 €</h3>
+                  <div class="k-banner k-banner--success">
+                    <k-icon name="check-circle"></k-icon>
+                    <div class="k-banner__text"><span class="k-banner__title">Merci !</span> Dès que votre avis sera publié, 10 € seront crédités sur votre compte.</div>
+                  </div>
+                  <div><button type="button" class="k-button k-button--ghost k-button--sm" data-av-ecrire>Rouvrir la page d'avis<k-icon name="arrow-top-right-on-square"></k-icon></button></div>
+                </div>
+
+                <!-- [V8] Crédité : PROPOSITION, état non dessiné dans la maquette d'origine (À CONCEVOIR) -->
+                <div class="k-stack" data-av-si="credite" hidden>
+                  <h3 class="k-card__title">Vos 10 € sont crédités</h3>
+                  <div class="k-banner k-banner--success">
+                    <k-icon name="check-circle"></k-icon>
+                    <div class="k-banner__text">Votre avis est publié : 10 € de messages ont été ajoutés à votre compte. Merci pour votre soutien !</div>
+                  </div>
+                </div>
+
+                <!-- [V5] Avis déjà laissé -->
+                <div data-av-si="deja">
+                  <h3 class="k-card__title">Merci !</h3>
+                  <p class="k-card__desc">Vous avez déjà laissé un avis sur Trustpilot : il n'y a rien à faire ici. Votre avis est en ligne, merci pour votre soutien.</p>
+                </div>
+              </div>
+            </article>
+
+          </div>
+        </section>
+      </div>
+    </div>
+    <!-- [V0] Bascule de démonstration, discrète, dans le coin : à ne pas porter. Elle pilote la carte Shopify. -->
+    <div class="k-segmented k-segmented--sm k-demo-switch" role="tablist" aria-label="Maquette : état de la carte Shopify" data-av-etats>
+      <span class="k-segmented__thumb"></span>
+      <button type="button" class="k-segmented__item" role="tab" aria-selected="true" data-etat="a-faire" aria-label="Maquette : avis à faire" data-k-tooltip="Maquette : avis à faire" data-k-tooltip-side="bottom"><k-icon name="pencil-square" size="14"></k-icon></button>
+      <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-etat="lien" aria-label="Maquette : lien à coller" data-k-tooltip="Maquette : lien à coller" data-k-tooltip-side="bottom"><k-icon name="link" size="14"></k-icon></button>
+      <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-etat="verification" aria-label="Maquette : en vérification" data-k-tooltip="Maquette : en vérification" data-k-tooltip-side="bottom"><k-icon name="clock" size="14"></k-icon></button>
+      <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-etat="credite" aria-label="Maquette : crédité (proposition)" data-k-tooltip="Maquette : crédité (proposition)" data-k-tooltip-side="bottom"><k-icon name="gift" size="14"></k-icon></button>
+      <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-etat="deja" aria-label="Maquette : avis déjà laissé" data-k-tooltip="Maquette : avis déjà laissé" data-k-tooltip-side="bottom"><k-icon name="check-circle" size="14"></k-icon></button>
+    </div>
+  </main>
+</div>
+
+<!-- Modale et menu de la barre de navigation : les mêmes sur toutes les pages -->
+<!-- Qualité du numéro et limite d'envoi de Meta : la même modale sur toutes les pages. Elle s'ouvre depuis « Quality », dans la barre -->
+<dialog class="k-modal k-modal--sm" id="mod-qualite" aria-labelledby="mod-qualite-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="mod-qualite-t">Qualité du numéro</h2></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+    <!-- Le niveau, en grand : un anneau, un mot, une phrase -->
+    <div class="k-stack" style="align-items:center;gap:var(--k-space-3);text-align:center">
+      <span class="k-gauge" aria-hidden="true"><span class="k-ring k-ring--lg" data-quality="high"></span><k-icon name="check"></k-icon></span>
+      <div><div class="k-modal__title" data-q-niveau>Élevée</div><p style="margin-top:var(--k-space-1);color:var(--k-ink-2)" data-q-texte>Vos clients lisent vos messages et les signalent peu. Continuez ainsi.</p></div>
+    </div>
+    <ol class="k-scale" aria-label="Les trois niveaux de qualité"><li class="k-scale__step" data-tone="danger">Basse</li><li class="k-scale__step" data-tone="warning" style="text-align:center">Moyenne</li><li class="k-scale__step" data-tone="success" aria-current="true" style="text-align:end">Élevée</li></ol>
+    <!-- Les envois du jour : une ligne, une jauge, une phrase -->
+    <div class="k-inset">
+      <div class="k-inset__row"><span class="k-inset__label">Envois sur 24 h</span><span class="k-inset__value"><b data-q-envoyes>4 812</b> sur <span data-q-limite>100 000</span></span></div>
+      <div class="k-progress k-progress--ink" role="progressbar" aria-label="Part de la limite d'envoi utilisée sur 24 heures" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="--k-value:0.05" data-q-jauge><span></span></div>
+      <p class="k-inset__hint" data-q-suite>Cette limite augmente toute seule à mesure que vous envoyez.</p>
+    </div>
+  </div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--primary" data-k-close>Compris</button></footer>
+</dialog>
+<div class="k-menu" id="menu-compte" popover role="menu">
+  <div class="k-menu__label">Maison Lumen · Scale plan</div>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#general"><k-icon name="user"></k-icon><span class="k-menu__text">Mon profil</span></a>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#facturation"><k-icon name="credit-card"></k-icon><span class="k-menu__text">Facturation</span></a>
+  <a class="k-menu__item" role="menuitem" href="forfaits.html"><k-icon name="star"></k-icon><span class="k-menu__text">Changer de forfait</span></a>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Passer à Kanal iMessage</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="arrow-left"></k-icon><span class="k-menu__text">Se déconnecter</span></button>
+</div>
+<script src="assets/avis.js?v=20261117-19"></script>
+<div id="k-fin" hidden></div>
+</body>
+</html>

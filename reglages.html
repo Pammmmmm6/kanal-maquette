@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La maquette est publiée pour Kite (GitHub Pages) : elle ne doit pas être référencée -->
+<meta name="robots" content="noindex, nofollow">
+<title>Réglages · Kanal</title>
+<!--
+  NOTES D'INTÉGRATION — Réglages, dans le design system Kanal
+
+  Gabarit « Page avec panneau de section » : la barre de navigation, un panneau avec le menu des réglages,
+  puis le contenu de la page choisie. Aucun style propre à cette page : tout vient de assets/composants.css.
+  Le script assets/reglages.js ne fait que changer de page et simuler l'enregistrement.
+
+  [G1] Menu (.k-sidebar > .k-nav) : cinq groupes. La page ouverte porte aria-current="page".
+       Dans l'app, chaque entrée est une route (/settings/general, /settings/team…) ; ici, une ancre (#general).
+  [G2] Une page = un en-tête (.k-page__header) puis des sections. Chaque section a son titre hors carte et une
+       carte de réglages (.k-settings) : une ligne par réglage, libellé et description à gauche, contrôle à droite.
+  [G3] Enregistrement. Un interrupteur enregistre tout de suite, et un toast le confirme. Une page qui a des champs
+       de texte a un bouton « Enregistrer » en haut à droite, désactivé tant que rien n'a changé (data-enregistrer).
+  [G4] Une action irréversible (supprimer l'espace, révoquer une clé) passe par une modale de confirmation
+       marquée data-k-static, dont le bouton reprend le verbe.
+  [G5] Une fonction pas encore branchée (iMessage, SMS, RCS : HYPOTHÈSE pour le contenu des deux dernières) montre une carte de mise en route (.k-promo) à la place
+       de ses réglages.
+  [G6] Sous 1180 px, le menu s'ouvre par-dessus le contenu depuis le bouton en haut de la page.
+  [G7] Intégrations : chaque application porte son logo dans une tuile (.k-logo, 40 px, logo de 22 px), jamais une
+       icône générique. Fichiers dans assets/img/ ; dans l'app, prendre les logos officiels de chaque partenaire.
+
+  Pages : Général, Équipe, Facturation · WhatsApp, iMessage, SMS, RCS · Inbox, Réponses enregistrées, Horaires d'ouverture ·
+  Heures calmes, Désabonnement, Attribution et UTM · Intégrations, API et webhooks.
+  Les valeurs (clés, factures, numéros) sont fictives. Données de démo : boutique Maison Lumen, Camille Roux.
+-->
+<link rel="icon" href="assets/img/logo-kanal-min-black.svg">
+<!-- La première image attend la fin du document (#k-fin) : la page arrive complète, y compris dans une transition -->
+<link rel="expect" href="#k-fin" blocking="render">
+<link rel="stylesheet" href="assets/jetons.css?v=20261117-19">
+<link rel="stylesheet" href="assets/composants.css?v=20261117-19">
+<script src="assets/composants.js?v=20261117-19"></script>
+<script src="assets/reglages.js?v=20261117-19" defer></script>
+</head>
+<body class="k-app">
+<script src="assets/icones.js?v=20261117-19"></script>
+
+<!-- Bandeau d'annonce : le logo de la barre le montre et le cache (data-k-announce-toggle) -->
+<div class="k-announce" role="region" aria-label="Nouveauté">
+  <span class="k-announce__tag">Nouveau</span>
+  <span class="k-announce__text"><b>Kanal se pilote depuis Claude.</b> Créez vos campagnes et vos automatisations en une phrase : inclus dans Scale et Business.</span>
+  <a class="k-announce__link" href="forfaits.html">Voir les forfaits<k-icon name="arrow-right" set="micro"></k-icon></a>
+  <button type="button" class="k-announce__close" aria-label="Masquer l'annonce" data-k-announce-toggle><k-icon name="x-mark" set="micro"></k-icon></button>
+</div>
+<div class="k-shell">
+  <nav class="k-rail" aria-label="Navigation">
+    <div class="k-rail__head">
+      <button type="button" class="k-rail__logo" aria-label="Kanal : montrer ou masquer l'annonce" data-k-announce-toggle><img src="assets/img/logo-kanal-min-white.svg" alt=""></button>
+      <button type="button" class="k-rail__pin" aria-pressed="false" aria-label="Épingler la navigation" data-k-rail-pin data-k-tooltip="Épingler la navigation" data-k-tooltip-side="bottom"><k-icon name="pin"></k-icon></button>
+    </div>
+    <div class="k-rail__main">
+      <a class="k-rail__item" href="accueil.html" aria-label="Home"><k-icon name="home"></k-icon><span class="k-rail__label">Home</span></a>
+      <a class="k-rail__item" href="inbox.html" aria-label="Inbox, 3 conversations à traiter"><k-icon name="inbox"></k-icon><span class="k-rail__label">Inbox</span><span class="k-count k-count--danger k-rail__count">3</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="automatisations.html" aria-label="Automations"><k-icon name="bolt"></k-icon><span class="k-rail__label">Automations</span></a>
+      <a class="k-rail__item" href="exemple.html" aria-label="Campaigns"><k-icon name="megaphone"></k-icon><span class="k-rail__label">Campaigns</span></a>
+      <a class="k-rail__item" href="agent.html" aria-label="AI Agent"><k-icon name="sparkles"></k-icon><span class="k-rail__label">AI Agent</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="contacts.html" aria-label="Contacts"><k-icon name="users"></k-icon><span class="k-rail__label">Contacts</span></a>
+      <a class="k-rail__item" href="listes.html" aria-label="Lists &amp; segments"><k-icon name="queue-list"></k-icon><span class="k-rail__label">Lists &amp; segments</span></a>
+      <a class="k-rail__item" href="liens.html" aria-label="Magic links"><k-icon name="link"></k-icon><span class="k-rail__label">Magic links</span></a>
+    </div>
+    <div class="k-rail__end">
+      <button type="button" class="k-rail__item" aria-label="Qualité du numéro : élevée. 4 812 messages sur 100 000 en 24 h" aria-haspopup="dialog" data-k-open="mod-qualite"><span class="k-ring" data-quality="high"></span><span class="k-rail__label">Quality</span><span class="k-rail__meta" data-quality="high" data-rail-qualite>High</span></button>
+      <a class="k-rail__item" href="reglages.html" aria-current="page" aria-label="Settings"><k-icon name="cog-6-tooth"></k-icon><span class="k-rail__label">Settings</span></a>
+      <a class="k-rail__item" href="avis.html" aria-label="Claim my 20 €"><k-icon name="gift"></k-icon><span class="k-rail__label">Claim my 20 €</span></a>
+      <button type="button" class="k-rail__item" aria-label="Menu du compte : Camille Roux, Maison Lumen" aria-haspopup="menu" data-k-menu="menu-compte" data-k-placement="right-end"><span class="k-avatar k-avatar--blue">CR<span class="k-avatar__status"></span></span><span class="k-rail__label">Camille Roux</span></button>
+    </div>
+  </nav>
+
+  <!-- [G1] Menu des réglages -->
+  <aside class="k-sidebar" aria-label="Menu des réglages">
+    <div class="k-sidebar__header"><span class="k-sidebar__title">Réglages</span></div>
+    <div class="k-sidebar__body">
+      <nav class="k-nav" aria-label="Réglages" data-rg-nav>
+        <div class="k-nav__label">Espace de travail</div>
+        <a class="k-nav__item" href="#general"><k-icon name="building-storefront"></k-icon><span>Général</span></a>
+        <a class="k-nav__item" href="#equipe"><k-icon name="user-group"></k-icon><span>Équipe</span><span class="k-nav__end k-tabular">3</span></a>
+        <a class="k-nav__item" href="#facturation"><k-icon name="credit-card"></k-icon><span>Facturation</span></a>
+        <div class="k-nav__label">Canaux</div>
+        <a class="k-nav__item" href="#whatsapp"><k-icon name="chat-bubble-left-right"></k-icon><span>WhatsApp</span></a>
+        <a class="k-nav__item" href="#imessage"><k-icon name="chat-bubble-left"></k-icon><span>iMessage</span><span class="k-nav__end"><span class="k-badge k-badge--solid">Nouveau</span></span></a>
+        <a class="k-nav__item" href="#sms"><k-icon name="device-phone-mobile"></k-icon><span>SMS</span></a>
+        <a class="k-nav__item" href="#rcs"><k-icon name="chat-bubble-oval-left"></k-icon><span>RCS</span></a>
+        <div class="k-nav__label">Messagerie</div>
+        <a class="k-nav__item" href="#inbox"><k-icon name="inbox"></k-icon><span>Inbox</span></a>
+        <a class="k-nav__item" href="#reponses"><k-icon name="bookmark"></k-icon><span>Réponses enregistrées</span></a>
+        <a class="k-nav__item" href="#horaires"><k-icon name="clock"></k-icon><span>Horaires d'ouverture</span></a>
+        <div class="k-nav__label">Marketing</div>
+        <a class="k-nav__item" href="#heures-calmes"><k-icon name="bell-snooze"></k-icon><span>Heures calmes</span></a>
+        <a class="k-nav__item" href="#desabonnement"><k-icon name="no-symbol"></k-icon><span>Désabonnement</span></a>
+        <a class="k-nav__item" href="#attribution"><k-icon name="chart-bar"></k-icon><span>Attribution et UTM</span></a>
+        <div class="k-nav__label">Connexions</div>
+        <a class="k-nav__item" href="#integrations"><k-icon name="puzzle-piece"></k-icon><span>Intégrations</span></a>
+        <a class="k-nav__item" href="#api"><k-icon name="key"></k-icon><span>API et webhooks</span></a>
+      </nav>
+    </div>
+  </aside>
+
+  <main class="k-main">
+    <div class="k-main__scroll" data-rg-defilement>
+      <!-- [G6] -->
+      <button type="button" class="k-button k-button--outline k-button--sm k-nav-toggle" data-k-nav-toggle style="margin:var(--k-space-4) 0 0 var(--k-page-gutter)"><k-icon name="bars-3"></k-icon>Menu des réglages</button>
+
+      <!-- ================= GÉNÉRAL ================= -->
+      <section class="k-page" id="general" data-rg-page="Général">
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">Général</h1><p class="k-page__subtitle">Le nom de votre boutique, sa langue et son fuseau horaire.</p></div>
+          <div class="k-page__actions"><button type="button" class="k-button k-button--primary" data-enregistrer disabled>Enregistrer</button></div>
+        </header>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Boutique</h2></div>
+          <div class="k-settings">
+            <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="rg-nom">Nom</label><span class="k-settings__desc">Affiché en tête de vos messages et dans la barre de navigation.</span></span><span class="k-settings__control"><input class="k-input" id="rg-nom" type="text" value="Maison Lumen"></span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Logo</span><span class="k-settings__desc">Carré, 256 px au moins. PNG ou SVG.</span></span><span class="k-settings__control"><span class="k-avatar k-avatar--lg k-avatar--square k-avatar--ink">ML</span><button type="button" class="k-button k-button--secondary k-button--sm">Changer</button></span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Identifiant de l'espace</span><span class="k-settings__desc">À donner au support. Ce n'est pas un secret.</span></span><span class="k-settings__control"><span class="k-copyfield" style="width:clamp(200px,22vw,320px)"><span class="k-copyfield__value">ws_8f3k2m9qLumen</span><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Copier l'identifiant" data-k-tooltip="Copier" data-k-copy="ws_8f3k2m9qLumen"><k-icon name="document-duplicate"></k-icon></button></span></span></div>
+          </div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Langue et région</h2><p class="k-section__desc">Ces choix règlent l'interface et le format des dates et des montants.</p></div>
+          <div class="k-settings">
+            <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="rg-langue">Langue de l'interface</label></span><span class="k-settings__control"><select class="k-select" id="rg-langue"><option>Français</option><option>English</option></select></span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="rg-fuseau">Fuseau horaire</label><span class="k-settings__desc">Sert aux campagnes programmées et aux heures calmes.</span></span><span class="k-settings__control"><select class="k-select" id="rg-fuseau"><option>Europe/Paris</option><option>Europe/London</option><option>America/New_York</option></select></span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="rg-devise">Devise</label><span class="k-settings__desc">Reprise de Shopify.</span></span><span class="k-settings__control"><select class="k-select" id="rg-devise" disabled><option>Euro (€)</option></select></span></div>
+          </div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Zone sensible</h2></div>
+          <div class="k-settings">
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Supprimer l'espace de travail</span><span class="k-settings__desc">Supprime les contacts, les conversations, les campagnes et les automatisations. Cette action ne s'annule pas.</span></span><span class="k-settings__control"><button type="button" class="k-button k-button--outline" data-k-open="rg-supprimer" style="color:var(--k-danger-text)">Supprimer</button></span></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= ÉQUIPE ================= -->
+      <section class="k-page" id="equipe" data-rg-page="Équipe" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">Équipe</h1><p class="k-page__subtitle">Les personnes qui ont accès à Kanal, et ce que chacune peut faire.</p></div>
+          <div class="k-page__actions"><button type="button" class="k-button k-button--primary" data-k-open="rg-inviter"><k-icon name="plus"></k-icon>Inviter</button></div>
+        </header>
+        <section class="k-section">
+          <div class="k-table-wrap"><div class="k-table-wrap__scroll"><table class="k-table">
+            <thead><tr><th>Personne</th><th>Rôle</th><th>Dernière connexion</th><th class="k-table__actions"><span class="k-sr-only">Actions</span></th></tr></thead>
+            <tbody>
+              <tr><td><div style="display:flex;align-items:center;gap:var(--k-space-3)"><span class="k-avatar k-avatar--ink">CR<span class="k-avatar__status"></span></span><div><div class="k-table__primary">Camille Roux <span class="k-badge">Vous</span></div><div class="k-table__secondary">camille@maisonlumen.fr</div></div></div></td><td>Propriétaire</td><td>À l'instant</td><td class="k-table__actions"></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:var(--k-space-3)"><span class="k-avatar k-avatar--violet">TG<span class="k-avatar__status"></span></span><div><div class="k-table__primary">Théo Garnier</div><div class="k-table__secondary">theo@maisonlumen.fr</div></div></div></td><td><select class="k-select k-select--sm" aria-label="Rôle de Théo Garnier" style="width:150px"><option>Administrateur</option><option>Agent</option></select></td><td>Il y a 12 min</td><td class="k-table__actions"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions sur Théo Garnier" data-k-menu="rg-menu-membre" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:var(--k-space-3)"><span class="k-avatar k-avatar--green">IM</span><div><div class="k-table__primary">Inès Morel <span class="k-badge k-badge--warning">Invitation envoyée</span></div><div class="k-table__secondary">ines@maisonlumen.fr</div></div></div></td><td><select class="k-select k-select--sm" aria-label="Rôle d'Inès Morel" style="width:150px"><option>Agent</option><option>Administrateur</option></select></td><td>Jamais</td><td class="k-table__actions"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions sur Inès Morel" data-k-menu="rg-menu-membre" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></td></tr>
+            </tbody>
+          </table></div><div class="k-table-footer"><span>3 personnes sur 5 comprises dans le forfait Scale</span></div></div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Rôles</h2></div>
+          <div class="k-settings">
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Propriétaire</span><span class="k-settings__desc">Tout, y compris la facturation et la suppression de l'espace. Une seule personne.</span></span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Administrateur</span><span class="k-settings__desc">Tout sauf la facturation : campagnes, automatisations, réglages, équipe.</span></span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Agent</span><span class="k-settings__desc">L'inbox et les contacts. Ne peut ni envoyer de campagne ni modifier les réglages.</span></span></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= FACTURATION ================= -->
+      <section class="k-page" id="facturation" data-rg-page="Facturation" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">Facturation</h1><p class="k-page__subtitle">Votre forfait, vos messages du mois et vos factures.</p></div>
+        </header>
+        <section class="k-section">
+          <div class="k-grid k-grid--2">
+            <div class="k-stat"><div class="k-stat__label">Forfait Scale</div><div class="k-stat__value">149 €<span class="k-stat__unit">par mois</span></div><div class="k-stat__meta">Prochain prélèvement le 1<sup>er</sup> décembre 2026</div><div><a class="k-button k-button--secondary k-button--sm" href="forfaits.html">Changer de forfait</a></div></div>
+            <div class="k-stat"><div class="k-stat__label">Messages ce mois-ci</div><div class="k-stat__value k-tabular">18 240</div><div class="k-stat__meta">Sans limite côté Kanal. La seule limite d'envoi est celle de Meta : <button type="button" class="k-link" data-k-open="mod-qualite">voir la qualité du numéro</button>.</div></div>
+          </div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Moyen de paiement</h2></div>
+          <div class="k-settings">
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Visa se terminant par 4242</span><span class="k-settings__desc">Expire en 08/2028</span></span><span class="k-settings__control"><button type="button" class="k-button k-button--secondary k-button--sm">Modifier</button></span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="rg-mail-facture">E-mail de facturation</label><span class="k-settings__desc">Les factures y sont envoyées chaque mois.</span></span><span class="k-settings__control"><input class="k-input" id="rg-mail-facture" type="email" value="compta@maisonlumen.fr"></span></div>
+          </div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Factures</h2></div>
+          <div class="k-table-wrap"><div class="k-table-wrap__scroll"><table class="k-table k-table--compact">
+            <thead><tr><th>Date</th><th>Détail</th><th>Statut</th><th class="k-table__num">Montant</th><th class="k-table__actions"><span class="k-sr-only">Télécharger</span></th></tr></thead>
+            <tbody>
+              <tr><td class="k-table__primary">1 nov. 2026</td><td>Forfait Scale</td><td><span class="k-badge k-badge--success">Payée</span></td><td class="k-table__num">149,00 €</td><td class="k-table__actions"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Télécharger la facture de novembre" data-k-tooltip="Télécharger"><k-icon name="arrow-down-tray"></k-icon></button></td></tr>
+              <tr><td class="k-table__primary">1 oct. 2026</td><td>Forfait Scale + 1 840 messages</td><td><span class="k-badge k-badge--success">Payée</span></td><td class="k-table__num">222,60 €</td><td class="k-table__actions"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Télécharger la facture d'octobre" data-k-tooltip="Télécharger"><k-icon name="arrow-down-tray"></k-icon></button></td></tr>
+              <tr><td class="k-table__primary">1 sept. 2026</td><td>Forfait Pro</td><td><span class="k-badge k-badge--success">Payée</span></td><td class="k-table__num">89,00 €</td><td class="k-table__actions"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Télécharger la facture de septembre" data-k-tooltip="Télécharger"><k-icon name="arrow-down-tray"></k-icon></button></td></tr>
+            </tbody>
+          </table></div></div>
+        </section>
+      </section>
+
+      <!-- ================= WHATSAPP ================= -->
+      <section class="k-page" id="whatsapp" data-rg-page="WhatsApp" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">WhatsApp</h1><p class="k-page__subtitle">Le numéro qui envoie vos messages, sa qualité et son profil public.</p></div>
+          <div class="k-page__actions"><button type="button" class="k-button k-button--primary" data-enregistrer disabled>Enregistrer</button></div>
+        </header>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Numéro</h2></div>
+          <div class="k-settings">
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label k-tabular">+33 4 72 00 12 34</span><span class="k-settings__desc">Maison Lumen · WhatsApp Business Platform</span></span><span class="k-settings__control"><span class="k-badge k-badge--success"><span class="k-badge__dot"></span>Connecté</span></span></div>
+            <div class="k-settings__row k-settings__row--sub"><span class="k-settings__text"><span class="k-settings__label">Qualité</span><span class="k-settings__desc">Calculée par Meta sur les 7 derniers jours : blocages et signalements de vos messages.</span></span><span class="k-settings__control"><span class="k-badge k-badge--success"><span class="k-badge__dot"></span>Haute</span></span></div>
+            <div class="k-settings__row k-settings__row--sub"><span class="k-settings__text"><span class="k-settings__label">Limite d'envoi</span><span class="k-settings__desc">Le nombre de contacts à qui vous pouvez écrire en premier, par 24 heures.</span></span><span class="k-settings__control k-tabular" style="font-weight:var(--k-weight-strong)">100 000</span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Nom d'affichage</span><span class="k-settings__desc">Maison Lumen. Il se change dans WhatsApp Manager, et Meta le valide sous 48 heures.</span></span><span class="k-settings__control"><a class="k-button k-button--secondary k-button--sm" href="#whatsapp">Ouvrir WhatsApp Manager<k-icon name="arrow-top-right-on-square"></k-icon></a></span></div>
+          </div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Profil public</h2><p class="k-section__desc">Ce que vos clients voient en ouvrant votre fiche dans WhatsApp.</p></div>
+          <div class="k-settings">
+            <div class="k-settings__row k-settings__row--stack"><label class="k-settings__label" for="rg-wa-desc">Description</label><textarea class="k-textarea" id="rg-wa-desc" rows="2">Bougies parfumées coulées à la main à Lyon. Réponse sous une heure, du lundi au vendredi.</textarea></div>
+            <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="rg-wa-site">Site</label></span><span class="k-settings__control"><div class="k-input-addon" style="width:clamp(200px,22vw,320px)"><span class="k-input-addon__text">https://</span><input class="k-input" id="rg-wa-site" type="text" value="maisonlumen.fr"></div></span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="rg-wa-mail">E-mail de contact</label></span><span class="k-settings__control"><input class="k-input" id="rg-wa-mail" type="email" value="bonjour@maisonlumen.fr"></span></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= IMESSAGE ================= -->
+      <section class="k-page" id="imessage" data-rg-page="iMessage" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">iMessage</h1><p class="k-page__subtitle">Répondez à vos clients dans l'app Messages de leur iPhone, depuis la même inbox.</p></div>
+        </header>
+        <!-- [G5] -->
+        <div class="k-promo k-grid-paper">
+          <div class="k-promo__media"><div class="k-thread" style="min-height:0;width:100%;padding:0"><div class="k-bubble k-bubble--in">Bonjour, la bougie Ambre revient quand ?</div><div class="k-bubble k-bubble--out" style="background:var(--k-imessage);color:var(--k-on-inverse)">Le 24 novembre. Je vous préviens dès qu'elle est en ligne.</div></div></div>
+          <div class="k-promo__body">
+            <h2 class="k-promo__title">Ouvrez un second canal</h2>
+            <span class="k-badge k-badge--danger">Non connecté</span>
+            <p class="k-promo__desc">Kanal iMessage est une app à part, avec son agent et ses automatisations. La mise en route prend deux jours ouvrés : nous configurons votre numéro avec vous.</p>
+            <button type="button" class="k-button k-button--outline" style="margin-top:var(--k-space-2)" data-k-toast="Demande envoyée. Nous vous écrivons sous 24 heures." data-k-toast-tone="success">Demander l'accès<k-icon name="arrow-right"></k-icon></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SMS ================= -->
+      <section class="k-page" id="sms" data-rg-page="SMS" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">SMS</h1><p class="k-page__subtitle">Joignez les clients qui n'ont pas WhatsApp, depuis la même inbox et les mêmes automatisations.</p></div>
+        </header>
+        <!-- [G5] -->
+        <div class="k-promo k-grid-paper">
+          <div class="k-promo__media"><div class="k-thread" style="min-height:0;width:100%;padding:0"><div class="k-bubble k-bubble--in">STOP</div><div class="k-bubble k-bubble--out">Maison Lumen : votre désinscription est prise en compte.</div></div></div>
+          <div class="k-promo__body">
+            <h2 class="k-promo__title">Le SMS, en renfort</h2>
+            <span class="k-badge k-badge--danger">Non connecté</span>
+            <p class="k-promo__desc">Un numéro ou un nom d'expéditeur dédié à votre boutique. Le SMS prend le relais quand un message WhatsApp n'arrive pas, et se facture au message selon le pays.</p>
+            <button type="button" class="k-button k-button--outline" style="margin-top:var(--k-space-2)" data-k-toast="Demande envoyée. Nous vous écrivons sous 24 heures." data-k-toast-tone="success">Demander l'accès<k-icon name="arrow-right"></k-icon></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= RCS ================= -->
+      <section class="k-page" id="rcs" data-rg-page="RCS" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">RCS</h1><p class="k-page__subtitle">Des messages riches dans l'app Messages d'Android : images, boutons et carrousels, sans application à installer.</p></div>
+        </header>
+        <!-- [G5] -->
+        <div class="k-promo k-grid-paper">
+          <div class="k-promo__media"><div class="k-thread" style="min-height:0;width:100%;padding:0"><div class="k-bubble k-bubble--in">Vous avez encore le coffret Découverte ?</div><div class="k-bubble k-bubble--out">Oui, il en reste 12. Voici le lien pour le commander.</div></div></div>
+          <div class="k-promo__body">
+            <h2 class="k-promo__title">Le RCS, pour Android</h2>
+            <span class="k-badge k-badge--danger">Non connecté</span>
+            <p class="k-promo__desc">Votre marque apparaît avec son nom, son logo et une coche de vérification. La validation de l'expéditeur par les opérateurs prend quelques jours : nous la faisons avec vous.</p>
+            <button type="button" class="k-button k-button--outline" style="margin-top:var(--k-space-2)" data-k-toast="Demande envoyée. Nous vous écrivons sous 24 heures." data-k-toast-tone="success">Demander l'accès<k-icon name="arrow-right"></k-icon></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= INBOX ================= -->
+      <section class="k-page" id="inbox" data-rg-page="Inbox" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">Inbox</h1><p class="k-page__subtitle">Comment les conversations arrivent à votre équipe, et ce qui se passe quand on les clôture.</p></div>
+        </header>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Assignation</h2></div>
+          <div class="k-settings">
+            <label class="k-settings__row" for="rg-auto"><span class="k-settings__text"><span class="k-settings__label">Répartition automatique</span><span class="k-settings__desc">Les conversations que Lumi passe à un humain sont assignées à tour de rôle aux personnes en ligne.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="rg-auto" checked></span></label>
+            <div class="k-settings__row k-settings__row--sub"><span class="k-settings__text"><span class="k-settings__label">Qui reçoit des conversations</span><span class="k-settings__desc">Une personne hors ligne n'en reçoit pas.</span></span><span class="k-settings__control"><span class="k-avatar-stack"><span class="k-avatar k-avatar--sm k-avatar--ink">CR</span><span class="k-avatar k-avatar--sm k-avatar--violet">TG</span></span><button type="button" class="k-button k-button--secondary k-button--sm">Modifier</button></span></div>
+            <label class="k-settings__row" for="rg-repondre"><span class="k-settings__text"><span class="k-settings__label">Répondre assigne la conversation</span><span class="k-settings__desc">La première personne qui répond à une conversation non assignée en devient responsable.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="rg-repondre" checked></span></label>
+          </div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Clôture</h2></div>
+          <div class="k-settings">
+            <label class="k-settings__row" for="rg-rouvrir"><span class="k-settings__text"><span class="k-settings__label">Rouvrir à la réponse du client</span><span class="k-settings__desc">Une conversation fermée ou reportée revient dans « À traiter » dès que le client écrit.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="rg-rouvrir" checked></span></label>
+            <label class="k-settings__row" for="rg-e"><span class="k-settings__text"><span class="k-settings__label">Clôturer avec la touche E</span><span class="k-settings__desc">Sans confirmation : un toast propose « Annuler » pendant 5 secondes.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="rg-e" checked></span></label>
+            <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="rg-auto-clore">Clôture automatique</label><span class="k-settings__desc">Ferme une conversation restée sans réponse du client.</span></span><span class="k-settings__control"><select class="k-select" id="rg-auto-clore"><option>Jamais</option><option>Après 3 jours</option><option selected>Après 7 jours</option><option>Après 14 jours</option></select></span></div>
+          </div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Agent IA</h2><p class="k-section__desc">Ce que Lumi laisse à l'équipe quand elle passe la main.</p></div>
+          <div class="k-settings">
+            <label class="k-settings__row" for="rg-resume"><span class="k-settings__text"><span class="k-settings__label">Résumé de passation</span><span class="k-settings__desc">En tête du fil : la demande, ce que Lumi a fait, pourquoi elle s'arrête.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="rg-resume" checked></span></label>
+            <a class="k-settings__row" href="agent.html#reglages"><span class="k-settings__text"><span class="k-settings__label">Configurer l'agent IA</span><span class="k-settings__desc">Son ton, ses connaissances, et quand elle passe la main.</span></span><span class="k-settings__control"><k-icon name="chevron-right" set="micro" size="16"></k-icon></span></a>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= RÉPONSES ENREGISTRÉES ================= -->
+      <section class="k-page" id="reponses" data-rg-page="Réponses enregistrées" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">Réponses enregistrées</h1><p class="k-page__subtitle">Les réponses que votre équipe insère avec « / » dans l'inbox. Le prénom du client se remplit tout seul.</p></div>
+          <div class="k-page__actions"><button type="button" class="k-button k-button--primary" data-k-open="rg-reponse"><k-icon name="plus"></k-icon>Nouvelle réponse</button></div>
+        </header>
+        <section class="k-section">
+          <div class="k-card"><div class="k-list">
+            <div class="k-list__row"><span class="k-list__icon"><k-icon name="bookmark"></k-icon></span><span class="k-list__main"><span class="k-list__title">Délais de livraison</span><span class="k-list__meta">Bonjour <span class="k-var">Prénom</span> ! Nos commandes partent sous 24 h et arrivent en 2 à 3 jours ouvrés en France.</span></span><span class="k-list__end"><span class="k-badge k-tabular">Utilisée 128 fois</span><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions sur Délais de livraison" data-k-menu="rg-menu-reponse" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></span></div>
+            <div class="k-list__row"><span class="k-list__icon"><k-icon name="bookmark"></k-icon></span><span class="k-list__main"><span class="k-list__title">Suivi de commande</span><span class="k-list__meta">Bonjour <span class="k-var">Prénom</span>, vous pouvez suivre votre colis ici : <span class="k-var">Lien de suivi</span>.</span></span><span class="k-list__end"><span class="k-badge k-tabular">Utilisée 96 fois</span><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions sur Suivi de commande" data-k-menu="rg-menu-reponse" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></span></div>
+            <div class="k-list__row"><span class="k-list__icon"><k-icon name="bookmark"></k-icon></span><span class="k-list__main"><span class="k-list__title">Colis abîmé</span><span class="k-list__meta">Je suis vraiment désolée <span class="k-var">Prénom</span>. Pouvez-vous m'envoyer une photo du colis ?</span></span><span class="k-list__end"><span class="k-badge k-tabular">Utilisée 41 fois</span><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions sur Colis abîmé" data-k-menu="rg-menu-reponse" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></span></div>
+            <div class="k-list__row"><span class="k-list__icon"><k-icon name="bookmark"></k-icon></span><span class="k-list__main"><span class="k-list__title">Retour et échange</span><span class="k-list__meta">Vous avez 30 jours pour retourner un article, <span class="k-var">Prénom</span>.</span></span><span class="k-list__end"><span class="k-badge k-tabular">Utilisée 37 fois</span><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions sur Retour et échange" data-k-menu="rg-menu-reponse" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></span></div>
+            <div class="k-list__row"><span class="k-list__icon"><k-icon name="bookmark"></k-icon></span><span class="k-list__main"><span class="k-list__title">Code de bienvenue</span><span class="k-list__meta">Avec plaisir <span class="k-var">Prénom</span> ! Voici -10 % sur votre prochaine commande avec le code LUMEN10.</span></span><span class="k-list__end"><span class="k-badge k-tabular">Utilisée 22 fois</span><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Actions sur Code de bienvenue" data-k-menu="rg-menu-reponse" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button></span></div>
+            <div class="k-list__footer">5 réponses</div>
+          </div></div>
+        </section>
+      </section>
+
+      <!-- ================= HORAIRES ================= -->
+      <section class="k-page" id="horaires" data-rg-page="Horaires d'ouverture" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">Horaires d'ouverture</h1><p class="k-page__subtitle">Quand votre équipe répond, et ce que reçoivent les clients qui écrivent en dehors.</p></div>
+          <div class="k-page__actions"><button type="button" class="k-button k-button--primary" data-enregistrer disabled>Enregistrer</button></div>
+        </header>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Plages horaires</h2><p class="k-section__desc">En dehors de ces plages, Lumi continue de répondre si elle est active.</p></div>
+          <div class="k-settings">
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Du lundi au vendredi</span></span><span class="k-settings__control"><select class="k-select" aria-label="Ouverture, du lundi au vendredi" style="width:110px"><option>9:00</option><option>8:00</option><option>10:00</option></select><span>à</span><select class="k-select" aria-label="Fermeture, du lundi au vendredi" style="width:110px"><option>18:00</option><option>17:00</option><option>19:00</option></select><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Retirer cette plage" data-k-tooltip="Retirer"><k-icon name="trash"></k-icon></button></span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Le samedi</span></span><span class="k-settings__control"><select class="k-select" aria-label="Ouverture, le samedi" style="width:110px"><option>10:00</option><option>9:00</option></select><span>à</span><select class="k-select" aria-label="Fermeture, le samedi" style="width:110px"><option>13:00</option><option>12:00</option><option>17:00</option></select><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Retirer cette plage" data-k-tooltip="Retirer"><k-icon name="trash"></k-icon></button></span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><button type="button" class="k-button k-button--secondary k-button--sm"><k-icon name="plus" set="micro"></k-icon>Ajouter une plage</button></span></div>
+          </div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">En dehors des horaires</h2></div>
+          <div class="k-settings">
+            <label class="k-settings__row" for="rg-absence"><span class="k-settings__text"><span class="k-settings__label">Message d'absence</span><span class="k-settings__desc">Envoyé une fois par conversation, quand Lumi n'est pas active.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="rg-absence" checked></span></label>
+            <div class="k-settings__row k-settings__row--sub k-settings__row--stack"><label class="k-settings__label" for="rg-absence-texte">Texte du message</label><textarea class="k-textarea" id="rg-absence-texte" rows="2">Merci pour votre message ! Notre équipe vous répond dès demain matin, 9 h.</textarea></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= HEURES CALMES ================= -->
+      <section class="k-page" id="heures-calmes" data-rg-page="Heures calmes" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">Heures calmes</h1><p class="k-page__subtitle">Une plage pendant laquelle aucun message marketing ne part. Un message prévu la nuit attend le matin.</p></div>
+          <div class="k-page__actions"><button type="button" class="k-button k-button--primary" data-enregistrer disabled>Enregistrer</button></div>
+        </header>
+        <section class="k-section">
+          <div class="k-settings">
+            <label class="k-settings__row" for="rg-calme"><span class="k-settings__text"><span class="k-settings__label">Activer les heures calmes</span><span class="k-settings__desc">S'applique aux campagnes et aux automatisations marketing, dans le fuseau de chaque contact.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="rg-calme" checked></span></label>
+            <div class="k-settings__row k-settings__row--sub"><span class="k-settings__text"><span class="k-settings__label">Plage</span><span class="k-settings__desc">Les messages retenus partent à la fin de la plage.</span></span><span class="k-settings__control"><span>de</span><select class="k-select" aria-label="Début des heures calmes" style="width:110px"><option>21:00</option><option>20:00</option><option>22:00</option></select><span>à</span><select class="k-select" aria-label="Fin des heures calmes" style="width:110px"><option>8:00</option><option>7:00</option><option>9:00</option></select></span></div>
+            <label class="k-settings__row" for="rg-calme-transac"><span class="k-settings__text"><span class="k-settings__label">Laisser passer les messages de commande</span><span class="k-settings__desc">Confirmation, expédition, livraison : ils partent à toute heure.</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="rg-calme-transac" checked></span></label>
+          </div>
+          <div class="k-banner k-banner--info"><k-icon name="information-circle"></k-icon><div class="k-banner__text">Cette nuit, 312 messages attendent 8 h : 2 campagnes et 1 automatisation.</div></div>
+        </section>
+      </section>
+
+      <!-- ================= DÉSABONNEMENT ================= -->
+      <section class="k-page" id="desabonnement" data-rg-page="Désabonnement" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">Désabonnement</h1><p class="k-page__subtitle">Comment un client arrête de recevoir vos messages marketing. Meta l'exige, et un client qui peut partir facilement ne vous signale pas.</p></div>
+          <div class="k-page__actions"><button type="button" class="k-button k-button--primary" data-enregistrer disabled>Enregistrer</button></div>
+        </header>
+        <section class="k-section">
+          <div class="k-settings">
+            <div class="k-settings__row k-settings__row--stack"><div><label class="k-settings__label" for="rg-stop">Mots qui désabonnent</label><span class="k-settings__desc">Un client qui répond l'un de ces mots est retiré de vos envois marketing.</span></div><div class="k-taginput"><span class="k-tag">STOP<button type="button" class="k-tag__remove" aria-label="Retirer STOP"><k-icon name="x-mark" set="micro"></k-icon></button></span><span class="k-tag">ARRET<button type="button" class="k-tag__remove" aria-label="Retirer ARRET"><k-icon name="x-mark" set="micro"></k-icon></button></span><span class="k-tag">DESABONNER<button type="button" class="k-tag__remove" aria-label="Retirer DESABONNER"><k-icon name="x-mark" set="micro"></k-icon></button></span><input id="rg-stop" type="text" placeholder="Ajouter un mot, puis Entrée"></div></div>
+            <div class="k-settings__row k-settings__row--stack"><label class="k-settings__label" for="rg-stop-msg">Message de confirmation</label><textarea class="k-textarea" id="rg-stop-msg" rows="2">C'est noté, vous ne recevrez plus nos offres. Répondez START pour vous réabonner.</textarea></div>
+            <label class="k-settings__row" for="rg-stop-pied"><span class="k-settings__text"><span class="k-settings__label">Ajouter la mention au pied des modèles</span><span class="k-settings__desc">« Répondez STOP pour ne plus recevoir nos messages. »</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="rg-stop-pied" checked></span></label>
+          </div>
+        </section>
+        <section class="k-section">
+          <div class="k-grid k-grid--2">
+            <div class="k-stat"><div class="k-stat__label">Désabonnements, 30 jours</div><div class="k-stat__value">84</div><div class="k-stat__meta"><span class="k-delta k-delta--up"><k-icon name="arrow-down-right" set="micro"></k-icon>12 %</span>de moins que les 30 jours d'avant</div></div>
+            <div class="k-stat"><div class="k-stat__label">Taux de désabonnement</div><div class="k-stat__value">0,46<span class="k-stat__unit">%</span></div><div class="k-stat__meta">Sous 1 %, votre qualité reste haute.</div></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= ATTRIBUTION ================= -->
+      <section class="k-page" id="attribution" data-rg-page="Attribution et UTM" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">Attribution et UTM</h1><p class="k-page__subtitle">Quelles commandes Kanal compte comme les siennes, et comment vos liens apparaissent dans vos outils d'analyse.</p></div>
+          <div class="k-page__actions"><button type="button" class="k-button k-button--primary" data-enregistrer disabled>Enregistrer</button></div>
+        </header>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Attribution</h2></div>
+          <div class="k-settings">
+            <div class="k-settings__row"><span class="k-settings__text"><label class="k-settings__label" for="rg-fenetre">Fenêtre d'attribution</label><span class="k-settings__desc">Une commande compte si elle est passée dans ce délai après un message.</span></span><span class="k-settings__control"><select class="k-select" id="rg-fenetre"><option>1 jour</option><option selected>3 jours</option><option>5 jours</option><option>7 jours</option></select></span></div>
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Ce qui déclenche l'attribution</span><span class="k-settings__desc">Au clic : le client a ouvert un lien du message. Au message : il l'a seulement reçu.</span></span><div class="k-settings__control"><div class="k-segmented" role="radiogroup" aria-label="Déclencheur de l'attribution"><span class="k-segmented__thumb"></span><button type="button" class="k-segmented__item" role="radio" aria-checked="true">Au clic</button><button type="button" class="k-segmented__item" role="radio" aria-checked="false">Au message</button></div></div></div>
+          </div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Paramètres UTM</h2><p class="k-section__desc">Ajoutés à chaque lien de vos messages.</p></div>
+          <div class="k-settings">
+            <label class="k-settings__row" for="rg-utm"><span class="k-settings__text"><span class="k-settings__label">Ajouter les UTM aux liens</span></span><span class="k-settings__control"><input class="k-switch" type="checkbox" role="switch" id="rg-utm" checked></span></label>
+            <div class="k-settings__row k-settings__row--sub"><span class="k-settings__text"><label class="k-settings__label" for="rg-utm-source">utm_source</label></span><span class="k-settings__control"><input class="k-input" id="rg-utm-source" type="text" value="kanal"></span></div>
+            <div class="k-settings__row k-settings__row--sub"><span class="k-settings__text"><label class="k-settings__label" for="rg-utm-medium">utm_medium</label></span><span class="k-settings__control"><input class="k-input" id="rg-utm-medium" type="text" value="whatsapp"></span></div>
+            <div class="k-settings__row k-settings__row--sub"><span class="k-settings__text"><span class="k-settings__label">utm_campaign</span><span class="k-settings__desc">Rempli avec le nom de la campagne ou de l'automatisation.</span></span><span class="k-settings__control"><span class="k-var">Nom de la campagne</span></span></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= INTÉGRATIONS [G7] ================= -->
+      <section class="k-page" id="integrations" data-rg-page="Intégrations" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">Intégrations</h1><p class="k-page__subtitle">Les outils que Kanal lit ou alimente.</p></div>
+        </header>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Connectées</h2></div>
+          <div class="k-card"><div class="k-list">
+            <div class="k-list__row"><span class="k-logo"><img src="assets/img/shopify.svg" alt=""></span><span class="k-list__main"><span class="k-list__title">Shopify</span><span class="k-list__meta">maison-lumen.myshopify.com · commandes, paniers, clients, produits</span></span><span class="k-list__end"><span class="k-badge k-badge--success"><span class="k-badge__dot"></span>Connectée</span><button type="button" class="k-button k-button--secondary k-button--sm">Gérer</button></span></div>
+            <div class="k-list__row"><span class="k-logo"><img src="assets/img/claude.svg" alt=""></span><span class="k-list__main"><span class="k-list__title">Claude</span><span class="k-list__meta">Par le serveur MCP : créer des campagnes et lire les chiffres depuis Claude</span></span><span class="k-list__end"><span class="k-badge k-badge--success"><span class="k-badge__dot"></span>Connectée</span><button type="button" class="k-button k-button--secondary k-button--sm">Gérer</button></span></div>
+          </div></div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Disponibles</h2></div>
+          <div class="k-card"><div class="k-list">
+            <div class="k-list__row"><span class="k-logo"><img src="assets/img/chatgpt.svg" alt=""></span><span class="k-list__main"><span class="k-list__title">ChatGPT</span><span class="k-list__meta">Par le serveur MCP : analyser vos résultats et rédiger vos campagnes depuis ChatGPT</span></span><span class="k-list__end"><button type="button" class="k-button k-button--outline k-button--sm">Connecter</button></span></div>
+            <div class="k-list__row"><span class="k-logo"><img src="assets/img/klaviyo.png" alt=""></span><span class="k-list__main"><span class="k-list__title">Klaviyo</span><span class="k-list__meta">Synchroniser les listes et déclencher un flow depuis un événement Klaviyo</span></span><span class="k-list__end"><button type="button" class="k-button k-button--outline k-button--sm">Connecter</button></span></div>
+            <div class="k-list__row"><span class="k-logo"><img src="assets/img/gorgias.png" alt=""></span><span class="k-list__main"><span class="k-list__title">Gorgias</span><span class="k-list__meta">Créer un ticket quand Lumi passe la main</span></span><span class="k-list__end"><button type="button" class="k-button k-button--outline k-button--sm">Connecter</button></span></div>
+            <div class="k-list__row"><span class="k-logo"><img src="assets/img/slack.svg" alt=""></span><span class="k-list__main"><span class="k-list__title">Slack</span><span class="k-list__meta">Prévenir un canal quand un client attend ou que Lumi passe la main</span></span><span class="k-list__end"><button type="button" class="k-button k-button--outline k-button--sm">Connecter</button></span></div>
+          </div></div>
+        </section>
+      </section>
+
+      <!-- ================= API ================= -->
+      <section class="k-page" id="api" data-rg-page="API et webhooks" hidden>
+        <header class="k-page__header">
+          <div><h1 class="k-page__title">API et webhooks</h1><p class="k-page__subtitle">Les clés qui laissent votre code parler à Kanal, et les adresses que Kanal prévient.</p></div>
+          <div class="k-page__actions"><a class="k-button k-button--secondary" href="#api">Documentation<k-icon name="arrow-top-right-on-square"></k-icon></a><button type="button" class="k-button k-button--primary" data-k-open="rg-cle"><k-icon name="plus"></k-icon>Créer une clé</button></div>
+        </header>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Clés d'API</h2><p class="k-section__desc">Une clé donne accès à tout l'espace de travail. Elle n'est affichée en entier qu'à sa création.</p></div>
+          <div class="k-card"><div class="k-list">
+            <div class="k-list__row"><span class="k-list__icon"><k-icon name="key"></k-icon></span><span class="k-list__main"><span class="k-list__title">Site maisonlumen.fr</span><span class="k-list__meta" style="font-family:var(--k-font-mono)">kanal_live_••••••••a3f9 · créée le 2 sept. 2026 · utilisée il y a 4 min</span></span><span class="k-list__end"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Révoquer la clé Site maisonlumen.fr" data-k-tooltip="Révoquer" data-k-open="rg-revoquer"><k-icon name="trash"></k-icon></button></span></div>
+            <div class="k-list__row"><span class="k-list__icon"><k-icon name="key"></k-icon></span><span class="k-list__main"><span class="k-list__title">Export comptable</span><span class="k-list__meta" style="font-family:var(--k-font-mono)">kanal_live_••••••••71bc · créée le 14 oct. 2026 · jamais utilisée</span></span><span class="k-list__end"><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Révoquer la clé Export comptable" data-k-tooltip="Révoquer" data-k-open="rg-revoquer"><k-icon name="trash"></k-icon></button></span></div>
+            <div class="k-list__footer">2 clés</div>
+          </div></div>
+        </section>
+        <section class="k-section">
+          <div><h2 class="k-section__title">Serveur MCP</h2><p class="k-section__desc">L'adresse à donner à Claude ou à un autre assistant pour qu'il agisse dans Kanal.</p></div>
+          <div class="k-settings">
+            <div class="k-settings__row"><span class="k-settings__text"><span class="k-settings__label">Adresse du serveur</span></span><span class="k-settings__control"><span class="k-copyfield" style="width:clamp(240px,28vw,380px)"><span class="k-copyfield__value">https://mcp.getkanal.com/maison-lumen</span><button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Copier l'adresse" data-k-tooltip="Copier" data-k-copy="https://mcp.getkanal.com/maison-lumen"><k-icon name="document-duplicate"></k-icon></button></span></span></div>
+          </div>
+        </section>
+        <section class="k-section">
+          <div class="k-section__header"><div><h2 class="k-section__title">Webhooks</h2><p class="k-section__desc">Kanal appelle ces adresses quand un événement arrive.</p></div><button type="button" class="k-button k-button--outline k-button--sm">Ajouter un webhook</button></div>
+          <div class="k-card"><div class="k-empty" style="padding-block:var(--k-space-8)"><span class="k-empty__icon"><k-icon name="signal" size="24"></k-icon></span><p class="k-empty__title">Aucun webhook</p><p class="k-empty__desc">Un webhook prévient votre serveur à chaque message reçu, commande attribuée ou désabonnement.</p></div></div>
+        </section>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Menus et modales des réglages -->
+<div class="k-menu" id="rg-menu-membre" popover role="menu">
+  <button type="button" class="k-menu__item" role="menuitem" data-k-toast="Invitation renvoyée" data-k-toast-tone="success"><k-icon name="paper-airplane"></k-icon><span class="k-menu__text">Renvoyer l'invitation</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item k-menu__item--danger" role="menuitem" data-k-toast="Accès retiré" data-k-toast-action="Annuler"><k-icon name="no-symbol"></k-icon><span class="k-menu__text">Retirer de l'équipe</span></button>
+</div>
+<div class="k-menu" id="rg-menu-reponse" popover role="menu">
+  <button type="button" class="k-menu__item" role="menuitem" data-k-open="rg-reponse"><k-icon name="pencil-square"></k-icon><span class="k-menu__text">Modifier</span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-k-toast="Réponse dupliquée" data-k-toast-tone="success"><k-icon name="document-duplicate"></k-icon><span class="k-menu__text">Dupliquer</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item k-menu__item--danger" role="menuitem" data-k-toast="Réponse supprimée" data-k-toast-action="Annuler"><k-icon name="trash"></k-icon><span class="k-menu__text">Supprimer</span></button>
+</div>
+
+<dialog class="k-modal" id="rg-inviter" aria-labelledby="rg-inviter-t">
+  <header class="k-modal__header"><div><h2 class="k-modal__title" id="rg-inviter-t">Inviter une personne</h2><p class="k-modal__desc">Elle reçoit un e-mail avec un lien valable 7 jours.</p></div><button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button></header>
+  <div class="k-modal__body"><div style="display:flex;flex-direction:column;gap:var(--k-space-4)">
+    <div class="k-field"><label class="k-field__label" for="rg-inv-mail">E-mail</label><input class="k-input" id="rg-inv-mail" type="email" placeholder="prenom@maisonlumen.fr" autofocus></div>
+    <div class="k-field"><span class="k-field__label">Rôle</span>
+      <label class="k-choice"><input class="k-radio" type="radio" name="rg-inv-role" checked><span><span class="k-check__label">Agent</span><span class="k-check__hint">L'inbox et les contacts.</span></span></label>
+      <label class="k-choice"><input class="k-radio" type="radio" name="rg-inv-role"><span><span class="k-check__label">Administrateur</span><span class="k-check__hint">Tout sauf la facturation.</span></span></label>
+    </div>
+  </div></div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--ghost" data-k-close>Annuler</button><button type="button" class="k-button k-button--primary" data-k-close data-k-toast="Invitation envoyée" data-k-toast-tone="success">Envoyer l'invitation</button></footer>
+</dialog>
+
+<dialog class="k-modal" id="rg-reponse" aria-labelledby="rg-reponse-t">
+  <header class="k-modal__header"><div><h2 class="k-modal__title" id="rg-reponse-t">Réponse enregistrée</h2><p class="k-modal__desc">Son titre sert à la retrouver après « / ».</p></div><button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button></header>
+  <div class="k-modal__body"><div style="display:flex;flex-direction:column;gap:var(--k-space-4)">
+    <div class="k-field"><label class="k-field__label" for="rg-rep-titre">Titre</label><input class="k-input" id="rg-rep-titre" type="text" placeholder="Délais de livraison" autofocus></div>
+    <div class="k-field"><label class="k-field__label" for="rg-rep-texte">Texte</label><textarea class="k-textarea" id="rg-rep-texte" rows="4" placeholder="Bonjour, …"></textarea><span class="k-field__hint">Variables : <span class="k-var">Prénom</span> <span class="k-var">Lien de suivi</span> <span class="k-var">Numéro de commande</span></span></div>
+  </div></div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--ghost" data-k-close>Annuler</button><button type="button" class="k-button k-button--primary" data-k-close data-k-toast="Réponse enregistrée" data-k-toast-tone="success">Enregistrer</button></footer>
+</dialog>
+
+<dialog class="k-modal k-modal--sm" id="rg-cle" aria-labelledby="rg-cle-t">
+  <header class="k-modal__header"><div><h2 class="k-modal__title" id="rg-cle-t">Créer une clé d'API</h2><p class="k-modal__desc">Donnez-lui le nom de l'outil qui s'en servira : vous saurez laquelle révoquer.</p></div><button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button></header>
+  <div class="k-modal__body"><div class="k-field"><label class="k-field__label" for="rg-cle-nom">Nom</label><input class="k-input" id="rg-cle-nom" type="text" placeholder="Site maisonlumen.fr" autofocus></div></div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--ghost" data-k-close>Annuler</button><button type="button" class="k-button k-button--primary" data-k-close data-k-toast="Clé créée. Copiez-la maintenant : elle ne sera plus affichée." data-k-toast-tone="success">Créer la clé</button></footer>
+</dialog>
+
+<!-- [G4] -->
+<dialog class="k-modal k-modal--sm" id="rg-revoquer" aria-labelledby="rg-revoquer-t" data-k-static>
+  <header class="k-modal__header"><div><h2 class="k-modal__title" id="rg-revoquer-t">Révoquer la clé ?</h2><p class="k-modal__desc">Tout outil qui s'en sert cessera de fonctionner tout de suite. Cette action ne s'annule pas.</p></div></header>
+  <footer class="k-modal__footer" style="box-shadow:none;padding-top:var(--k-space-6)"><button type="button" class="k-button k-button--ghost" data-k-close>Garder la clé</button><button type="button" class="k-button k-button--danger" data-k-close data-k-toast="Clé révoquée">Révoquer la clé</button></footer>
+</dialog>
+<dialog class="k-modal k-modal--sm" id="rg-supprimer" aria-labelledby="rg-supprimer-t" data-k-static>
+  <header class="k-modal__header"><div><h2 class="k-modal__title" id="rg-supprimer-t">Supprimer Maison Lumen ?</h2><p class="k-modal__desc">12 480 contacts, 34 campagnes et 6 automatisations seront supprimés. Votre numéro WhatsApp sera déconnecté. Cette action ne s'annule pas.</p></div></header>
+  <div class="k-modal__body"><div class="k-field"><label class="k-field__label" for="rg-suppr-nom">Pour confirmer, écrivez Maison Lumen</label><input class="k-input" id="rg-suppr-nom" type="text" autocomplete="off" data-rg-confirmer="Maison Lumen"></div></div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--ghost" data-k-close>Garder l'espace</button><button type="button" class="k-button k-button--danger" data-rg-confirmer-bouton disabled data-k-close data-k-toast="Dans l'app, l'espace serait supprimé ici">Supprimer l'espace</button></footer>
+</dialog>
+
+<!-- Modale et menu de la barre de navigation : les mêmes sur toutes les pages -->
+<!-- Qualité du numéro et limite d'envoi de Meta : la même modale sur toutes les pages. Elle s'ouvre depuis « Quality », dans la barre -->
+<dialog class="k-modal k-modal--sm" id="mod-qualite" aria-labelledby="mod-qualite-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="mod-qualite-t">Qualité du numéro</h2></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+    <!-- Le niveau, en grand : un anneau, un mot, une phrase -->
+    <div class="k-stack" style="align-items:center;gap:var(--k-space-3);text-align:center">
+      <span class="k-gauge" aria-hidden="true"><span class="k-ring k-ring--lg" data-quality="high"></span><k-icon name="check"></k-icon></span>
+      <div><div class="k-modal__title" data-q-niveau>Élevée</div><p style="margin-top:var(--k-space-1);color:var(--k-ink-2)" data-q-texte>Vos clients lisent vos messages et les signalent peu. Continuez ainsi.</p></div>
+    </div>
+    <ol class="k-scale" aria-label="Les trois niveaux de qualité"><li class="k-scale__step" data-tone="danger">Basse</li><li class="k-scale__step" data-tone="warning" style="text-align:center">Moyenne</li><li class="k-scale__step" data-tone="success" aria-current="true" style="text-align:end">Élevée</li></ol>
+    <!-- Les envois du jour : une ligne, une jauge, une phrase -->
+    <div class="k-inset">
+      <div class="k-inset__row"><span class="k-inset__label">Envois sur 24 h</span><span class="k-inset__value"><b data-q-envoyes>4 812</b> sur <span data-q-limite>100 000</span></span></div>
+      <div class="k-progress k-progress--ink" role="progressbar" aria-label="Part de la limite d'envoi utilisée sur 24 heures" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="--k-value:0.05" data-q-jauge><span></span></div>
+      <p class="k-inset__hint" data-q-suite>Cette limite augmente toute seule à mesure que vous envoyez.</p>
+    </div>
+  </div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--primary" data-k-close>Compris</button></footer>
+</dialog>
+<div class="k-menu" id="menu-compte" popover role="menu">
+  <div class="k-menu__label">Maison Lumen · Scale plan</div>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#general"><k-icon name="user"></k-icon><span class="k-menu__text">Mon profil</span></a>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#facturation"><k-icon name="credit-card"></k-icon><span class="k-menu__text">Facturation</span></a>
+  <a class="k-menu__item" role="menuitem" href="forfaits.html"><k-icon name="star"></k-icon><span class="k-menu__text">Changer de forfait</span></a>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Passer à Kanal iMessage</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="arrow-left"></k-icon><span class="k-menu__text">Se déconnecter</span></button>
+</div>
+<div id="k-fin" hidden></div>
+</body>
+</html>

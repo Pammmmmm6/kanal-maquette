@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La maquette est publiée pour Kite (GitHub Pages) : elle ne doit pas être référencée -->
+<meta name="robots" content="noindex, nofollow">
+<title>Panier abandonné · Automatisations · Kanal</title>
+<!--
+  NOTES D'INTÉGRATION — Builder d'automatisation, dans le design system Kanal
+
+  Assemblé avec les seuls composants du système. Scripts : assets/courbe.js, assets/builder.js.
+  Le builder est un TABLEAU BLANC, comme celui de l'app (vue-flow) : des nœuds posés où l'on veut, reliés par
+  des flèches. Seul l'habillage change : la barre d'éditeur en haut, les nœuds du design system, la barre
+  d'actions en bas. Les nœuds gardent 283 px de large. L'entrée d'un nœud est en haut, ses sorties en bas.
+
+  [U1] Coquille : .k-main.k-main--split > .k-main__column (barre, tableau) + .k-aside (propriétés).
+  [U2] Barre d'éditeur (.k-topbar.k-topbar--editor) : à gauche le retour, le nom et le statut ; au centre exact,
+       les onglets Éditeur et Résultats ; à droite annuler et rétablir [U10], les réglages [U9], « Tester »
+       [U11], le menu (mettre en pause, dupliquer, exporter les statistiques en .xlsx, ajouter à la
+       bibliothèque, supprimer) et « Enregistrer ». « Enregistrer » reste éteint (« Enregistré ») tant que rien
+       n'a changé ; une pastille « Modifiée » apparaît dès la première modification.
+       « Modifier avec Claude » : un bouton rond à fond gris, le logo de Claude seul, avant les réglages. Son nom est
+       dans l'infobulle. Il ouvre Claude dans un nouvel onglet (https://claude.ai/new), où le connecteur Kanal (MCP)
+       modifie l'automatisation en une phrase. Dans l'app : ouvrir Claude avec l'automatisation en contexte.
+  [U3] Le tableau (.k-canvas.k-board) et ses nœuds (.k-node, positionnés en x et y). Le déclencheur, puis trois
+       familles : MESSAGES (modèle WhatsApp, carrousel de cartes produits, message libre dans la fenêtre de
+       24 h), LOGIQUE (délai, condition, test A/B), ACTIONS (appel API, ajout à une liste, attribut du
+       contact, agent IA, passage à l'équipe). HYPOTHÈSES de maquette, à rapprocher de l'API : carrousel,
+       test A/B, attribut, équipe. Une condition a deux sorties, Oui et Non ; un test A/B aussi, A et B ;
+       une sortie sans flèche termine l'automatisation pour la personne (écrit « fin » sous la sortie).
+  [U4] Flèches (.k-edge) : on en tire une depuis la poignée de sortie d'un nœud jusqu'à un autre nœud. Une sortie
+       n'a qu'une flèche (la nouvelle remplace l'ancienne) ; pas de boucle, pas de flèche vers le déclencheur.
+       Un clic choisit une flèche : elle devient bleue, et se supprime par sa croix ou par la touche Suppr.
+  [U5] Ajouter une action : par la barre d'actions en bas (.k-dock) : cinq raccourcis (modèle, carrousel,
+       délai, condition, appel API), et « Ajouter une action » qui ouvre la palette de tous les nœuds, rangée
+       par familles sur deux colonnes (.k-menu.k-menu--palette). Le nœud se pose à la suite du nœud choisi si
+       sa sortie est libre, sinon au milieu de la vue, décalé pour ne jamais recouvrir un autre nœud ; la vue
+       se déplace pour qu'il ne reste ni sous le panneau ni sous la barre. Par le « + » d'une flèche : le nœud s'insère sur la flèche, et ce qui suit
+       descend pour lui faire de la place.
+  [U6] La vue : on déplace le tableau en le faisant glisser ou à la molette ; Ctrl + molette (ou pincement)
+       zoome sur le pointeur. En bas à gauche : zoom, « Tout voir », et « Ranger », qui remet les nœuds en
+       colonnes. Les nœuds se déplacent à la souris, aimantés sur 8 px.
+  [U7] Un clic sur un nœud le choisit (aria-selected, anneau bleu) et ouvre ses propriétés dans un PANNEAU
+       FLOTTANT (.k-aside.k-aside--wide.k-aside--float, data-open) : il passe par-dessus le tableau, sous la
+       barre d'éditeur, arrondi et détaché du bord, sans déplacer ni réduire le tableau. Chaque champ modifié
+       change le nœud tout de suite. Pied du panneau : dupliquer, supprimer (boutons à leur taille). Le déclencheur n'a ni l'un ni l'autre.
+  [U8] Onglet Résultats : chiffres sur 30 jours, courbe jour par jour, entonnoir (.k-bars), tableau par étape.
+  [U9] Réglages de l'automatisation (modale) : ce qui se passe quand un contact la déclenche de nouveau
+       (à chaque fois, une seule fois, pas avant un délai), quand arrêter (le contact répond, l'équipe
+       répond), heures calmes et limite de fréquence. Ce sont les « Flow settings » de l'app.
+  [U10] Annuler et rétablir : chaque changement (déplacement, flèche, ajout, suppression, champ) se défait.
+        Boutons de la barre, et au clavier : Ctrl/Cmd + Z, Maj + Ctrl/Cmd + Z (ou Ctrl + Y).
+  [U11] « Tester » : envoie tous les messages du graphe sur le numéro choisi, sans attendre les délais.
+  [U12] Clavier : Entrée choisit le nœud qui a le focus, Suppr retire le nœud ou la flèche choisis, Échap
+        désélectionne.
+
+  À brancher côté app : chargement et enregistrement du graphe, modèles WhatsApp validés, test, résultats,
+  historique. Les nœuds de builder.js et les chiffres sont fictifs (« Panier abandonné », Maison Lumen).
+-->
+<link rel="icon" href="assets/img/logo-kanal-min-black.svg">
+<!-- La première image attend la fin du document (#k-fin) : la page arrive complète, y compris dans une transition -->
+<link rel="expect" href="#k-fin" blocking="render">
+<link rel="stylesheet" href="assets/jetons.css?v=20261117-19">
+<link rel="stylesheet" href="assets/composants.css?v=20261117-19">
+<script src="assets/composants.js?v=20261117-19"></script>
+</head>
+<body class="k-app">
+<script src="assets/icones.js?v=20261117-19"></script>
+
+<!-- Bandeau d'annonce : le logo de la barre le montre et le cache (data-k-announce-toggle) -->
+<div class="k-announce" role="region" aria-label="Nouveauté">
+  <span class="k-announce__tag">Nouveau</span>
+  <span class="k-announce__text"><b>Kanal se pilote depuis Claude.</b> Créez vos campagnes et vos automatisations en une phrase : inclus dans Scale et Business.</span>
+  <a class="k-announce__link" href="forfaits.html">Voir les forfaits<k-icon name="arrow-right" set="micro"></k-icon></a>
+  <button type="button" class="k-announce__close" aria-label="Masquer l'annonce" data-k-announce-toggle><k-icon name="x-mark" set="micro"></k-icon></button>
+</div>
+<div class="k-shell">
+  <nav class="k-rail" aria-label="Navigation">
+    <div class="k-rail__head">
+      <button type="button" class="k-rail__logo" aria-label="Kanal : montrer ou masquer l'annonce" data-k-announce-toggle><img src="assets/img/logo-kanal-min-white.svg" alt=""></button>
+      <button type="button" class="k-rail__pin" aria-pressed="false" aria-label="Épingler la navigation" data-k-rail-pin data-k-tooltip="Épingler la navigation" data-k-tooltip-side="bottom"><k-icon name="pin"></k-icon></button>
+    </div>
+    <div class="k-rail__main">
+      <a class="k-rail__item" href="accueil.html" aria-label="Home"><k-icon name="home"></k-icon><span class="k-rail__label">Home</span></a>
+      <a class="k-rail__item" href="inbox.html" aria-label="Inbox, 3 conversations à traiter"><k-icon name="inbox"></k-icon><span class="k-rail__label">Inbox</span><span class="k-count k-count--danger k-rail__count">3</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="automatisations.html" aria-current="page" aria-label="Automations"><k-icon name="bolt"></k-icon><span class="k-rail__label">Automations</span></a>
+      <a class="k-rail__item" href="exemple.html" aria-label="Campaigns"><k-icon name="megaphone"></k-icon><span class="k-rail__label">Campaigns</span></a>
+      <a class="k-rail__item" href="agent.html" aria-label="AI Agent"><k-icon name="sparkles"></k-icon><span class="k-rail__label">AI Agent</span></a>
+      <span class="k-rail__sep" aria-hidden="true"></span>
+      <a class="k-rail__item" href="contacts.html" aria-label="Contacts"><k-icon name="users"></k-icon><span class="k-rail__label">Contacts</span></a>
+      <a class="k-rail__item" href="listes.html" aria-label="Lists &amp; segments"><k-icon name="queue-list"></k-icon><span class="k-rail__label">Lists &amp; segments</span></a>
+      <a class="k-rail__item" href="liens.html" aria-label="Magic links"><k-icon name="link"></k-icon><span class="k-rail__label">Magic links</span></a>
+    </div>
+    <div class="k-rail__end">
+      <button type="button" class="k-rail__item" aria-label="Qualité du numéro : élevée. 4 812 messages sur 100 000 en 24 h" aria-haspopup="dialog" data-k-open="mod-qualite"><span class="k-ring" data-quality="high"></span><span class="k-rail__label">Quality</span><span class="k-rail__meta" data-quality="high" data-rail-qualite>High</span></button>
+      <a class="k-rail__item" href="reglages.html" aria-label="Settings"><k-icon name="cog-6-tooth"></k-icon><span class="k-rail__label">Settings</span></a>
+      <a class="k-rail__item" href="avis.html" aria-label="Claim my 20 €"><k-icon name="gift"></k-icon><span class="k-rail__label">Claim my 20 €</span></a>
+      <button type="button" class="k-rail__item" aria-label="Menu du compte : Camille Roux, Maison Lumen" aria-haspopup="menu" data-k-menu="menu-compte" data-k-placement="right-end"><span class="k-avatar k-avatar--blue">CR<span class="k-avatar__status"></span></span><span class="k-rail__label">Camille Roux</span></button>
+    </div>
+  </nav>
+
+  <!-- [U1] -->
+  <main class="k-main k-main--split">
+    <div class="k-main__column">
+      <!-- [U2] Barre d'éditeur -->
+      <div class="k-topbar k-topbar--editor">
+        <div class="k-topbar__start">
+          <a class="k-button k-button--secondary k-button--icon" href="automatisations.html" aria-label="Retour aux automatisations" data-k-tooltip="Retour" data-k-tooltip-side="bottom"><k-icon name="chevron-left"></k-icon></a>
+          <span class="k-topbar__title">Panier abandonné</span>
+          <span data-bd-statut></span>
+          <span class="k-badge k-badge--warning" data-bd-modifie hidden>Modifiée</span>
+        </div>
+        <div class="k-segmented" role="tablist" aria-label="Vue" data-bd-onglets>
+          <span class="k-segmented__thumb"></span>
+          <button type="button" class="k-segmented__item" role="tab" aria-selected="true" data-onglet="editeur">Éditeur</button>
+          <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-onglet="resultats">Résultats</button>
+        </div>
+        <div class="k-topbar__end">
+          <!-- [U10] Revenir en arrière, comme Ctrl+Z -->
+          <button type="button" class="k-button k-button--ghost k-button--icon" aria-label="Annuler" data-bd-annuler data-bd-outil data-k-tooltip="Annuler" data-k-kbd="⌘ Z" data-k-tooltip-side="bottom" disabled><k-icon name="arrow-uturn-left"></k-icon></button>
+          <button type="button" class="k-button k-button--ghost k-button--icon" aria-label="Rétablir" data-bd-retablir data-bd-outil data-k-tooltip="Rétablir" data-k-kbd="⇧ ⌘ Z" data-k-tooltip-side="bottom" disabled><k-icon class="k-icon--flip" name="arrow-uturn-left"></k-icon></button>
+          <span class="k-topbar__sep" data-bd-outil aria-hidden="true"></span>
+          <!-- [U9] Réglages de l'automatisation -->
+          <!-- [U2] Modifier avec Claude : pousse à passer par le connecteur Kanal (MCP) -->
+          <a class="k-button k-button--secondary k-button--icon" href="https://claude.ai/new" target="_blank" rel="noopener" aria-label="Modifier avec Claude" data-k-tooltip="Modifier avec Claude" data-k-tooltip-side="bottom"><img src="assets/img/claude.svg" alt=""></a>
+          <button type="button" class="k-button k-button--secondary k-button--icon" aria-label="Réglages de l'automatisation" aria-haspopup="dialog" data-k-open="bd-reglages" data-k-tooltip="Réglages" data-k-tooltip-side="bottom"><k-icon name="cog-6-tooth"></k-icon></button>
+          <button type="button" class="k-button k-button--outline" data-k-open="bd-tester"><k-icon name="paper-airplane"></k-icon>Tester</button>
+          <button type="button" class="k-button k-button--secondary k-button--icon" aria-label="Autres actions" aria-haspopup="menu" data-k-menu="bd-menu" data-k-placement="bottom-end"><k-icon name="ellipsis-horizontal"></k-icon></button>
+          <button type="button" class="k-button k-button--primary" data-bd-enregistrer disabled>Enregistré</button>
+        </div>
+      </div>
+
+      <!-- [U3] Le tableau blanc -->
+      <div class="k-canvas k-board" data-bd-editeur>
+        <div class="k-board__plan" data-bd-plan>
+          <!-- [U4] Les flèches, sous les nœuds -->
+          <svg class="k-board__edges" data-bd-liens aria-hidden="true">
+            <defs>
+              <marker id="bd-fleche" class="k-edge__head" viewBox="0 0 8 8" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto"><path d="M1 1 7 4 1 7Z"/></marker>
+              <marker id="bd-fleche-choisie" class="k-edge__head" data-selected="true" viewBox="0 0 8 8" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto"><path d="M1 1 7 4 1 7Z"/></marker>
+            </defs>
+          </svg>
+          <div data-bd-noeuds></div>
+          <div data-bd-plus></div>
+        </div>
+        <!-- [U6] La vue : zoom, tout voir, ranger -->
+        <div class="k-dock k-dock--start" role="group" aria-label="Vue">
+          <button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Dézoomer" data-bd-zoom-moins data-k-tooltip="Dézoomer"><k-icon name="minus" set="micro"></k-icon></button>
+          <span class="k-dock__value" data-bd-zoom aria-live="polite">100 %</span>
+          <button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Zoomer" data-bd-zoom-plus data-k-tooltip="Zoomer"><k-icon name="plus" set="micro"></k-icon></button>
+          <span class="k-dock__sep" aria-hidden="true"></span>
+          <button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Tout voir" data-bd-tout-voir data-k-tooltip="Tout voir"><k-icon name="arrows-pointing-out"></k-icon></button>
+          <button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Ranger les nœuds" data-bd-ranger data-k-tooltip="Ranger les nœuds"><k-icon name="bars-arrow-down"></k-icon></button>
+        </div>
+        <!-- [U5] La barre d'actions -->
+        <div class="k-dock" role="toolbar" aria-label="Ajouter une action" data-bd-dock>
+          <button type="button" class="k-button k-button--ghost k-button--icon" aria-label="Ajouter : Modèle WhatsApp" data-bd-ajout="message" data-k-tooltip="Modèle WhatsApp"><k-icon name="chat-bubble-left"></k-icon></button>
+          <button type="button" class="k-button k-button--ghost k-button--icon" aria-label="Ajouter : Carrousel" data-bd-ajout="carrousel" data-k-tooltip="Carrousel"><k-icon name="view-columns"></k-icon></button>
+          <button type="button" class="k-button k-button--ghost k-button--icon" aria-label="Ajouter : Délai" data-bd-ajout="attente" data-k-tooltip="Délai"><k-icon name="clock"></k-icon></button>
+          <button type="button" class="k-button k-button--ghost k-button--icon" aria-label="Ajouter : Condition" data-bd-ajout="condition" data-k-tooltip="Condition"><k-icon name="arrows-up-down"></k-icon></button>
+          <button type="button" class="k-button k-button--ghost k-button--icon" aria-label="Ajouter : Appel API" data-bd-ajout="api" data-k-tooltip="Appel API"><k-icon name="code-bracket"></k-icon></button>
+          <span class="k-dock__sep" aria-hidden="true"></span>
+          <button type="button" class="k-button k-button--primary" aria-haspopup="menu" data-k-menu="bd-ajouter" data-k-placement="top-end"><k-icon name="plus"></k-icon>Ajouter une action</button>
+        </div>
+      </div>
+
+      <!-- [U8] Les résultats -->
+      <div class="k-main__scroll" data-bd-resultats hidden>
+        <div class="k-page">
+          <section class="k-section" aria-label="Chiffres des 30 derniers jours">
+            <div class="k-kpis k-kpis--4">
+              <div class="k-kpis__item"><span class="k-kpis__label">Entrées, 30 jours</span><span class="k-kpis__value"><span>1 240</span><span class="k-delta k-delta--up"><k-icon name="arrow-up-right" set="micro"></k-icon>9 %</span></span></div>
+              <div class="k-kpis__item"><span class="k-kpis__label">Messages délivrés</span><span class="k-kpis__value"><span>2 140</span><span class="k-delta k-delta--up"><k-icon name="arrow-up-right" set="micro"></k-icon>12 %</span></span></div>
+              <div class="k-kpis__item"><span class="k-kpis__label">Chiffre d'affaires attribué</span><span class="k-kpis__value"><span>9 860 €</span><span class="k-delta k-delta--up"><k-icon name="arrow-up-right" set="micro"></k-icon>12 %</span></span></div>
+              <div class="k-kpis__item"><span class="k-kpis__label">ROAS</span><span class="k-kpis__value"><span>×18,2</span><span class="k-delta">4,61 € par destinataire</span></span></div>
+            </div>
+          </section>
+          <section class="k-section">
+            <div class="k-card">
+              <div class="k-card__head">
+                <div><h2 class="k-card__title">Jour par jour</h2><p class="k-card__desc">17 oct. – 16 nov. 2026.</p></div>
+                <div class="k-segmented k-segmented--sm" role="tablist" aria-label="Ce que montre la courbe" data-bd-series>
+                  <span class="k-segmented__thumb"></span>
+                  <button type="button" class="k-segmented__item" role="tab" aria-selected="true" data-serie="entrees">Entrées</button>
+                  <button type="button" class="k-segmented__item" role="tab" aria-selected="false" data-serie="ca">Chiffre d'affaires</button>
+                </div>
+              </div>
+              <div class="k-chart" data-bd-courbe></div>
+            </div>
+            <div class="k-card">
+              <div class="k-card__head"><div><h2 class="k-card__title">Entonnoir</h2><p class="k-card__desc">De l'entrée dans l'automatisation à la commande. À droite, le taux par rapport à l'étape d'avant.</p></div></div>
+              <ol class="k-bars" style="--_label:150px">
+                <li class="k-bars__row" style="--k-value:1"><span class="k-bars__label">Entrées</span><span class="k-bars__bar"><span></span></span><span class="k-bars__value">1 240</span><span class="k-bars__rate">paniers abandonnés</span></li>
+                <li class="k-bars__row" style="--k-value:0.942"><span class="k-bars__label">Ont reçu un message</span><span class="k-bars__bar"><span></span></span><span class="k-bars__value">1 168</span><span class="k-bars__rate">94 % des entrées</span></li>
+                <li class="k-bars__row" style="--k-value:0.669"><span class="k-bars__label">Ont lu</span><span class="k-bars__bar"><span></span></span><span class="k-bars__value">829</span><span class="k-bars__rate">71 % des messages</span></li>
+                <li class="k-bars__row" style="--k-value:0.226"><span class="k-bars__label">Ont cliqué</span><span class="k-bars__bar"><span></span></span><span class="k-bars__value">280</span><span class="k-bars__rate">34 % des lecteurs</span></li>
+                <li class="k-bars__row" style="--k-value:0.092"><span class="k-bars__label">Ont commandé</span><span class="k-bars__bar"><span></span></span><span class="k-bars__value">114</span><span class="k-bars__rate">41 % des clics</span></li>
+              </ol>
+            </div>
+          </section>
+          <section class="k-section">
+            <div><h2 class="k-section__title">Étape par étape</h2><p class="k-section__desc">Combien de personnes arrivent à chaque étape, et ce qu'elle rapporte. 17 oct. – 16 nov. 2026.</p></div>
+            <div class="k-table-wrap"><div class="k-table-wrap__scroll">
+              <table class="k-table">
+                <thead><tr><th>Étape</th><th class="k-table__num">Personnes</th><th class="k-table__num">Part des entrées</th><th class="k-table__num">Lus</th><th class="k-table__num">Chiffre d'affaires</th></tr></thead>
+                <tbody>
+                    <tr><td class="k-table__primary">Entrées dans l'automatisation</td><td class="k-table__num"><div class="k-table__who k-table__who--end"><span>1 240</span><span class="k-progress k-progress--ink k-progress--inline" style="--k-value:1.0" role="img" aria-label="100 % des entrées"><span></span></span></div></td><td class="k-table__num">100 %</td><td class="k-table__num">—</td><td class="k-table__num">—</td></tr>
+                    <tr><td class="k-table__primary">Relance panier</td><td class="k-table__num"><div class="k-table__who k-table__who--end"><span>1 168</span><span class="k-progress k-progress--ink k-progress--inline" style="--k-value:0.94" role="img" aria-label="94 % des entrées"><span></span></span></div></td><td class="k-table__num">94 %</td><td class="k-table__num">71 %</td><td class="k-table__num">6 140 €</td></tr>
+                    <tr><td class="k-table__primary">Relance panier, code de 10 %</td><td class="k-table__num"><div class="k-table__who k-table__who--end"><span>972</span><span class="k-progress k-progress--ink k-progress--inline" style="--k-value:0.78" role="img" aria-label="78 % des entrées"><span></span></span></div></td><td class="k-table__num">78 %</td><td class="k-table__num">68 %</td><td class="k-table__num">3 720 €</td></tr>
+                    <tr><td class="k-table__primary">Sorties : ont commandé</td><td class="k-table__num"><div class="k-table__who k-table__who--end"><span>114</span><span class="k-progress k-progress--ink k-progress--inline" style="--k-value:0.09" role="img" aria-label="9 % des entrées"><span></span></span></div></td><td class="k-table__num">9 %</td><td class="k-table__num">—</td><td class="k-table__num">9 860 €</td></tr>
+                </tbody>
+              </table>
+            </div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- [U4] Propriétés de l'étape choisie -->
+    <aside class="k-aside k-aside--wide k-aside--float" id="bd-panneau" data-collapsible data-closed aria-label="Propriétés de l'étape">
+      <div class="k-topbar">
+        <span class="k-topbar__title" data-bd-p-titre>Étape</span>
+        <div class="k-topbar__end">
+          <button type="button" class="k-button k-button--ghost k-button--icon k-button--sm" aria-label="Fermer les propriétés" data-k-aside-toggle="bd-panneau" data-k-tooltip="Fermer" data-k-tooltip-side="bottom"><k-icon name="x-mark" set="micro"></k-icon></button>
+        </div>
+      </div>
+      <div class="k-aside__body">
+        <form class="k-aside__form" data-bd-p-corps onsubmit="return false"></form>
+      </div>
+      <!-- [U6] -->
+      <div class="k-aside__foot" data-bd-p-pied>
+        <button type="button" class="k-button k-button--secondary" data-bd-dupliquer><k-icon name="document-duplicate"></k-icon>Dupliquer</button>
+        <button type="button" class="k-button k-button--secondary k-button--icon" aria-label="Supprimer ce nœud" data-bd-supprimer data-k-tooltip="Supprimer" data-k-kbd="Suppr"><k-icon name="trash"></k-icon></button>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<!-- [U5] Ajouter une action -->
+<div class="k-menu k-menu--palette" id="bd-ajouter" popover role="menu" aria-label="Ajouter une action">
+  <div class="k-menu__label">Messages</div>
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-ajout="message"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Modèle WhatsApp<span class="k-menu__desc">Un modèle validé par Meta.</span></span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-ajout="carrousel"><k-icon name="view-columns"></k-icon><span class="k-menu__text">Carrousel<span class="k-menu__desc">Des cartes produits à faire défiler.</span></span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-ajout="texte"><k-icon name="pencil-square"></k-icon><span class="k-menu__text">Message libre<span class="k-menu__desc">Du texte, dans la fenêtre de 24 h.</span></span></button>
+  <div class="k-menu__sep"></div>
+  <div class="k-menu__label">Logique</div>
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-ajout="attente"><k-icon name="clock"></k-icon><span class="k-menu__text">Délai<span class="k-menu__desc">Laisse passer un temps donné.</span></span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-ajout="condition"><k-icon name="arrows-up-down"></k-icon><span class="k-menu__text">Condition<span class="k-menu__desc">Deux sorties : oui, non.</span></span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-ajout="ab"><k-icon name="beaker"></k-icon><span class="k-menu__text">Test A/B<span class="k-menu__desc">Partage les contacts au hasard.</span></span></button>
+  <div class="k-menu__sep"></div>
+  <div class="k-menu__label">Actions</div>
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-ajout="api"><k-icon name="code-bracket"></k-icon><span class="k-menu__text">Appel API<span class="k-menu__desc">Prévient un autre outil (webhook).</span></span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-ajout="liste"><k-icon name="queue-list"></k-icon><span class="k-menu__text">Ajouter à une liste<span class="k-menu__desc">Range le contact dans une liste.</span></span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-ajout="attribut"><k-icon name="tag"></k-icon><span class="k-menu__text">Attribut du contact<span class="k-menu__desc">Change une valeur de sa fiche.</span></span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-ajout="ia"><k-icon name="sparkles"></k-icon><span class="k-menu__text">Agent IA<span class="k-menu__desc">Lumi répond si le contact écrit.</span></span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-ajout="equipe"><k-icon name="hand-raised"></k-icon><span class="k-menu__text">Passer à l'équipe<span class="k-menu__desc">Assigne la conversation.</span></span></button>
+</div>
+<div class="k-menu" id="bd-menu" popover role="menu">
+  <button type="button" class="k-menu__item" role="menuitem" data-bd-pause><k-icon name="pause"></k-icon><span class="k-menu__text">Mettre en pause</span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-k-toast="Automatisation dupliquée, en brouillon"><k-icon name="document-duplicate"></k-icon><span class="k-menu__text">Dupliquer</span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-k-toast="Export lancé : le fichier .xlsx arrive par e-mail"><k-icon name="arrow-down-tray"></k-icon><span class="k-menu__text">Exporter les statistiques (.xlsx)</span></button>
+  <button type="button" class="k-menu__item" role="menuitem" data-k-toast="Ajoutée à la bibliothèque de modèles"><k-icon name="arrow-up-tray"></k-icon><span class="k-menu__text">Ajouter à la bibliothèque</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item k-menu__item--danger" role="menuitem" data-k-toast="Automatisation supprimée" data-k-toast-action="Annuler"><k-icon name="trash"></k-icon><span class="k-menu__text">Supprimer</span></button>
+</div>
+<!-- [U9] Réglages de l'automatisation -->
+<dialog class="k-modal" id="bd-reglages" aria-labelledby="bd-reglages-t">
+  <form data-bd-reglages>
+    <header class="k-modal__header">
+      <div><h2 class="k-modal__title" id="bd-reglages-t">Réglages de l'automatisation</h2><p class="k-modal__desc">Ils valent pour toute l'automatisation, quel que soit le chemin suivi.</p></div>
+      <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+    </header>
+    <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+      <fieldset class="k-fieldset">
+        <legend class="k-fieldset__legend">Quand un contact la déclenche de nouveau</legend>
+        <div class="k-stack" style="gap:var(--k-space-2)">
+          <label class="k-choice"><input class="k-radio" type="radio" name="reentree" value="toujours"><span><span class="k-check__label">Il y entre à chaque fois</span><span class="k-check__hint">Autant de fois que l'événement se produit.</span></span></label>
+          <label class="k-choice"><input class="k-radio" type="radio" name="reentree" value="jamais"><span><span class="k-check__label">Il n'y entre qu'une fois</span><span class="k-check__hint">Une seule fois par contact, pour toujours.</span></span></label>
+          <label class="k-choice"><input class="k-radio" type="radio" name="reentree" value="delai" checked><span><span class="k-check__label">Pas avant un délai</span><span class="k-check__hint">Il peut y revenir une fois le délai passé.</span></span></label>
+          <div class="k-field" data-bd-delai><span class="k-field__label" id="bd-delai-l">Délai avant de pouvoir y revenir</span><div class="k-menu__form" style="padding:0"><input class="k-input" type="number" min="1" value="7" aria-labelledby="bd-delai-l"><select class="k-select" aria-label="Unité"><option>heures</option><option selected>jours</option><option>semaines</option></select></div></div>
+        </div>
+      </fieldset>
+      <fieldset class="k-fieldset">
+        <legend class="k-fieldset__legend">Quand quelqu'un répond</legend>
+        <div class="k-stack">
+          <label class="k-check"><input class="k-switch" type="checkbox" role="switch" checked><span class="k-check__label">Arrêter quand le contact répond<span class="k-check__hint">S'il envoie un message, il sort de l'automatisation tout de suite.</span></span></label>
+          <label class="k-check"><input class="k-switch" type="checkbox" role="switch"><span class="k-check__label">Arrêter quand un membre de l'équipe répond<span class="k-check__hint">Dès qu'une réponse part de l'inbox, l'automatisation s'arrête pour ce contact.</span></span></label>
+        </div>
+      </fieldset>
+      <fieldset class="k-fieldset">
+        <legend class="k-fieldset__legend">Envoi</legend>
+        <div class="k-stack">
+          <label class="k-check"><input class="k-switch" type="checkbox" role="switch" checked><span class="k-check__label">Heures calmes<span class="k-check__hint">Aucun message entre 21 h et 9 h, heure du contact.</span></span></label>
+          <label class="k-check"><input class="k-switch" type="checkbox" role="switch" checked><span class="k-check__label">Limite de fréquence<span class="k-check__hint">Pas plus d'un message marketing par jour et par contact, toutes automatisations confondues.</span></span></label>
+        </div>
+      </fieldset>
+    </div>
+    <footer class="k-modal__footer"><button type="button" class="k-button k-button--ghost" data-k-close>Annuler</button><button type="submit" class="k-button k-button--primary">Enregistrer les réglages</button></footer>
+  </form>
+</dialog>
+<!-- [U7] Tester -->
+<dialog class="k-modal k-modal--sm" id="bd-tester" aria-labelledby="bd-tester-t">
+  <form data-bd-test>
+    <header class="k-modal__header">
+      <div><h2 class="k-modal__title" id="bd-tester-t">Tester l'automatisation</h2><p class="k-modal__desc">Vous recevez tous les messages du flow, l'un après l'autre, sans attendre les délais.</p></div>
+      <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+    </header>
+    <div class="k-modal__body"><div class="k-field"><label class="k-field__label" for="bd-test-num">Envoyer à</label><select class="k-select" id="bd-test-num"><option>Camille Roux · +33 6 00 00 00 20</option><option>Théo Garnier · +33 6 00 00 00 21</option></select><span class="k-field__hint">Les tests ne comptent pas dans les résultats.</span></div></div>
+    <footer class="k-modal__footer"><button type="button" class="k-button k-button--ghost" data-k-close>Annuler</button><button type="submit" class="k-button k-button--primary"><k-icon name="paper-airplane"></k-icon>Envoyer le test</button></footer>
+  </form>
+</dialog>
+
+<!-- Modale et menu de la barre de navigation : les mêmes sur toutes les pages -->
+<!-- Qualité du numéro et limite d'envoi de Meta : la même modale sur toutes les pages. Elle s'ouvre depuis « Quality », dans la barre -->
+<dialog class="k-modal k-modal--sm" id="mod-qualite" aria-labelledby="mod-qualite-t">
+  <header class="k-modal__header">
+    <div><h2 class="k-modal__title" id="mod-qualite-t">Qualité du numéro</h2></div>
+    <button type="button" class="k-button k-button--secondary k-button--icon k-modal__close" aria-label="Fermer" data-k-close><k-icon name="x-mark"></k-icon></button>
+  </header>
+  <div class="k-modal__body k-stack" style="gap:var(--k-space-6)">
+    <!-- Le niveau, en grand : un anneau, un mot, une phrase -->
+    <div class="k-stack" style="align-items:center;gap:var(--k-space-3);text-align:center">
+      <span class="k-gauge" aria-hidden="true"><span class="k-ring k-ring--lg" data-quality="high"></span><k-icon name="check"></k-icon></span>
+      <div><div class="k-modal__title" data-q-niveau>Élevée</div><p style="margin-top:var(--k-space-1);color:var(--k-ink-2)" data-q-texte>Vos clients lisent vos messages et les signalent peu. Continuez ainsi.</p></div>
+    </div>
+    <ol class="k-scale" aria-label="Les trois niveaux de qualité"><li class="k-scale__step" data-tone="danger">Basse</li><li class="k-scale__step" data-tone="warning" style="text-align:center">Moyenne</li><li class="k-scale__step" data-tone="success" aria-current="true" style="text-align:end">Élevée</li></ol>
+    <!-- Les envois du jour : une ligne, une jauge, une phrase -->
+    <div class="k-inset">
+      <div class="k-inset__row"><span class="k-inset__label">Envois sur 24 h</span><span class="k-inset__value"><b data-q-envoyes>4 812</b> sur <span data-q-limite>100 000</span></span></div>
+      <div class="k-progress k-progress--ink" role="progressbar" aria-label="Part de la limite d'envoi utilisée sur 24 heures" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="--k-value:0.05" data-q-jauge><span></span></div>
+      <p class="k-inset__hint" data-q-suite>Cette limite augmente toute seule à mesure que vous envoyez.</p>
+    </div>
+  </div>
+  <footer class="k-modal__footer"><button type="button" class="k-button k-button--primary" data-k-close>Compris</button></footer>
+</dialog>
+<div class="k-menu" id="menu-compte" popover role="menu">
+  <div class="k-menu__label">Maison Lumen · Scale plan</div>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#general"><k-icon name="user"></k-icon><span class="k-menu__text">Mon profil</span></a>
+  <a class="k-menu__item" role="menuitem" href="reglages.html#facturation"><k-icon name="credit-card"></k-icon><span class="k-menu__text">Facturation</span></a>
+  <a class="k-menu__item" role="menuitem" href="forfaits.html"><k-icon name="star"></k-icon><span class="k-menu__text">Changer de forfait</span></a>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="chat-bubble-left"></k-icon><span class="k-menu__text">Passer à Kanal iMessage</span></button>
+  <div class="k-menu__sep"></div>
+  <button type="button" class="k-menu__item" role="menuitem"><k-icon name="arrow-left"></k-icon><span class="k-menu__text">Se déconnecter</span></button>
+</div>
+<script src="assets/courbe.js?v=20261117-19"></script>
+<script src="assets/builder.js?v=20261117-19"></script>
+<div id="k-fin" hidden></div>
+</body>
+</html>
